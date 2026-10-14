@@ -58,6 +58,18 @@ AFTER="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); echo $p->query(
 [[ "$STATUS" == "403" && "$BEFORE" == "$AFTER" ]] || fail "Administrator-only taxonomy mutation was not blocked before state change"
 pass "Central Staff policy denies Operator access and mutation on Administrator routes"
 
+# Staff mutation negatives: authentication and CSRF rejection must occur before database writes.
+BUSINESSES_BEFORE="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); echo $p->query("SELECT COUNT(*) FROM businesses")->fetchColumn();')"
+STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -X POST "$BASE/staff/listings/create" \
+  --data-urlencode '_csrf=missing' --data-urlencode 'business_name_en=Unauthenticated Mutation' --data-urlencode 'branch_name_en=Forbidden')"
+BUSINESSES_AFTER="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); echo $p->query("SELECT COUNT(*) FROM businesses")->fetchColumn();')"
+[[ "$STATUS" == "302" && "$BUSINESSES_BEFORE" == "$BUSINESSES_AFTER" ]] || fail "Unauthenticated Staff mutation changed database state"
+STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" -X POST "$BASE/staff/listings/create" \
+  --data-urlencode '_csrf=invalid' --data-urlencode 'business_name_en=CSRF Mutation' --data-urlencode 'branch_name_en=Forbidden')"
+BUSINESSES_AFTER="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); echo $p->query("SELECT COUNT(*) FROM businesses")->fetchColumn();')"
+[[ "$STATUS" == "302" && "$BUSINESSES_BEFORE" == "$BUSINESSES_AFTER" ]] || fail "Invalid-CSRF Staff mutation changed database state"
+pass "Unauthenticated and invalid-CSRF Staff mutations preserve database state"
+
 # Customer OTP: request, HMAC-backed code preview in development, verification, account session.
 TEST_EMAIL="ci-otp-$(date +%s)-$$@example.com"
 curl -fsS -c "$TMP/customer.cookies" "$BASE/auth/login" -o "$TMP/customer-login.html"
@@ -76,9 +88,25 @@ curl -fsS -b "$TMP/customer.cookies" "$BASE/account" -o "$TMP/account.html"
 grep -q "$TEST_EMAIL" "$TMP/account.html" || fail "Customer account session inaccessible"
 pass "Customer OTP request + HMAC verification + session flow"
 
-# Security behavior: invalid CSRF must not mutate and malformed Google credential must not authenticate.
-STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -X POST "$BASE/staff/gates/toggle" --data-urlencode '_csrf=invalid' --data-urlencode 'gate_key=D_39_PAID_CAMPAIGNS_ENABLED')"
-[[ "$STATUS" == "302" ]] || fail "Invalid-CSRF staff mutation did not fail safely"
-pass "State-changing endpoint rejects invalid CSRF"
+# Customer mutation state: invalid CSRF and cross-customer review withdrawal must not mutate; valid save toggles must.
+CSRF="$(csrf_from "$TMP/account.html")"; [[ -n "$CSRF" ]] || fail "Authenticated Customer CSRF missing"
+CUSTOMER_ID="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); $s=$p->prepare("SELECT id FROM customers WHERE email=:e"); $s->execute([":e"=>$argv[1]]); echo $s->fetchColumn();' "$TEST_EMAIL")"
+SAVED_BEFORE="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); $s=$p->prepare("SELECT COUNT(*) FROM customer_saved_businesses WHERE customer_id=:id"); $s->execute([":id"=>$argv[1]]); echo $s->fetchColumn();' "$CUSTOMER_ID")"
+STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/customer.cookies" -X POST "$BASE/account/saved/toggle" \
+  --data-urlencode '_csrf=invalid' --data-urlencode 'business_id=1' --data-urlencode 'return_to=/account')"
+SAVED_AFTER="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); $s=$p->prepare("SELECT COUNT(*) FROM customer_saved_businesses WHERE customer_id=:id"); $s->execute([":id"=>$argv[1]]); echo $s->fetchColumn();' "$CUSTOMER_ID")"
+[[ "$STATUS" == "302" && "$SAVED_BEFORE" == "$SAVED_AFTER" ]] || fail "Invalid-CSRF Customer save changed database state"
+curl -sS -o /dev/null -b "$TMP/customer.cookies" -X POST "$BASE/account/saved/toggle" --data-urlencode "_csrf=$CSRF" --data-urlencode 'business_id=1' --data-urlencode 'return_to=/account'
+SAVED_ADDED="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); $s=$p->prepare("SELECT COUNT(*) FROM customer_saved_businesses WHERE customer_id=:id"); $s->execute([":id"=>$argv[1]]); echo $s->fetchColumn();' "$CUSTOMER_ID")"
+[[ "$SAVED_ADDED" -eq $((SAVED_BEFORE + 1)) ]] || fail "Valid Customer save did not create expected database state"
+curl -sS -o /dev/null -b "$TMP/customer.cookies" -X POST "$BASE/account/saved/toggle" --data-urlencode "_csrf=$CSRF" --data-urlencode 'business_id=1' --data-urlencode 'return_to=/account'
+SAVED_REMOVED="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); $s=$p->prepare("SELECT COUNT(*) FROM customer_saved_businesses WHERE customer_id=:id"); $s->execute([":id"=>$argv[1]]); echo $s->fetchColumn();' "$CUSTOMER_ID")"
+[[ "$SAVED_REMOVED" == "$SAVED_BEFORE" ]] || fail "Customer save toggle cleanup did not restore database state"
+REVIEW_ID="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); echo $p->query("SELECT id FROM reviews ORDER BY id LIMIT 1")->fetchColumn();')"
+REVIEW_BEFORE="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); $s=$p->prepare("SELECT status FROM reviews WHERE id=:id"); $s->execute([":id"=>$argv[1]]); echo $s->fetchColumn();' "$REVIEW_ID")"
+curl -sS -o /dev/null -b "$TMP/customer.cookies" -X POST "$BASE/account/reviews/$REVIEW_ID/withdraw" --data-urlencode "_csrf=$CSRF"
+REVIEW_AFTER="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); $s=$p->prepare("SELECT status FROM reviews WHERE id=:id"); $s->execute([":id"=>$argv[1]]); echo $s->fetchColumn();' "$REVIEW_ID")"
+[[ "$REVIEW_BEFORE" == "$REVIEW_AFTER" ]] || fail "Customer modified another account's review"
+pass "Customer CSRF, positive mutation-state, cleanup, and object-ownership checks"
 
 echo 'ALL AUTHENTICATED END-TO-END FLOWS PASSED.'
