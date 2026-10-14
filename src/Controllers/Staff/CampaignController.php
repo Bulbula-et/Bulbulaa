@@ -34,7 +34,7 @@ final class CampaignController
     public function index(Request $request): Response
     {
         $html = View::render('staff/campaigns', [
-            'pageTitle'   => 'Sponsored Placements & Campaigns (C-27) — Staff Console',
+            'pageTitle'   => 'Sponsored Placements & Campaigns — Staff Console',
             'activeNav'   => 'campaigns',
             'staff'       => $this->staffAuth->currentStaff(),
             'campaigns'   => $this->sponsorshipRepo->listAllForStaff(),

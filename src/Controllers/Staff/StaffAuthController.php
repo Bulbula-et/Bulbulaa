@@ -28,7 +28,7 @@ final class StaffAuthController
         }
 
         $html = View::render('staff/login', [
-            'pageTitle'    => 'Staff Console Sign In (Gate D-45) — Bulbula.et',
+            'pageTitle'    => 'Staff Console Sign In — Bulbula.et',
             'canonicalUrl' => '/staff/login',
             'request'      => $request,
             'returnTo'     => $returnTo,

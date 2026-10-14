@@ -34,7 +34,7 @@ final class VerificationController
         }
 
         $html = View::render('staff/verification', [
-            'pageTitle' => 'Verification & Quality Control Gate (C-21) — Staff Console',
+            'pageTitle' => 'Verification & Quality Control — Staff Console',
             'activeNav' => 'verification',
             'staff'     => $this->staffAuth->currentStaff(),
             'branches'  => $branches,

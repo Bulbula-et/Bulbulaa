@@ -10,7 +10,7 @@ $isDebug  = !empty($isDebug);
   <section class="b-card" style="padding: var(--space-8); border-top: 4px solid var(--orange-500);">
     <div>
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
-        <span class="b-badge b-badge--blue">Gate D-45 &middot; Staff RBAC</span>
+        <span class="b-badge b-badge--blue">Protected staff access</span>
         <span class="b-badge b-badge--orange">Web-Only Console</span>
       </div>
       <h1 style="font-size: var(--text-2xl); margin-top: var(--space-3);">Staff Console Sign In</h1>

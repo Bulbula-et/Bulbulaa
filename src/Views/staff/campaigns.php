@@ -19,9 +19,9 @@ foreach ($campaigns as $campaign) {
   <div class="b-campaign-policy__main">
     <h2>Commercial integrity boundary</h2>
     <p>Sponsored placements are intentionally separated from directory verification and organic ranking. Every campaign remains fixed-price, time-bounded, and transparently measured.</p>
-    <div class="b-campaign-rules"><span class="b-campaign-rule">3 approved formats only</span><span class="b-campaign-rule">Impressions and clicks only</span><span class="b-campaign-rule">No organic ranking influence</span><span class="b-campaign-rule">Controls C-16 + C-27</span></div>
+    <div class="b-campaign-rules"><span class="b-campaign-rule">3 approved formats only</span><span class="b-campaign-rule">Impressions and clicks only</span><span class="b-campaign-rule">No organic ranking influence</span><span class="b-campaign-rule">Controlled approval workflow</span></div>
   </div>
-  <aside class="b-campaign-gate <?= $gateD39Open ? '' : 'is-blocked' ?>"><span class="b-campaign-gate__label">Commercial gate D-39</span><strong class="b-campaign-gate__state"><?= $gateD39Open ? 'Active' : 'Blocked' ?></strong><span class="b-campaign-gate__meta"><?= $gateD39Open ? 'Campaign approval controls are available.' : 'Campaign creation may be recorded, but activation remains restricted.' ?></span></aside>
+  <aside class="b-campaign-gate <?= $gateD39Open ? '' : 'is-blocked' ?>"><span class="b-campaign-gate__label">Campaign approvals</span><strong class="b-campaign-gate__state"><?= $gateD39Open ? 'Active' : 'Blocked' ?></strong><span class="b-campaign-gate__meta"><?= $gateD39Open ? 'Campaign approval controls are available.' : 'Campaign creation may be recorded, but activation remains restricted.' ?></span></aside>
 </section>
 
 <section class="b-card b-campaign-create">

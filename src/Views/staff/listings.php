@@ -8,7 +8,7 @@ $categories = $categories ?? [];
 $areas      = $areas ?? [];
 ?>
 <section class="b-card b-listing-onboard">
-  <header class="b-listing-onboard__header"><div><h2>Onboard a business and branch</h2><p>Capture permission, location, category, and contact details before verification.</p></div><span class="b-listing-onboard__step">Permission gate C-19</span></header>
+  <header class="b-listing-onboard__header"><div><h2>Onboard a business and branch</h2><p>Capture permission, location, category, and contact details before verification.</p></div><span class="b-listing-onboard__step">Permission required</span></header>
   <form action="/staff/listings/create" method="POST" class="b-listing-form">
     <?= Csrf::field() ?>
     <div>
@@ -20,7 +20,7 @@ $areas      = $areas ?? [];
       <input id="lst-name-am" type="text" name="business_name_am" class="b-input" placeholder="e.g. ሰላም ክሊኒክ">
     </div>
     <div>
-      <label class="b-label" for="lst-cat">Primary Category (C-04)</label>
+      <label class="b-label" for="lst-cat">Primary category</label>
       <select id="lst-cat" name="primary_category_id" class="b-select" required>
         <?php foreach ($categories as $cat): ?>
           <option value="<?= (int) $cat['id'] ?>"><?= View::e($cat['name_en']) ?></option>
@@ -31,7 +31,7 @@ $areas      = $areas ?? [];
       </select>
     </div>
     <div>
-      <label class="b-label" for="lst-area">Bole Bulbula Area (C-05)</label>
+      <label class="b-label" for="lst-area">Bole Bulbula area</label>
       <select id="lst-area" name="area_id" class="b-select" required>
         <?php foreach ($areas as $a): ?>
           <option value="<?= (int) $a['id'] ?>"><?= View::e($a['name_en']) ?></option>
@@ -47,7 +47,7 @@ $areas      = $areas ?? [];
       <input id="lst-phone" type="text" name="phone_primary" class="b-input" placeholder="+251 911 ...">
     </div>
     <div>
-      <label class="b-label" for="lst-rep">Authorizing Representative (C-19)</label>
+      <label class="b-label" for="lst-rep">Authorizing representative</label>
       <input id="lst-rep" type="text" name="rep_full_name" class="b-input" placeholder="Owner / General Manager" required>
     </div>
     <div>
@@ -77,11 +77,11 @@ $areas      = $areas ?? [];
         <th>ID</th>
         <th>Branch Name (EN / AM)</th>
         <th>Parent Business</th>
-        <th>Primary Category (C-04)</th>
-        <th>Area &amp; Sub-City (C-05)</th>
-        <th>Hours Status (C-09)</th>
+        <th>Primary category</th>
+        <th>Area &amp; sub-city</th>
+        <th>Hours status</th>
         <th>Publication Status</th>
-        <th>Quick Edit (C-20)</th>
+        <th>Quick edit</th>
       </tr>
     </thead>
     <tbody>

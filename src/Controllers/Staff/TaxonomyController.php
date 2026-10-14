@@ -28,7 +28,7 @@ final class TaxonomyController
     public function index(Request $request): Response
     {
         $html = View::render('staff/taxonomy', [
-            'pageTitle'  => '2-Level Taxonomy Catalogue (C-23) — Staff Console',
+            'pageTitle'  => 'Taxonomy Catalogue — Staff Console',
             'activeNav'  => 'taxonomy',
             'staff'      => $this->staffAuth->currentStaff(),
             'categories' => $this->taxonomyRepo->getFullTree(false),

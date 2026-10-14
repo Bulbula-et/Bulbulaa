@@ -12,14 +12,14 @@ foreach ($areas as $area) {
 }
 ?>
 <section class="b-location-boundary">
-  <div class="b-location-boundary__main"><h2>Controlled launch geography</h2><p>Directory coverage is constrained to approved local areas so verification, discovery, and operational quality can scale without weakening geographic accuracy.</p><span class="b-location-boundary__gate">Gate D-40 · Bole launch boundary</span></div>
+  <div class="b-location-boundary__main"><h2>Controlled launch geography</h2><p>Directory coverage is constrained to approved local areas so verification, discovery, and operational quality can scale without weakening geographic accuracy.</p><span class="b-location-boundary__gate">Bole launch boundary active</span></div>
   <article class="b-location-stat"><span class="b-location-stat__label">Controlled areas</span><strong class="b-location-stat__value"><?= count($areas) ?></strong><span class="b-location-stat__meta">Configured local zones</span></article>
   <article class="b-location-stat"><span class="b-location-stat__label">V1 launch areas</span><strong class="b-location-stat__value"><?= $launchAreas ?></strong><span class="b-location-stat__meta">Enabled for publication</span></article>
   <article class="b-location-stat"><span class="b-location-stat__label">Published branches</span><strong class="b-location-stat__value"><?= $publishedBranches ?></strong><span class="b-location-stat__meta">Assigned across areas</span></article>
 </section>
 
 <section class="b-card b-location-create">
-  <header class="b-location-create__head"><h2>Add a controlled local area</h2><p>Register the bilingual name, stable URL, and geographic center defined by C-24.</p></header>
+  <header class="b-location-create__head"><h2>Add a controlled local area</h2><p>Register the bilingual name, stable URL, and geographic center required for controlled publishing.</p></header>
   <form action="/staff/locations/save" method="POST" class="b-location-form">
     <?= Csrf::field() ?>
     <div><label class="b-label" for="area-en">English name</label><input id="area-en" type="text" name="name_en" class="b-input" placeholder="e.g. Bulbula Mikael" required></div>

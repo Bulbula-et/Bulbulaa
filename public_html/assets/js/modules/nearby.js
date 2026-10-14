@@ -34,7 +34,7 @@
           locateBtn.disabled = false;
           locateBtn.textContent = 'Use My Current Location';
           if (statusEl) {
-            statusEl.textContent = 'Location access was declined or unavailable. You can use a Bole Bulbula landmark preset or browse by neighborhood area below (C-07 fallback).';
+            statusEl.textContent = 'Location access was declined or unavailable. You can use a Bole Bulbula landmark preset or browse by neighborhood area below.';
           }
         },
         { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }

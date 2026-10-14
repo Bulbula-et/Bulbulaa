@@ -27,7 +27,7 @@ final class StaffUserController
     {
         $role = $this->staffAuth->currentRole();
         $html = View::render('staff/users', [
-            'pageTitle'  => 'Staff Accounts & RBAC Management (Gate D-45) — Staff Console',
+            'pageTitle'  => 'Staff Accounts & Access Management — Staff Console',
             'activeNav'  => 'users',
             'staff'      => $this->staffAuth->currentStaff(),
             'canManage'  => $role->canApproveCampaigns(),

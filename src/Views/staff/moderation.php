@@ -10,7 +10,7 @@ $labels = ['PENDING_MODERATION' => 'Pending', 'PUBLISHED' => 'Published', 'REJEC
 $currentLabel = $labels[$statusFilter] ?? 'Reviews';
 ?>
 <section class="b-mod-toolbar">
-  <div class="b-mod-toolbar__title"><strong><?= View::e($currentLabel) ?> review queue · <?= count($reviews) ?></strong><span>Apply the C-25 policy gate before customer content reaches the public directory.</span></div>
+  <div class="b-mod-toolbar__title"><strong><?= View::e($currentLabel) ?> review queue · <?= count($reviews) ?></strong><span>Review customer content against publication policy before it reaches the public directory.</span></div>
   <nav class="b-mod-tabs" aria-label="Review status filters">
     <?php foreach ($labels as $status => $label): ?>
       <a href="/staff/moderation?status=<?= View::e($status) ?>" class="b-mod-tab <?= $statusFilter === $status ? 'is-active' : '' ?>" <?= $statusFilter === $status ? 'aria-current="page"' : '' ?>><?= View::e($label) ?></a>

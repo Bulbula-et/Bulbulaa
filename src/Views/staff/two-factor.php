@@ -9,7 +9,7 @@ $enrollment   = $enrollment ?? null;
 <div class="b-container" style="padding: var(--space-10) var(--space-5); max-width: 34rem;">
   <section class="b-card" style="padding: var(--space-8); border-top: 4px solid var(--orange-500);">
     <div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">
-      <span class="b-badge b-badge--blue">Gate D-45</span>
+      <span class="b-badge b-badge--blue">Protected staff access</span>
       <span class="b-badge b-badge--verified">RFC 6238 TOTP</span>
     </div>
     <h1 style="font-size:var(--text-2xl);margin-top:var(--space-3);">

@@ -28,7 +28,7 @@ $actionRate = $totalViews > 0 ? (($totalCalls + $totalDirections) / $totalViews)
 
 <div class="b-analytics-grid">
   <section class="b-card b-analytics-panel">
-    <header class="b-analytics-panel__head"><div><h2>Coverage opportunities</h2><p>Zero-result searches reveal missing categories and local supply.</p></div><span class="b-analytics-panel__tag">Pilot signal C-28</span></header>
+    <header class="b-analytics-panel__head"><div><h2>Coverage opportunities</h2><p>Zero-result searches reveal missing categories and local supply.</p></div><span class="b-analytics-panel__tag">Coverage signal</span></header>
     <?php if ($zeroQueries === []): ?>
       <div class="b-analytics-empty"><strong>No unmet searches recorded</strong>Coverage signals will appear when searches return no directory results.</div>
     <?php else: ?>
@@ -41,7 +41,7 @@ $actionRate = $totalViews > 0 ? (($totalCalls + $totalDirections) / $totalViews)
   </section>
 
   <section class="b-card b-analytics-panel">
-    <header class="b-analytics-panel__head"><div><h2>Branch discovery performance</h2><p>Organic profile reach and high-intent customer actions.</p></div><span class="b-analytics-panel__tag">Controls C-28 + C-38</span></header>
+    <header class="b-analytics-panel__head"><div><h2>Branch discovery performance</h2><p>Organic profile reach and high-intent customer actions.</p></div><span class="b-analytics-panel__tag">First-party analytics</span></header>
     <?php if ($topBranches === []): ?>
       <div class="b-analytics-empty"><strong>No branch analytics available</strong>Performance appears after profile views and actions are recorded.</div>
     <?php else: ?>

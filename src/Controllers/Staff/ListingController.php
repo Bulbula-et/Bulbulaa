@@ -34,7 +34,7 @@ final class ListingController
     public function index(Request $request): Response
     {
         $html = View::render('staff/listings', [
-            'pageTitle'  => 'Listings & Permission Registry (C-19, C-20) — Staff Console',
+            'pageTitle'  => 'Listings & Permission Registry — Staff Console',
             'activeNav'  => 'listings',
             'staff'      => $this->staffAuth->currentStaff(),
             'branches'   => $this->branchRepo->listAllForStaffConsole(50),

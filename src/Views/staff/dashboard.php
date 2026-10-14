@@ -2,6 +2,18 @@
 declare(strict_types=1);
 use Bulbula\Core\View;
 $summary=$summary??[];$totals=$summary['totals']??[];$gates=$gates??[];$branches=$branches??[];
+$gateLabels=[
+  'D_31_OPERATIONAL_PILOT'=>'Operational pilot',
+  'D_39_PAID_CAMPAIGNS_ENABLED'=>'Paid campaign approvals',
+  'D_40_LAUNCH_AREA_BOUNDARY'=>'Launch area boundary',
+  'D_45_STAFF_2FA_REQUIRED'=>'Staff two-factor authentication',
+];
+$gateDescriptions=[
+  'D_31_OPERATIONAL_PILOT'=>'Controls the current operational rollout scope.',
+  'D_39_PAID_CAMPAIGNS_ENABLED'=>'Allows approved sponsored campaigns to be activated.',
+  'D_40_LAUNCH_AREA_BOUNDARY'=>'Restricts publication to the approved launch geography.',
+  'D_45_STAFF_2FA_REQUIRED'=>'Requires authenticator protection for Staff access.',
+];
 ?>
 <section class="b-admin-welcome">
   <div><h2>Good to see you, <?= View::e(explode(' ', trim((string)($staff['full_name']??'Team')))[0]) ?>.</h2><p>Here is the current health of the Bulbula.et directory and its operational queues.</p></div>
@@ -22,7 +34,8 @@ $summary=$summary??[];$totals=$summary['totals']??[];$gates=$gates??[];$branches
       <?php foreach($gates as $gate): ?>
         <div class="b-gate-row">
           <i class="b-gate-row__state <?= !empty($gate['is_enabled'])?'is-on':'' ?>"></i>
-          <div class="b-gate-row__info"><strong><?= View::e((string)$gate['decision_ref']) ?> · <?= View::e(str_replace('_',' ',(string)$gate['gate_key'])) ?></strong><span><?= View::e((string)($gate['config_json']??'No additional scope note')) ?></span></div>
+          <?php $gateKey=(string)$gate['gate_key']; ?>
+          <div class="b-gate-row__info"><strong><?= View::e($gateLabels[$gateKey]??ucwords(strtolower(str_replace('_',' ',(string)preg_replace('/^[A-Z]_[0-9]+_/','',$gateKey))))) ?></strong><span><?= View::e($gateDescriptions[$gateKey]??'Administrator-managed platform readiness control.') ?></span></div>
           <span class="b-badge <?= !empty($gate['is_enabled'])?'b-badge--verified':'b-badge--orange' ?>"><?= !empty($gate['is_enabled'])?'Enabled':'Pending' ?></span>
           <form action="/staff/gates/toggle" method="POST"><?= View::csrfField() ?><input type="hidden" name="gate_key" value="<?= View::e($gate['gate_key']) ?>"><input type="hidden" name="new_state" value="<?= !empty($gate['is_enabled'])?'0':'1' ?>"><button type="submit" class="b-btn b-btn--outline b-btn--sm b-gate-toggle"><?= !empty($gate['is_enabled'])?'Disable':'Enable' ?></button></form>
         </div>

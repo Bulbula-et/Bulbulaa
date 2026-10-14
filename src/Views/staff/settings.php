@@ -11,7 +11,7 @@ $mail      = $env['mail'] ?? [];
 ?>
 <?php if (!$canManage): ?>
   <div class="b-alert b-alert--error">
-    <span>Gate D-45 Security Boundary: System &amp; Auth Configuration is restricted to the ADMINISTRATOR role.</span>
+    <span>System and authentication configuration is restricted to the Administrator role.</span>
   </div>
 <?php else: ?>
   <div class="b-alert b-alert--success" style="margin-bottom: var(--space-4);">
@@ -22,7 +22,7 @@ $mail      = $env['mail'] ?? [];
 
     <!-- 1. Security & Staff RBAC Mode -->
     <section class="b-card" style="padding: var(--space-5);">
-      <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-3);">1. Staff Console Security &amp; Policy Timers (Gate D-45)</h2>
+      <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-3);">1. Staff console security and policy timers</h2>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4);">
         <div>
           <label class="b-label" for="cfg-strict-login">Staff Console Access Mode</label>
@@ -36,7 +36,7 @@ $mail      = $env['mail'] ?? [];
           <input id="cfg-otp-exp" type="number" name="otp_expiry_seconds" class="b-input" value="<?= (int) ($sec['otp_expiry_seconds'] ?? 600) ?>">
         </div>
         <div>
-          <label class="b-label" for="cfg-rev-win">Customer Review Edit Window (Days — C-35)</label>
+          <label class="b-label" for="cfg-rev-win">Customer review edit window (days)</label>
           <input id="cfg-rev-win" type="number" name="review_edit_window_days" class="b-input" value="<?= (int) ($sec['review_edit_window_days'] ?? 30) ?>">
         </div>
       </div>
@@ -44,7 +44,7 @@ $mail      = $env['mail'] ?? [];
 
     <!-- 2. Google OAuth 2.0 & Telegram Mini App Setup (C-30) -->
     <section class="b-card" style="padding: var(--space-5);">
-      <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-3);">2. Google Identity Services (C-30) &amp; Telegram Mini App</h2>
+      <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-3);">2. Google Identity Services and Telegram Mini App</h2>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4);">
         <div>
           <label class="b-label" for="cfg-gid">Google OAuth Client ID</label>
@@ -67,7 +67,7 @@ $mail      = $env['mail'] ?? [];
 
     <!-- 3. Transactional Email OTP SMTP Settings (C-31) -->
     <section class="b-card" style="padding: var(--space-5);">
-      <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-3);">3. Transactional Email OTP (SMTP / cPanel Mail — C-31)</h2>
+      <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-3);">3. Transactional email OTP (SMTP / cPanel Mail)</h2>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--space-4);">
         <div>
           <label class="b-label" for="cfg-mdrv">Mail Transport</label>

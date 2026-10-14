@@ -25,7 +25,7 @@ final class AuditLogController
         $logs = $role->canViewAuditLogs() ? $this->auditService->listLogsForAdmin(100) : [];
 
         $html = View::render('staff/audit-logs', [
-            'pageTitle' => 'Append-Only Audit Logs (C-29) — Staff Console',
+            'pageTitle' => 'Append-Only Audit Logs — Staff Console',
             'activeNav' => 'audit-logs',
             'staff'     => $this->staffAuth->currentStaff(),
             'canView'   => $role->canViewAuditLogs(),

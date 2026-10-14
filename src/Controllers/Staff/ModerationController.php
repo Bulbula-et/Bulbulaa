@@ -27,7 +27,7 @@ final class ModerationController
     {
         $status = (string) $request->query('status', 'PENDING_MODERATION');
         $html = View::render('staff/moderation', [
-            'pageTitle'    => 'Review Moderation Queue (C-25) — Staff Console',
+            'pageTitle'    => 'Review Moderation Queue — Staff Console',
             'activeNav'    => 'moderation',
             'staff'        => $this->staffAuth->currentStaff(),
             'statusFilter' => $status,

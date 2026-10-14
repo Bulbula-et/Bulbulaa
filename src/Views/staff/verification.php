@@ -34,7 +34,7 @@ foreach ($branches as $branch) {
 <section class="b-card b-qc-panel">
   <header class="b-qc-panel__header">
     <div><h2>Verification and quality-control register</h2><p>Validate authorization, branch accuracy, and publication readiness before trust is granted.</p></div>
-    <span class="b-qc-policy">Hard gates C-19 + C-21 active</span>
+    <span class="b-qc-policy">Permission and quality controls active</span>
   </header>
 
   <?php if ($branches === []): ?>

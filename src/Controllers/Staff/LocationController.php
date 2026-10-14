@@ -28,7 +28,7 @@ final class LocationController
     public function index(Request $request): Response
     {
         $html = View::render('staff/locations', [
-            'pageTitle' => 'Local Areas & Launch Boundary (C-24, D-40) — Staff Console',
+            'pageTitle' => 'Local Areas & Launch Boundary — Staff Console',
             'activeNav' => 'locations',
             'staff'     => $this->staffAuth->currentStaff(),
             'areas'     => $this->areaRepo->listAll(false),

@@ -26,7 +26,7 @@ final class ReportQueueController
     public function index(Request $request): Response
     {
         $html = View::render('staff/reports', [
-            'pageTitle' => 'Public Reports & Corrections Queue (C-26) — Staff Console',
+            'pageTitle' => 'Public Reports & Corrections — Staff Console',
             'activeNav' => 'reports',
             'staff'     => $this->staffAuth->currentStaff(),
             'reports'   => $this->reportRepo->listQueue(null, 100),

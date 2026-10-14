@@ -20,10 +20,10 @@ $initials = static function (string $name): string {
 };
 ?>
 <?php if (!$canManage): ?>
-  <section class="b-access-denied"><strong>Administrator authorization required</strong><p>Gate D-45 restricts Staff identity, role, password, and authenticator controls to authenticated Administrators.</p></section>
+  <section class="b-access-denied"><strong>Administrator authorization required</strong><p>The security boundary restricts Staff identity, role, password, and authenticator controls to authenticated Administrators.</p></section>
 <?php else: ?>
   <section class="b-access-boundary">
-    <div class="b-access-boundary__main"><h2>Staff identity and access control</h2><p>Manage operational identities through explicit roles, individual credentials, account status, and authenticator enrollment. All changes remain attributable in the security audit log.</p><div class="b-access-boundary__controls"><span class="b-access-boundary__control">Gate D-45</span><span class="b-access-boundary__control">Role-based access</span><span class="b-access-boundary__control">Individual accounts only</span><span class="b-access-boundary__control">2FA protected</span></div></div>
+    <div class="b-access-boundary__main"><h2>Staff identity and access control</h2><p>Manage operational identities through explicit roles, individual credentials, account status, and authenticator enrollment. All changes remain attributable in the security audit log.</p><div class="b-access-boundary__controls"><span class="b-access-boundary__control">Administrator controlled</span><span class="b-access-boundary__control">Role-based access</span><span class="b-access-boundary__control">Individual accounts only</span><span class="b-access-boundary__control">2FA protected</span></div></div>
     <article class="b-access-stat"><span class="b-access-stat__label">Active staff</span><strong class="b-access-stat__value"><?= $activeUsers ?></strong><span class="b-access-stat__meta">of <?= count($staffUsers) ?> total accounts</span></article>
     <article class="b-access-stat"><span class="b-access-stat__label">Administrators</span><strong class="b-access-stat__value"><?= $administrators ?></strong><span class="b-access-stat__meta">Full access and approvals</span></article>
     <article class="b-access-stat"><span class="b-access-stat__label">2FA protected</span><strong class="b-access-stat__value"><?= $protectedUsers ?></strong><span class="b-access-stat__meta">Authenticator enrollment complete</span></article>

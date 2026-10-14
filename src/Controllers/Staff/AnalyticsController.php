@@ -22,7 +22,7 @@ final class AnalyticsController
     public function index(Request $request): Response
     {
         $html = View::render('staff/analytics', [
-            'pageTitle' => 'Operational & Pilot Analytics (C-28) — Staff Console',
+            'pageTitle' => 'Operational & Pilot Analytics — Staff Console',
             'activeNav' => 'analytics',
             'staff'     => $this->staffAuth->currentStaff(),
             'summary'   => $this->analyticsService->getOperationalDashboardSummary(),

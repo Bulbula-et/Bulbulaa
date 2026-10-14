@@ -19,10 +19,10 @@ $formatState = static function (?string $json): string {
 };
 ?>
 <?php if (!$canView): ?>
-  <section class="b-audit-denied"><strong>Administrator authorization required</strong><p>The C-29 security boundary restricts append-only audit records to authenticated Administrators. No audit metadata has been disclosed.</p></section>
+  <section class="b-audit-denied"><strong>Administrator authorization required</strong><p>The security boundary restricts append-only audit records to authenticated Administrators. No audit metadata has been disclosed.</p></section>
 <?php else: ?>
   <section class="b-audit-boundary">
-    <div class="b-audit-boundary__main"><h2>Append-only security record</h2><p>Administrative and operational changes are retained as immutable accountability events. Sensitive credentials and direct customer identifiers are excluded from state snapshots.</p><div class="b-audit-boundary__controls"><span class="b-audit-boundary__control">Administrator only</span><span class="b-audit-boundary__control">Append-only</span><span class="b-audit-boundary__control">Secrets and PII scrubbed</span><span class="b-audit-boundary__control">Control C-29</span></div></div>
+    <div class="b-audit-boundary__main"><h2>Append-only security record</h2><p>Administrative and operational changes are retained as immutable accountability events. Sensitive credentials and direct customer identifiers are excluded from state snapshots.</p><div class="b-audit-boundary__controls"><span class="b-audit-boundary__control">Administrator only</span><span class="b-audit-boundary__control">Append-only</span><span class="b-audit-boundary__control">Secrets and PII scrubbed</span><span class="b-audit-boundary__control">Accountable changes</span></div></div>
     <article class="b-audit-stat"><span class="b-audit-stat__label">Recorded events</span><strong class="b-audit-stat__value"><?= count($logs) ?></strong><span class="b-audit-stat__meta">Visible security records</span></article>
     <article class="b-audit-stat"><span class="b-audit-stat__label">Distinct actors</span><strong class="b-audit-stat__value"><?= count($actors) ?></strong><span class="b-audit-stat__meta">Staff and system identities</span></article>
     <article class="b-audit-stat"><span class="b-audit-stat__label">Action types</span><strong class="b-audit-stat__value"><?= count($actions) ?></strong><span class="b-audit-stat__meta">Latest event <?= View::e($latestAt) ?></span></article>

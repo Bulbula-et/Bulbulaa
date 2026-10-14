@@ -21,7 +21,7 @@ foreach ($categories as $category) {
 </section>
 
 <section class="b-card b-taxonomy-create">
-  <header class="b-taxonomy-create__head"><h2>Add a category or subcategory</h2><p>Maintain the controlled two-level directory vocabulary defined by C-23.</p></header>
+  <header class="b-taxonomy-create__head"><h2>Add a category or subcategory</h2><p>Maintain the controlled two-level directory vocabulary used across the public directory.</p></header>
   <form action="/staff/taxonomy/save" method="POST" class="b-taxonomy-form">
     <?= Csrf::field() ?>
     <div><label class="b-label" for="tax-parent">Parent category</label><select id="tax-parent" name="parent_id" class="b-select"><option value="">None — create level one</option><?php foreach ($categories as $cat): ?><option value="<?= (int) $cat['id'] ?>"><?= View::e($cat['name_en']) ?></option><?php endforeach; ?></select></div>
