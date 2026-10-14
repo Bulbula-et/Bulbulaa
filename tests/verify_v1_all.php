@@ -13,7 +13,6 @@ define('BULBULA_ROOT', dirname(__DIR__));
 require_once BULBULA_ROOT . '/src/Core/Autoloader.php';
 \Bulbula\Core\Autoloader::register(BULBULA_ROOT . '/src');
 \Bulbula\Core\Config::load(BULBULA_ROOT . '/config/env.json');
-\Bulbula\Core\Cache::configure(BULBULA_ROOT . '/storage/cache', true, 300);
 
 echo "=== 1. Zero-Restart Cache & Config Verification ===\n";
 $flushStats = \Bulbula\Core\Cache::flushAll();
