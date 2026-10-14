@@ -39,6 +39,9 @@ Bulbula.et pins production dependencies in `composer.lock`:
 
 - `phpmailer/phpmailer` — mature SMTP and transactional email transport.
 - `google/apiclient` — official Google Identity ID-token verification.
+- `robthree/twofactorauth` — standalone zero-dependency RFC 6238 TOTP verification for Staff Gate D-45.
+
+PHP must include the native Sodium extension (`ext-sodium`) so authenticator secrets are encrypted at rest with `sodium_crypto_secretbox`.
 
 From cPanel Terminal (or locally before upload), run from the application root:
 

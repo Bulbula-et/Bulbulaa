@@ -40,7 +40,7 @@ final class Router
                 [$controllerClass, $action] = $handler;
 
                 // Central Gate D-45 Auth Guard for all /staff/* routes (except /staff/login)
-                if (str_starts_with($path, '/staff') && $path !== '/staff/login') {
+                if (str_starts_with($path, '/staff') && !in_array($path, ['/staff/login', '/staff/2fa'], true)) {
                     if ($path === '/staff' && $request->query('switch_staff')) {
                         // Allow role switcher in preview mode
                     } else {

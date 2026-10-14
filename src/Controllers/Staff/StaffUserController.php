@@ -118,6 +118,28 @@ final class StaffUserController
         return Response::redirect('/staff/users');
     }
 
+    public function resetTotp(Request $request): Response
+    {
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security token expired.');
+            return Response::redirect('/staff/users');
+        }
+        if (!$this->staffAuth->currentRole()->canApproveCampaigns()) {
+            Session::flash('error', 'Only an Administrator can reset staff two-factor enrollment.');
+            return Response::redirect('/staff/users');
+        }
+        $targetId = (int) $request->param('id', 0);
+        $actor = $this->staffAuth->currentStaff();
+        if ($targetId <= 0 || $targetId === (int) ($actor['id'] ?? 0)) {
+            Session::flash('error', 'You cannot reset your own active two-factor enrollment. Another Administrator must do this.');
+            return Response::redirect('/staff/users');
+        }
+        $this->staffRepo->disableTotp($targetId);
+        $this->auditService->logStaffAction((int) ($actor['id'] ?? 1), 'STAFF_2FA_RESET', 'staff_user', $targetId, null, ['totp_enabled' => false]);
+        Session::flash('success', 'Two-factor enrollment reset for Staff #' . $targetId . '. They must enroll again at next login.');
+        return Response::redirect('/staff/users');
+    }
+
     public function resetPassword(Request $request): Response
     {
         if (!Csrf::verify((string) $request->input('_csrf', ''))) {

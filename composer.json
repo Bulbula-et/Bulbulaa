@@ -9,8 +9,10 @@
         "ext-json": "*",
         "ext-mbstring": "*",
         "ext-openssl": "*",
+        "ext-sodium": "*",
         "google/apiclient": "^2.18",
-        "phpmailer/phpmailer": "^6.10"
+        "phpmailer/phpmailer": "^6.10",
+        "robthree/twofactorauth": "^3.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",

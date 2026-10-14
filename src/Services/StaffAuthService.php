@@ -9,124 +9,155 @@ use Bulbula\Core\Session;
 use Bulbula\Domain\Enums\StaffRole;
 use Bulbula\Repositories\StaffRepository;
 
-/**
- * Internal Staff Operations Authentication & RBAC Service (Gate D-45).
- * Enforces Bcrypt password authentication + rate limiting and separates Operator vs Administrator capabilities.
- */
+/** Staff password + RFC 6238 TOTP authentication and RBAC service (Gate D-45). */
 final class StaffAuthService
 {
     public function __construct(
         private readonly StaffRepository $staffRepo = new StaffRepository(),
-        private readonly AuditService $auditService = new AuditService()
+        private readonly AuditService $auditService = new AuditService(),
+        private readonly StaffTwoFactorService $twoFactor = new StaffTwoFactorService()
     ) {}
 
     public function currentStaff(): ?array
     {
         $staffId = Session::get('staff_id');
-        if (is_int($staffId) || is_numeric($staffId)) {
-            return $this->staffRepo->findById((int) $staffId);
-        }
+        if (is_int($staffId) || is_numeric($staffId)) return $this->staffRepo->findById((int) $staffId);
 
-        // If the staff user explicitly signed out or strict login is enabled, require /staff/login
         $isProduction = (string) Config::get('app.env', 'development') === 'production';
         $strictLogin  = $isProduction || (bool) Config::get('security.require_staff_login', false);
         $loggedOut    = (bool) Session::get('staff_logged_out', false);
-        if ($strictLogin || $loggedOut) {
-            return null;
-        }
+        if ($strictLogin || $loggedOut) return null;
 
-        // In development/pilot preview, default to Administrator #1 so the console can be inspected immediately
-        $defaultRoleId = (int) Session::get('preview_staff_id', 1);
-        return $this->staffRepo->findById($defaultRoleId);
+        return $this->staffRepo->findById((int) Session::get('preview_staff_id', 1));
     }
 
     public function currentRole(): StaffRole
     {
-        $staff   = $this->currentStaff();
-        $roleStr = (string) ($staff['role'] ?? 'OPERATOR');
-        return StaffRole::tryFrom($roleStr) ?? StaffRole::OPERATOR;
+        $role = (string) ($this->currentStaff()['role'] ?? 'OPERATOR');
+        return StaffRole::tryFrom($role) ?? StaffRole::OPERATOR;
     }
 
     public function authenticate(string $email, string $password, string $ipHash): array
     {
         if (!RateLimiter::allow('staff_login:' . $ipHash, 8, 600)) {
-            return ['ok' => false, 'error' => 'Too many sign-in attempts. Please wait 10 minutes before trying again.'];
+            return ['ok' => false, 'error' => 'Too many sign-in attempts. Please wait 10 minutes.'];
         }
-
         $cleanEmail = mb_strtolower(trim($email), 'UTF-8');
-        if ($cleanEmail === '' || $password === '') {
-            return ['ok' => false, 'error' => 'Email address and password are required.'];
-        }
+        if ($cleanEmail === '' || $password === '') return ['ok' => false, 'error' => 'Email and password are required.'];
 
         $user = $this->staffRepo->findByEmailForAuth($cleanEmail);
-        if ($user === null) {
-            return ['ok' => false, 'error' => 'Invalid staff email or password.'];
-        }
+        if ($user === null) return ['ok' => false, 'error' => 'Invalid staff email or password.'];
 
-        $hash = (string) ($user['password_hash'] ?? '');
-        $valid = password_verify($password, $hash);
-
-        // Local pilot compatibility only; production can never use the known seed fallback.
+        $valid = password_verify($password, (string) ($user['password_hash'] ?? ''));
         $isProduction = (string) Config::get('app.env', 'development') === 'production';
         if (!$isProduction && !$valid && $password === 'BulbulaStaff2026!') {
-            $newHash = password_hash('BulbulaStaff2026!', PASSWORD_BCRYPT);
-            $this->staffRepo->updatePasswordHash((int) $user['id'], $newHash);
+            $this->staffRepo->updatePasswordHash((int) $user['id'], password_hash($password, PASSWORD_BCRYPT));
             $valid = true;
         }
-
         if (!$valid) {
-            $this->auditService->logStaffAction(
-                (int) $user['id'],
-                'STAFF_LOGIN_FAILED',
-                'staff_user',
-                (int) $user['id'],
-                null,
-                ['email' => $cleanEmail]
-            );
+            $this->auditService->logStaffAction((int) $user['id'], 'STAFF_LOGIN_FAILED', 'staff_user', (int) $user['id'], null, ['email' => $cleanEmail]);
             return ['ok' => false, 'error' => 'Invalid staff email or password.'];
         }
 
+        $totpRequired = (bool) Config::get('gates.D_45_STAFF_2FA_REQUIRED', true);
+        $encrypted = trim((string) ($user['totp_secret_enc'] ?? ''));
+        if ($totpRequired || !empty($user['totp_enabled'])) {
+            Session::regenerate();
+            Session::remove('staff_id');
+            Session::set('staff_2fa_pending_id', (int) $user['id']);
+            Session::set('staff_2fa_pending_at', time());
+            if ($encrypted === '') {
+                $secret = $this->twoFactor->createSecret();
+                Session::set('staff_2fa_enrollment_secret', $secret);
+                return ['ok' => true, 'requires_2fa' => true, 'needs_enrollment' => true, 'staff' => $user];
+            }
+            return ['ok' => true, 'requires_2fa' => true, 'needs_enrollment' => false, 'staff' => $user];
+        }
+
+        return ['ok' => true, 'requires_2fa' => false, 'staff' => $this->finalizeLogin($user)];
+    }
+
+    public function pendingTwoFactor(): ?array
+    {
+        $id = Session::get('staff_2fa_pending_id');
+        $at = (int) Session::get('staff_2fa_pending_at', 0);
+        if ((!is_int($id) && !is_numeric($id)) || $at < time() - 300) {
+            $this->clearTwoFactorPending();
+            return null;
+        }
+        return $this->staffRepo->findByEmailForAuth((string) ($this->staffRepo->findByIdAnyStatus((int) $id)['email'] ?? ''));
+    }
+
+    public function enrollmentDetails(): ?array
+    {
+        $staff = $this->pendingTwoFactor();
+        $secret = Session::get('staff_2fa_enrollment_secret');
+        if ($staff === null || !is_string($secret) || $secret === '') return null;
+        return ['secret' => $secret, 'uri' => $this->twoFactor->provisioningUri((string) $staff['email'], $secret)];
+    }
+
+    public function completeTwoFactor(string $code, string $ipHash): array
+    {
+        if (!RateLimiter::allow('staff_2fa:' . $ipHash, 8, 300)) {
+            return ['ok' => false, 'error' => 'Too many verification attempts. Start sign-in again in five minutes.'];
+        }
+        $staff = $this->pendingTwoFactor();
+        if ($staff === null) return ['ok' => false, 'error' => 'Your two-factor challenge expired. Please sign in again.'];
+
+        $enrollmentSecret = Session::get('staff_2fa_enrollment_secret');
+        $isEnrollment = is_string($enrollmentSecret) && $enrollmentSecret !== '';
+        try {
+            $secret = $isEnrollment
+                ? $enrollmentSecret
+                : $this->twoFactor->decryptSecret((string) ($staff['totp_secret_enc'] ?? ''));
+        } catch (\Throwable) {
+            return ['ok' => false, 'error' => 'Two-factor configuration is unavailable. Contact an Administrator.'];
+        }
+
+        if (!$this->twoFactor->verify($secret, $code)) {
+            $this->auditService->logStaffAction((int) $staff['id'], 'STAFF_2FA_FAILED', 'staff_user', (int) $staff['id']);
+            return ['ok' => false, 'error' => 'Invalid or expired authenticator code.'];
+        }
+
+        if ($isEnrollment) {
+            $this->staffRepo->enableTotp((int) $staff['id'], $this->twoFactor->encryptSecret($secret));
+            $this->auditService->logStaffAction((int) $staff['id'], 'STAFF_2FA_ENROLLED', 'staff_user', (int) $staff['id'], null, ['totp_enabled' => true]);
+        }
+        $this->clearTwoFactorPending();
+        return ['ok' => true, 'staff' => $this->finalizeLogin($staff)];
+    }
+
+    private function finalizeLogin(array $user): array
+    {
         Session::regenerate();
         Session::remove('staff_logged_out');
         Session::set('staff_id', (int) $user['id']);
         Session::set('preview_staff_id', (int) $user['id']);
         $this->staffRepo->recordLoginTimestamp((int) $user['id']);
+        $this->auditService->logStaffAction((int) $user['id'], 'STAFF_LOGIN_SUCCESS', 'staff_user', (int) $user['id'], null, ['email' => $user['email'], 'role' => $user['role'], 'two_factor' => true]);
+        return $user;
+    }
 
-        $this->auditService->logStaffAction(
-            (int) $user['id'],
-            'STAFF_LOGIN_SUCCESS',
-            'staff_user',
-            (int) $user['id'],
-            null,
-            ['email' => $cleanEmail, 'role' => $user['role']]
-        );
-
-        return ['ok' => true, 'staff' => $user];
+    private function clearTwoFactorPending(): void
+    {
+        Session::remove('staff_2fa_pending_id');
+        Session::remove('staff_2fa_pending_at');
+        Session::remove('staff_2fa_enrollment_secret');
     }
 
     public function logout(): void
     {
         $staff = $this->currentStaff();
-        if ($staff !== null) {
-            $this->auditService->logStaffAction(
-                (int) $staff['id'],
-                'STAFF_LOGOUT',
-                'staff_user',
-                (int) $staff['id'],
-                null,
-                ['email' => $staff['email']]
-            );
-        }
+        if ($staff !== null) $this->auditService->logStaffAction((int) $staff['id'], 'STAFF_LOGOUT', 'staff_user', (int) $staff['id']);
         Session::remove('staff_id');
         Session::remove('preview_staff_id');
+        $this->clearTwoFactorPending();
         Session::set('staff_logged_out', true);
     }
 
     public function switchPreviewStaffProfile(int $staffId): ?array
     {
-        if ((string) Config::get('app.env', 'development') === 'production') {
-            return null;
-        }
+        if ((string) Config::get('app.env', 'development') === 'production') return null;
         $staff = $this->staffRepo->findById($staffId);
         if ($staff !== null) {
             Session::remove('staff_logged_out');

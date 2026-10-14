@@ -89,6 +89,26 @@ final class StaffRepository
         );
     }
 
+    public function enableTotp(int $staffId, string $encryptedSecret): void
+    {
+        Database::execute(
+            'UPDATE staff_users
+             SET totp_secret_enc = :secret, totp_enabled = 1, updated_at = CURRENT_TIMESTAMP
+             WHERE id = :id AND is_active = 1',
+            [':secret' => $encryptedSecret, ':id' => $staffId]
+        );
+    }
+
+    public function disableTotp(int $staffId): void
+    {
+        Database::execute(
+            'UPDATE staff_users
+             SET totp_secret_enc = NULL, totp_enabled = 0, updated_at = CURRENT_TIMESTAMP
+             WHERE id = :id',
+            [':id' => $staffId]
+        );
+    }
+
     public function setActiveStatus(int $staffId, bool $isActive): void
     {
         Database::execute(

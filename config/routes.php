@@ -51,7 +51,9 @@ return [
     // Web-only internal console (Strong auth + RBAC + Audit Logs)
     // =========================================================================
     ['GET',  '/staff/login',                         ['Staff\StaffAuthController', 'showLogin']],       // D-45 Bcrypt + rate-limited login
-    ['POST', '/staff/login',                         ['Staff\StaffAuthController', 'login']],           // D-45 Authenticate and rotate session
+    ['POST', '/staff/login',                         ['Staff\StaffAuthController', 'login']],           // D-45 Password step
+    ['GET',  '/staff/2fa',                           ['Staff\StaffAuthController', 'showTwoFactor']],   // D-45 RFC 6238 challenge/enrollment
+    ['POST', '/staff/2fa',                           ['Staff\StaffAuthController', 'verifyTwoFactor']], // D-45 TOTP verification
     ['POST', '/staff/logout',                        ['Staff\StaffAuthController', 'logout']],          // D-45 Audited logout
     ['GET',  '/staff',                               ['Staff\DashboardController', 'index']],           // Console overview & pilot metrics
     ['POST', '/staff/system/flush-cache',            ['Staff\DashboardController', 'flushCache']],      // Zero-restart cache & OPcache flush
@@ -79,6 +81,7 @@ return [
     ['POST', '/staff/users/create',                  ['Staff\StaffUserController', 'create']],          // D-45 Create staff account
     ['POST', '/staff/users/{id}/toggle',             ['Staff\StaffUserController', 'toggleActive']],    // D-45 Suspend/activate staff
     ['POST', '/staff/users/{id}/password',           ['Staff\StaffUserController', 'resetPassword']],   // D-45 Admin password reset
+    ['POST', '/staff/users/{id}/2fa-reset',          ['Staff\StaffUserController', 'resetTotp']],       // D-45 Admin-assisted TOTP recovery
     ['GET',  '/staff/settings',                      ['Staff\SettingsController', 'index']],            // Auth/SMTP/System settings
     ['POST', '/staff/settings/save',                 ['Staff\SettingsController', 'save']],             // Zero-restart config hot reload
     ['POST', '/staff/settings/test-email',           ['Staff\SettingsController', 'testEmail']],        // SMTP live delivery test
