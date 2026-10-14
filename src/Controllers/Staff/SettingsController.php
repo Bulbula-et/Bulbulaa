@@ -6,6 +6,7 @@ namespace Bulbula\Controllers\Staff;
 use Bulbula\Core\Cache;
 use Bulbula\Core\Config;
 use Bulbula\Core\Csrf;
+use Bulbula\Core\Mailer;
 use Bulbula\Core\Request;
 use Bulbula\Core\Response;
 use Bulbula\Core\Session;
@@ -106,6 +107,33 @@ final class SettingsController
         );
 
         Session::flash('success', 'System, Google OAuth, and SMTP Mail settings saved to config/env.json and hot-reloaded without server restart.');
+        return Response::redirect('/staff/settings');
+    }
+
+    public function testEmail(Request $request): Response
+    {
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security token expired.');
+            return Response::redirect('/staff/settings');
+        }
+        if (!$this->staffAuth->currentRole()->canApproveCampaigns()) {
+            Session::flash('error', 'Only an Administrator can test SMTP delivery.');
+            return Response::redirect('/staff/settings');
+        }
+
+        $recipient = trim((string) $request->input('test_email', ''));
+        $result = Mailer::send(
+            $recipient,
+            'Bulbula.et SMTP configuration test',
+            '<div style="font-family:Arial,sans-serif;padding:24px"><h1 style="color:#EA6A15">SMTP is working</h1><p>This message confirms that Bulbula.et can deliver customer verification codes.</p><p>Tested at ' . htmlspecialchars(date('Y-m-d H:i:s T'), ENT_QUOTES, 'UTF-8') . '.</p></div>',
+            'Bulbula.et SMTP is working. This message confirms customer OTP delivery.'
+        );
+
+        if ($result['ok']) {
+            Session::flash('success', 'Test email delivered to ' . $recipient . ' using ' . strtoupper((string) ($result['transport'] ?? 'mail')) . '.');
+        } else {
+            Session::flash('error', 'Email test failed: ' . (string) ($result['error'] ?? 'Unknown transport error.'));
+        }
         return Response::redirect('/staff/settings');
     }
 }

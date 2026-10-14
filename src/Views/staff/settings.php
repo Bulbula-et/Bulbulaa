@@ -112,4 +112,17 @@ $mail      = $env['mail'] ?? [];
       </div>
     </section>
   </form>
+
+  <section class="b-card" style="padding: var(--space-5); margin-top: var(--space-5);">
+    <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-2);">4. Live SMTP Delivery Test</h2>
+    <p style="font-size: var(--text-sm); color: var(--neutral-600); margin-bottom: var(--space-3);">Save your SMTP settings first, then send a real test through the configured transport.</p>
+    <form action="/staff/settings/test-email" method="POST" style="display: flex; gap: var(--space-3); align-items: end; flex-wrap: wrap;">
+      <?= Csrf::field() ?>
+      <div style="flex: 1 1 240px;">
+        <label class="b-label" for="cfg-test-email">Test Recipient</label>
+        <input id="cfg-test-email" type="email" name="test_email" class="b-input" placeholder="admin@bulbula.et" required>
+      </div>
+      <button type="submit" class="b-btn b-btn--outline">Send SMTP Test</button>
+    </form>
+  </section>
 <?php endif; ?>

@@ -9,6 +9,7 @@ use Bulbula\Core\Response;
 use Bulbula\Core\Session;
 use Bulbula\Core\View;
 use Bulbula\Services\CustomerAuthService;
+use Bulbula\Services\GoogleIdentityService;
 
 /**
  * C-30, C-31, C-32 Password-Free Customer Authentication Controller (Google Auth + Email OTP).
@@ -107,12 +108,20 @@ final class AuthController
             return Response::redirect('/auth/login');
         }
 
-        // Demo / verified server-side Google credential handler (C-30)
-        $email = trim((string) $request->input('google_email', 'liya.tadesse@example.com'));
-        $name  = trim((string) $request->input('google_name', 'Liya T.'));
-        $sub   = 'google-oauth2|' . hash('sha256', $email);
+        $credential = (string) $request->input('credential', '');
+        $verified   = $this->googleIdentity->verifyIdToken($credential);
+        if (!$verified['ok']) {
+            Session::flash('error', (string) ($verified['error'] ?? 'Google Sign-In failed.'));
+            return Response::redirect('/auth/login?return_to=' . rawurlencode($returnTo));
+        }
 
-        $customer = $this->authService->signInWithVerifiedGoogleIdentity($email, $name, $sub, $request->surface());
+        $identity = $verified['identity'];
+        $customer = $this->authService->signInWithVerifiedGoogleIdentity(
+            (string) $identity['email'],
+            (string) $identity['name'],
+            (string) $identity['sub'],
+            $request->surface()
+        );
         Session::flash('success', 'Signed in with Google as ' . $customer['display_name'] . '.');
         return Response::redirect($returnTo);
     }

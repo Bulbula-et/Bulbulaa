@@ -81,4 +81,5 @@ return [
     ['POST', '/staff/users/{id}/password',           ['Staff\StaffUserController', 'resetPassword']],   // D-45 Admin password reset
     ['GET',  '/staff/settings',                      ['Staff\SettingsController', 'index']],            // Auth/SMTP/System settings
     ['POST', '/staff/settings/save',                 ['Staff\SettingsController', 'save']],             // Zero-restart config hot reload
+    ['POST', '/staff/settings/test-email',           ['Staff\SettingsController', 'testEmail']],        // SMTP live delivery test
 ];

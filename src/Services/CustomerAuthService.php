@@ -52,13 +52,30 @@ final class CustomerAuthService
         $hmac   = hash_hmac('sha256', $email . ':' . $code, $secret);
         $ttl    = (int) Config::get('security.otp_expiry_seconds', 600);
 
+        $isDev = (string) Config::get('app.env', 'development') !== 'production';
+        $minutes = max(1, (int) ceil($ttl / 60));
+        $safeCode = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:28px;color:#1f2937">'
+              . '<div style="color:#EA6A15;font-weight:800;font-size:20px">Bulbula.et</div>'
+              . '<h1 style="font-size:24px;margin:20px 0 8px">Your verification code</h1>'
+              . '<p>Use this one-time code to sign in. It expires in ' . $minutes . ' minutes.</p>'
+              . '<div style="font-size:34px;letter-spacing:8px;font-weight:800;background:#FFF5EB;border:1px solid #FFEBDA;border-radius:14px;padding:18px;text-align:center">' . $safeCode . '</div>'
+              . '<p style="font-size:13px;color:#6b7280">If you did not request this code, you can safely ignore this email. Never share the code with anyone.</p></div>';
+        $text = "Your Bulbula.et verification code is {$code}. It expires in {$minutes} minutes. Never share this code.";
+
+        $mail = Mailer::send($email, $code . ' is your Bulbula.et verification code', $html, $text);
+        if (!$mail['ok'] && !$isDev) {
+            return ['ok' => false, 'error' => 'We could not deliver your verification email. Please try again later.'];
+        }
+
+        // Persist only after successful production delivery; development preview remains usable without SMTP credentials.
         $this->customerRepo->storeOtpToken($email, $hmac, $clientIpHash, $ttl);
 
-        $isDev = (string) Config::get('app.env', 'development') !== 'production';
         return [
             'ok'              => true,
             'email'           => $email,
             'expires_seconds' => $ttl,
+            'mail_delivered'  => (bool) $mail['ok'],
             'dev_preview_otp' => $isDev ? $code : null,
         ];
     }

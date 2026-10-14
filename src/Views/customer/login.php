@@ -53,14 +53,30 @@ $devOtp       = $devOtp ?? null;
       OR
     </div>
 
-    <form method="POST" action="/auth/google/callback">
-      <?= Csrf::field() ?>
-      <input type="hidden" name="return_to" value="<?= View::e($returnTo) ?>">
-      <input type="hidden" name="google_email" value="liya.tadesse@example.com">
-      <input type="hidden" name="google_name" value="Liya T.">
-      <button type="submit" class="b-btn b-btn--outline" style="width: 100%;">
-        <span>Continue with Google (Demo: Liya T.)</span>
-      </button>
-    </form>
+    <?php if ($googleClientId !== ''): ?>
+      <form id="google-auth-form" method="POST" action="/auth/google/callback">
+        <?= Csrf::field() ?>
+        <input type="hidden" name="return_to" value="<?= View::e($returnTo) ?>">
+        <input id="google-credential" type="hidden" name="credential" value="">
+      </form>
+      <div id="g_id_onload"
+           data-client_id="<?= View::e($googleClientId) ?>"
+           data-callback="bulbulaGoogleCredential"
+           data-auto_prompt="false"
+           data-ux_mode="popup"></div>
+      <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="continue_with" data-size="large" data-logo_alignment="left" data-width="360"></div>
+      <script src="https://accounts.google.com/gsi/client" async defer></script>
+      <script>
+        function bulbulaGoogleCredential(response) {
+          if (!response || !response.credential) return;
+          document.getElementById('google-credential').value = response.credential;
+          document.getElementById('google-auth-form').submit();
+        }
+      </script>
+    <?php else: ?>
+      <div class="b-alert" style="font-size: var(--text-xs);">
+        Google Sign-In will appear after an Administrator saves the Google OAuth Client ID under <strong>Staff Console → Auth &amp; SMTP Settings</strong>.
+      </div>
+    <?php endif; ?>
   </section>
 </div>
