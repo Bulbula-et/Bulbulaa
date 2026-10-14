@@ -55,6 +55,7 @@ if ($isAdmin) $navGroups['Administration'] = [
   <link rel="stylesheet" href="<?= View::asset('css/staff.css') ?>">
   <?php if ($activeNav === 'listings'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-listings.css') ?>"><?php endif; ?>
   <?php if ($activeNav === 'verification'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-verification.css') ?>"><?php endif; ?>
+  <?php if ($activeNav === 'moderation'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-moderation.css') ?>"><?php endif; ?>
 </head>
 <body class="b-staff-body">
   <div class="b-staff-shell">
