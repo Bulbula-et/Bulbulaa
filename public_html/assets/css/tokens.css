@@ -1,0 +1,165 @@
+/**
+ * ============================================================================
+ * BULBULA.ET V1 — APPLE-STYLE CLEAN SAAS DESIGN TOKENS (LOCKED PALETTE)
+ * - Canvas & Surfaces: Pure White (#FFFFFF) + Soft Light-Orange Tints (#FFFAF5, #FFF5EB)
+ * - Typography: Crisp Carbon Neutral Ink (#111315 & #525860)
+ * - Primary Accent: Vibrant Brand Orange (#EA6A15)
+ * - Secondary Blue: Reserved strictly for Footer (#0F2236) and Verified Badge (#1D4E89 / #E6F0FA)
+ * ============================================================================
+ */
+
+:root {
+  /* --------------------------------------------------------------------------
+   * 1. LIGHT ORANGE & WARM WHITE SURFACE SYSTEM (Main Background & Contrast)
+   * -------------------------------------------------------------------------- */
+  --orange-25:  #FFFAF5; /* Main Page Canvas — Ultra-clean warm light-orange/ivory tint */
+  --orange-50:  #FFF5EB; /* Soft Light-Orange Section & Bento Surface */
+  --orange-100: #FFEBDA; /* Icon Wells, Pill Backgrounds & Sponsored Card Tint */
+  --orange-200: #FFD6B5; /* Subtle Warm Hairline Border */
+  --orange-300: #FFB580; /* Active/Hover Card Border Accent */
+  --orange-400: #FF8A3D; /* Luminous Highlight */
+  --orange-500: #EA6A15; /* Core Brand Orange (Locked) */
+  --orange-600: #D45B0C; /* Primary Hover / Active State */
+  --orange-700: #B24805; /* Deep Accent Text */
+  --orange-800: #7C3203;
+  --orange-900: #4D1E02;
+
+  /* --------------------------------------------------------------------------
+   * 2. PURE WHITE & ARCHITECTURAL NEUTRAL INK (Apple HIG Clarity)
+   * -------------------------------------------------------------------------- */
+  --neutral-0:   #FFFFFF; /* Crisp Pure White Cards & Floating Surfaces */
+  --neutral-50:  #FAFAFB;
+  --neutral-100: #F4F4F6; /* Secondary Neutral Pill Surface */
+  --neutral-200: #EAECEF; /* Hairline Divider */
+  --neutral-300: #DFE2E6; /* Standard 1px Card Border */
+  --neutral-400: #C2C7D0;
+  --neutral-500: #8A9099; /* Muted Captions & Placeholders */
+  --neutral-600: #525860; /* Secondary Body Copy */
+  --neutral-700: #363A40;
+  --neutral-800: #1D1F23; /* Primary Body Copy */
+  --neutral-900: #111315; /* Primary Apple-Style Display Headings */
+
+  /* --------------------------------------------------------------------------
+   * 3. RESTRAINED BLUE (ONLY for Footer, C-12 Verified Badge & Staff Sidebar)
+   * -------------------------------------------------------------------------- */
+  --blue-50:    #F2F7FD;
+  --blue-100:   #E6F0FA; /* Verified Trust Badge Pill Background */
+  --blue-200:   #C5DCF5; /* Verified Badge Border */
+  --blue-300:   #94BFE8;
+  --blue-400:   #5B8EC2;
+  --blue-500:   #2563EB;
+  --blue-600:   #1D4E89; /* Verified Trust Badge Text */
+  --blue-700:   #14365D;
+  --blue-800:   #0F2236; /* Footer & Internal Staff Console Sidebar Background */
+  --blue-900:   #091524;
+
+  /* --------------------------------------------------------------------------
+   * 4. SEMANTIC STATUS COLORS (C-09 Open / Closed / Unknown)
+   * -------------------------------------------------------------------------- */
+  --status-open-bg:       #ECFDF3;
+  --status-open-text:     #067647;
+  --status-open-dot:      #12B76A;
+
+  --status-closed-bg:     #FEF3F2;
+  --status-closed-text:   #B42318;
+  --status-closed-dot:    #F04438;
+
+  --status-unknown-bg:    #F4F4F6;
+  --status-unknown-text:  #525860;
+
+  --color-success:        #067647;
+  --color-success-bg:     #ECFDF3;
+  --color-success-border: #ABEFC6;
+  --color-danger:         #B42318;
+  --color-danger-bg:      #FEF3F2;
+  --color-danger-border:  #FECDCA;
+
+  /* --------------------------------------------------------------------------
+   * 5. SEMANTIC COMPONENT MAPPINGS
+   * -------------------------------------------------------------------------- */
+  --color-bg-canvas:          var(--orange-25);
+  --color-bg-surface:         var(--neutral-0);
+  --color-bg-elevated:        var(--neutral-0);
+  --color-bg-subtle:          var(--orange-50);
+  --color-bg-sponsored:       var(--orange-50);
+  --color-bg-verified-pill:   var(--blue-100);
+
+  --color-text-primary:       var(--neutral-800);
+  --color-text-heading:       var(--neutral-900);
+  --color-text-secondary:     var(--neutral-600);
+  --color-text-muted:         var(--neutral-500);
+
+  --color-action-primary:       var(--orange-500);
+  --color-action-primary-hover: var(--orange-600);
+  --color-action-accent:        var(--orange-500);
+
+  --color-action-secondary:       var(--blue-600);
+  --color-action-secondary-hover: var(--blue-700);
+
+  --color-border-subtle:      rgba(17, 19, 21, 0.06);
+  --color-border-default:     rgba(17, 19, 21, 0.08);
+  --color-border-strong:      rgba(17, 19, 21, 0.14);
+  --color-border-orange:      var(--orange-200);
+
+  --focus-ring-orange: 0 0 0 3px rgba(234, 106, 21, 0.24);
+
+  /* --------------------------------------------------------------------------
+   * 6. TYPOGRAPHY, RADII & SPACING
+   * -------------------------------------------------------------------------- */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Plus Jakarta Sans', 'Segoe UI', Roboto, 'Noto Sans Ethiopic', sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Inter', 'Noto Sans Ethiopic', sans-serif;
+  --font-mono: 'SFMono-Regular', 'JetBrains Mono', Consolas, monospace;
+
+  --weight-regular:   400;
+  --weight-medium:    500;
+  --weight-semibold:  600;
+  --weight-bold:      700;
+  --weight-extrabold: 800;
+  --tracking-Caps:    0.06em;
+
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.3125rem;
+  --text-2xl:  1.625rem;
+  --text-3xl:  2.125rem;
+  --text-4xl:  2.875rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.75rem;
+  --space-12: 3.75rem;
+  --space-16: 5rem;
+
+  --radius-xs:   6px;
+  --radius-sm:   10px;
+  --radius-md:   14px;
+  --radius-lg:   18px;
+  --radius-xl:   24px;
+  --radius-2xl:  28px;
+  --radius-pill: 9999px;
+  --radius-full: 9999px;
+
+  --shadow-xs: 0 1px 2px rgba(17, 19, 21, 0.03);
+  --shadow-sm: 0 2px 10px rgba(17, 19, 21, 0.04), 0 1px 2px rgba(17, 19, 21, 0.02);
+  --shadow-md: 0 12px 32px -4px rgba(17, 19, 21, 0.07), 0 2px 6px rgba(17, 19, 21, 0.03);
+  --shadow-lg: 0 20px 48px -8px rgba(234, 106, 21, 0.12), 0 4px 14px rgba(17, 19, 21, 0.05);
+  --shadow-orange-glow: 0 8px 24px -4px rgba(234, 106, 21, 0.32);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth:   cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast:   150ms;
+  --duration-normal: 240ms;
+  --duration-base:   240ms;
+  --duration-slow:   400ms;
+
+  --container-max: 1140px;
+  --header-height: 64px;
+}

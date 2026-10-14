@@ -1,0 +1,74 @@
+<?php
+declare(strict_types=1);
+
+namespace Bulbula\Controllers\Staff;
+
+use Bulbula\Core\Csrf;
+use Bulbula\Core\Request;
+use Bulbula\Core\Response;
+use Bulbula\Core\Session;
+use Bulbula\Core\View;
+use Bulbula\Repositories\BranchRepository;
+use Bulbula\Repositories\PermissionRepository;
+use Bulbula\Services\ListingOpsService;
+use Bulbula\Services\StaffAuthService;
+
+/**
+ * C-21 Verification & Quality Control Queue Controller.
+ */
+final class VerificationController
+{
+    public function __construct(
+        private readonly StaffAuthService $staffAuth = new StaffAuthService(),
+        private readonly BranchRepository $branchRepo = new BranchRepository(),
+        private readonly PermissionRepository $permissionRepo = new PermissionRepository(),
+        private readonly ListingOpsService $listingOps = new ListingOpsService()
+    ) {}
+
+    public function index(Request $request): Response
+    {
+        $branches = $this->branchRepo->listAllForStaffConsole(50);
+        foreach ($branches as &$br) {
+            $br['permission'] = $this->permissionRepo->findActiveForBusiness((int) $br['business_id']);
+            $br['latest_qc']  = $this->permissionRepo->latestQcForBranch((int) $br['branch_id']);
+        }
+
+        $html = View::render('staff/verification', [
+            'pageTitle' => 'Verification & Quality Control Gate (C-21) — Staff Console',
+            'activeNav' => 'verification',
+            'staff'     => $this->staffAuth->currentStaff(),
+            'branches'  => $branches,
+        ], 'staff');
+
+        return Response::html($html);
+    }
+
+    public function recordQc(Request $request): Response
+    {
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security token expired.');
+            return Response::redirect('/staff/verification');
+        }
+
+        $staff    = $this->staffAuth->currentStaff();
+        $branchId = (int) $request->param('branch_id', 0);
+        $outcome  = (string) $request->input('outcome', 'PASSED');
+        $notes    = trim((string) $request->input('reviewer_notes', 'Verified permission and physical branch details.'));
+
+        $result = $this->listingOps->performQcAndPublish(
+            $branchId,
+            (int) ($staff['id'] ?? 1),
+            $outcome,
+            ['permission_verified' => true, 'coordinates_checked' => true, 'category_checked' => true],
+            $notes
+        );
+
+        if ($result['ok'] && $result['published']) {
+            Session::flash('success', 'Branch #' . $branchId . ' passed QC and Publication Gate (C-19/C-21) and is now PUBLISHED & VERIFIED.');
+        } else {
+            Session::flash('error', 'QC recorded, but publication gate blocked: ' . implode(' ', $result['violations'] ?? $result['errors'] ?? []));
+        }
+
+        return Response::redirect('/staff/verification');
+    }
+}

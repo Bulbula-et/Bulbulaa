@@ -1,0 +1,16 @@
+# Bulbula.et V1 — Crawl Rules (C-37 SEO)
+User-agent: *
+Allow: /
+Allow: /categories
+Allow: /c/
+Allow: /areas
+Allow: /a/
+Allow: /b/
+Allow: /about
+Allow: /policies/
+
+# Internal operations and authenticated customer routes are never indexed
+Disallow: /staff
+Disallow: /account
+Disallow: /auth
+Disallow: /api/

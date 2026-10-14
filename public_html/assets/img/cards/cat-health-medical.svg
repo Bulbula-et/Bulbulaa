@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 680" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="600" y2="680" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFE6CF"/>
+      <stop offset="45%" stop-color="#F7B27D"/>
+      <stop offset="100%" stop-color="#2B1911"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="680" fill="url(#bg)"/>
+  <circle cx="460" cy="140" r="130" fill="#FFFFFF" fill-opacity="0.35"/>
+  <!-- Modern Medical Center Illustration -->
+  <rect x="110" y="95" width="380" height="270" rx="28" fill="#FFFFFF" fill-opacity="0.92" stroke="#FFD6B5" stroke-width="3"/>
+  <rect x="145" y="135" width="135" height="185" rx="18" fill="#FFF5EB"/>
+  <circle cx="212" cy="225" r="46" fill="#EA6A15" fill-opacity="0.14"/>
+  <rect x="201" y="196" width="22" height="58" rx="6" fill="#EA6A15"/>
+  <rect x="183" y="214" width="58" height="22" rx="6" fill="#EA6A15"/>
+  <rect x="305" y="135" width="150" height="82" rx="16" fill="#FFF5EB"/>
+  <path d="M325 178H352L364 154L380 198L394 168L406 178H435" stroke="#EA6A15" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="305" y="235" width="150" height="85" rx="16" fill="#FFF5EB"/>
+  <rect x="328" y="260" width="96" height="12" rx="6" fill="#EA6A15" fill-opacity="0.6"/>
+  <rect x="328" y="284" width="68" height="12" rx="6" fill="#FFB580"/>
+</svg>

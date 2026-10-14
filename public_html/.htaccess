@@ -1,0 +1,29 @@
+# ============================================================================
+# BULBULA.ET V1 — SHARED HOSTING APACHE / LITESPEED CONFIGURATION
+# ============================================================================
+Options -Indexes -MultiViews
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block access to hidden dotfiles (.git, .env, .htaccess)
+    RewriteRule (^\.|/\.) - [F,L]
+
+    # Serve existing static assets (/assets/*, /media/*, robots.txt) directly
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # Route all other clean URLs through the Front Controller
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# Prevent LiteSpeed / Cloudflare / Browser from freezing dynamic HTML responses
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Static assets use ?v=filemtime() cache-busting, so they are safe to cache
+    <FilesMatch "\.(css|js|svg|webp|png|jpg|jpeg|woff2)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>

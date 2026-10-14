@@ -1,0 +1,554 @@
+/**
+ * ============================================================================
+ * BULBULA.ET V1 — APPLE-STYLE SAAS LAYOUT & RESPONSIVE NAV (layout.css)
+ * - Desktop (>= 900px): Clean Frosted-Glass Top Nav visible; Bottom Nav hidden.
+ * - Mobile & Tablet (< 900px): Top Nav links hidden; Responsive Bottom Nav visible.
+ * ============================================================================
+ */
+
+.b-app-shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.b-container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+}
+
+@media (max-width: 639px) {
+  .b-container {
+    padding-inline: 1rem;
+  }
+}
+
+.b-main {
+  flex: 1 0 auto;
+  padding-bottom: var(--space-10);
+}
+
+/* ----------------------------------------------------------------------------
+ * 1. SINGLE FROSTED-GLASS APPLE-STYLE STICKY HEADER (Restored Design)
+ * ---------------------------------------------------------------------------- */
+.b-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--header-height);
+  background: rgba(255, 250, 245, 0.84);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid rgba(234, 106, 21, 0.10);
+  transition: background var(--duration-fast) var(--ease-smooth);
+}
+
+.b-header__inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.b-logo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.b-logo-img {
+  height: 36px;
+  width: auto;
+}
+
+/* Top Nav Links: Visible ONLY on Desktop (>= 900px) */
+.b-nav {
+  display: none;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+@media (min-width: 900px) {
+  .b-nav {
+    display: flex;
+  }
+}
+
+.b-nav__link {
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--neutral-600);
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+.b-nav__link:hover {
+  color: var(--neutral-900);
+  background: rgba(234, 106, 21, 0.08);
+}
+
+.b-nav__link.is-active {
+  color: var(--orange-700);
+  background: var(--orange-100);
+  font-weight: var(--weight-semibold);
+}
+
+.b-header__right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+/* ----------------------------------------------------------------------------
+ * 2. RESPONSIVE BOTTOM NAVIGATION BAR (ONLY Phones & Tablets < 900px)
+ * Hidden on Desktop (>= 900px) where the Top Nav is active.
+ * ---------------------------------------------------------------------------- */
+.b-bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: max(10px, env(safe-area-inset-bottom, 10px));
+  z-index: 150;
+  display: flex;
+  justify-content: center;
+  padding-inline: 0.75rem;
+  pointer-events: none;
+}
+
+@media (min-width: 900px) {
+  .b-bottom-nav {
+    display: none !important;
+  }
+}
+
+.b-bottom-nav__dock {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 440px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.38rem 0.45rem;
+  background: rgba(255, 252, 248, 0.90);
+  backdrop-filter: saturate(190%) blur(22px);
+  -webkit-backdrop-filter: saturate(190%) blur(22px);
+  border: 1px solid rgba(234, 106, 21, 0.16);
+  border-radius: 24px;
+  box-shadow:
+    0 12px 32px -6px rgba(17, 19, 21, 0.12),
+    0 2px 8px rgba(234, 106, 21, 0.08);
+}
+
+.b-bottom-nav__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18rem;
+  padding: 0.36rem 0.2rem;
+  border-radius: 16px;
+  color: var(--neutral-600);
+  text-decoration: none;
+  transition: all var(--duration-fast) var(--ease-smooth);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.b-bottom-nav__item:hover {
+  color: var(--neutral-900);
+}
+
+.b-bottom-nav__item.is-active {
+  color: var(--orange-700);
+  background: var(--orange-100);
+  font-weight: var(--weight-semibold);
+}
+
+.b-bottom-nav__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 21px;
+}
+
+.b-bottom-nav__label {
+  font-size: 0.68rem;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.b-bottom-nav__item--center {
+  padding-top: 0;
+  background: transparent !important;
+}
+
+.b-bottom-nav__orb {
+  width: 42px;
+  height: 42px;
+  margin-top: -14px;
+  border-radius: 50%;
+  background: var(--orange-500);
+  color: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #FFFAF5;
+  box-shadow: 0 6px 16px rgba(234, 106, 21, 0.35);
+}
+
+.b-bottom-nav__item--center.is-active .b-bottom-nav__label {
+  color: var(--orange-700);
+  font-weight: var(--weight-bold);
+}
+
+/* ----------------------------------------------------------------------------
+ * 3. APPLE-STYLE CENTERED HERO WITH LIGHT-ORANGE RADIAL ATMOSPHERE
+ * ---------------------------------------------------------------------------- */
+.b-hero {
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-12) 0 var(--space-10);
+  background:
+    radial-gradient(ellipse 80% 70% at 50% -10%, rgba(255, 212, 178, 0.55) 0%, rgba(255, 245, 235, 0.35) 55%, rgba(255, 250, 245, 0) 100%),
+    linear-gradient(180deg, #FFF5EB 0%, #FFFAF5 100%);
+  border-bottom: 1px solid rgba(234, 106, 21, 0.08);
+}
+
+@media (max-width: 639px) {
+  .b-hero {
+    padding: var(--space-8) 0 var(--space-6);
+  }
+}
+
+.b-hero__center {
+  max-width: 760px;
+  margin-inline: auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.b-hero__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-pill);
+  background: #FFFFFF;
+  border: 1px solid var(--orange-200);
+  color: var(--orange-700);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  box-shadow: var(--shadow-xs);
+  margin-bottom: var(--space-5);
+}
+
+.b-hero__pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--orange-500);
+}
+
+.b-hero__headline {
+  color: var(--neutral-900);
+  font-size: clamp(2rem, 4.5vw, 3.35rem);
+  font-weight: var(--weight-extrabold);
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  margin-bottom: var(--space-4);
+}
+
+.b-hero__headline-accent {
+  color: var(--orange-500);
+}
+
+.b-hero__subtitle {
+  color: var(--neutral-600);
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  line-height: 1.6;
+  max-width: 58ch;
+  margin-inline: auto;
+  margin-bottom: var(--space-8);
+}
+
+/* Apple Spotlight-Style Search Command Bar */
+.b-search-dock {
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  background: #FFFFFF;
+  border-radius: var(--radius-2xl);
+  padding: 0.45rem;
+  border: 1px solid rgba(234, 106, 21, 0.22);
+  box-shadow: var(--shadow-lg);
+  transition: border-color var(--duration-fast) var(--ease-smooth), box-shadow var(--duration-fast) var(--ease-smooth);
+}
+
+.b-search-dock:focus-within {
+  border-color: var(--orange-500);
+  box-shadow: var(--shadow-lg), var(--shadow-orange-glow);
+}
+
+.b-search-dock__form {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+@media (max-width: 639px) {
+  .b-search-dock {
+    border-radius: var(--radius-lg);
+    padding: 0.5rem;
+  }
+  .b-search-dock__form {
+    grid-template-columns: 1fr auto;
+  }
+  .b-search-dock__field {
+    grid-column: 1 / -1;
+  }
+}
+
+.b-search-dock__field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-left: 0.85rem;
+}
+
+.b-search-dock__input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0.7rem 0.6rem;
+  font-size: var(--text-base);
+  color: var(--neutral-900);
+  outline: none;
+}
+
+.b-search-dock__input::placeholder {
+  color: var(--neutral-500);
+}
+
+.b-search-dock__select {
+  border: 1px solid var(--orange-100);
+  background: var(--orange-50);
+  color: var(--neutral-800);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  padding: 0.65rem 0.9rem;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+}
+
+/* Quick Entry Chips */
+.b-quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: var(--space-5);
+}
+
+.b-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-pill);
+  background: #FFFFFF;
+  border: 1px solid rgba(234, 106, 21, 0.16);
+  color: var(--neutral-800);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  box-shadow: var(--shadow-xs);
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+.b-chip:hover {
+  background: var(--orange-50);
+  border-color: var(--orange-400);
+  color: var(--orange-700);
+  transform: translateY(-1px);
+}
+
+/* ----------------------------------------------------------------------------
+ * 4. SECTIONS & RESPONSIVE BENTO GRIDS
+ * ---------------------------------------------------------------------------- */
+.b-section {
+  padding: var(--space-12) 0;
+}
+
+@media (max-width: 767px) {
+  .b-section {
+    padding: var(--space-8) 0;
+  }
+}
+
+.b-section--tint {
+  background: var(--orange-50);
+  border-top: 1px solid rgba(234, 106, 21, 0.08);
+  border-bottom: 1px solid rgba(234, 106, 21, 0.08);
+}
+
+.b-section__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.b-section__eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-Caps);
+  color: var(--orange-500);
+  margin-bottom: 0.3rem;
+}
+
+.b-grid {
+  display: grid;
+  gap: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  .b-grid {
+    gap: var(--space-5);
+  }
+}
+
+/* Categories & Business Boxes: Strictly 2 in a row on Mobile (< 640px), 3 on Tablet, 4 on Desktop */
+.b-grid--categories {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+  .b-grid--categories {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .b-grid--categories {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.b-grid--branches {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+  .b-grid--branches {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .b-grid--branches {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.b-grid--areas {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+  .b-grid--areas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.b-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+}
+
+@media (min-width: 960px) {
+  .b-profile-grid {
+    grid-template-columns: 1.55fr 1fr;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * 5. DEEP BLUE STRUCTURAL FOOTER (Blue Reserved Here)
+ * ---------------------------------------------------------------------------- */
+.b-footer {
+  background: var(--blue-800);
+  color: rgba(255, 255, 255, 0.78);
+  padding: var(--space-16) 0 var(--space-10);
+  border-top: 3px solid var(--orange-500);
+}
+
+/* Extra bottom clearance ONLY on screens (< 900px) where Bottom Nav is visible */
+@media (max-width: 899px) {
+  .b-footer {
+    padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.b-footer__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-8);
+}
+
+.b-footer__brand p {
+  color: rgba(255, 255, 255, 0.70);
+  font-size: var(--text-sm);
+  margin-top: var(--space-3);
+  max-width: 34ch;
+}
+
+.b-footer__col h4 {
+  color: #FFFFFF;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-Caps);
+  margin-bottom: var(--space-3);
+}
+
+.b-footer__col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.b-footer__col a {
+  color: rgba(255, 255, 255, 0.74);
+  font-size: var(--text-sm);
+  transition: color var(--duration-fast);
+}
+
+.b-footer__col a:hover {
+  color: var(--orange-300);
+}
+
+.b-footer__bottom {
+  margin-top: var(--space-10);
+  padding-top: var(--space-6);
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  color: rgba(255, 255, 255, 0.58);
+}

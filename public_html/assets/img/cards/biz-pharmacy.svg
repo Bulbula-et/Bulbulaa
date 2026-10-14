@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="640" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFEFE0"/>
+      <stop offset="60%" stop-color="#FFF7F0"/>
+      <stop offset="100%" stop-color="#FFFFFF"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="400" fill="url(#bg)"/>
+  <circle cx="490" cy="110" r="105" fill="#FFFFFF" fill-opacity="0.65"/>
+  <rect x="165" y="75" width="310" height="220" rx="26" fill="#FFFFFF" stroke="#FFD6B5" stroke-width="3"/>
+  <!-- Pharmacy Capsule & Cross -->
+  <rect x="225" y="140" width="110" height="54" rx="27" transform="rotate(-25 225 140)" fill="#EA6A15"/>
+  <rect x="275" y="117" width="60" height="54" rx="27" transform="rotate(-25 275 117)" fill="#FFF5EB" stroke="#EA6A15" stroke-width="4"/>
+  <circle cx="385" cy="195" r="44" fill="#FFF5EB" stroke="#FFD6B5" stroke-width="3"/>
+  <rect x="377" y="171" width="16" height="48" rx="5" fill="#EA6A15"/>
+  <rect x="361" y="187" width="48" height="16" rx="5" fill="#EA6A15"/>
+</svg>

@@ -1,0 +1,9 @@
+# Runtime ephemeral files (auto-created by Bulbula.et V1)
+storage/cache/*.cache
+storage/logs/*.log
+storage/sessions/*
+storage/rate_limits/*
+!storage/cache/.gitkeep
+!storage/logs/.gitkeep
+!storage/sessions/.gitkeep
+!storage/rate_limits/.gitkeep

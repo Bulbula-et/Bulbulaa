@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" fill="none">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1200" y2="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1D354D"/>
+      <stop offset="48%" stop-color="#8C4A27"/>
+      <stop offset="100%" stop-color="#EA6A15"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="68%" cy="32%" r="48%">
+      <stop offset="0%" stop-color="#FFB580" stop-opacity="0.85"/>
+      <stop offset="50%" stop-color="#EA6A15" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#EA6A15" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="hill1" x1="0" y1="260" x2="0" y2="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B2314"/>
+      <stop offset="100%" stop-color="#1A120B"/>
+    </linearGradient>
+    <linearGradient id="hill2" x1="0" y1="300" x2="0" y2="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5A3018"/>
+      <stop offset="100%" stop-color="#24140A"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="520" fill="url(#sky)"/>
+  <rect width="1200" height="520" fill="url(#sun)"/>
+  <!-- Warm Sun Orb over Addis Horizon -->
+  <circle cx="820" cy="170" r="88" fill="#FFE4CC" fill-opacity="0.32"/>
+  <circle cx="820" cy="170" r="52" fill="#FFF5EB" fill-opacity="0.55"/>
+  <!-- Entoto & Bole Horizon Ridges -->
+  <path d="M0 350C180 280 340 290 520 340C710 390 920 260 1200 310V520H0V350Z" fill="url(#hill2)" fill-opacity="0.75"/>
+  <path d="M0 395C240 330 460 410 720 360C920 320 1060 355 1200 380V520H0V395Z" fill="url(#hill1)"/>
+  <!-- Modern Bole Bulbula Architectural Skyline Silhouettes & Warm Lit Windows -->
+  <g fill="#2B180D" stroke="#FF8A3D" stroke-opacity="0.28" stroke-width="1.5">
+    <rect x="140" y="250" width="78" height="160" rx="8"/>
+    <rect x="232" y="220" width="96" height="190" rx="10"/>
+    <rect x="345" y="275" width="70" height="135" rx="8"/>
+    <rect x="760" y="235" width="92" height="175" rx="10"/>
+    <rect x="868" y="265" width="84" height="145" rx="8"/>
+    <rect x="968" y="245" width="74" height="165" rx="8"/>
+  </g>
+  <!-- Glowing Warm Windows -->
+  <g fill="#FFB580" fill-opacity="0.75">
+    <rect x="250" y="242" width="16" height="10" rx="2"/>
+    <rect x="276" y="242" width="16" height="10" rx="2"/>
+    <rect x="250" y="264" width="16" height="10" rx="2"/>
+    <rect x="298" y="264" width="16" height="10" rx="2"/>
+    <rect x="780" y="258" width="18" height="10" rx="2"/>
+    <rect x="808" y="258" width="18" height="10" rx="2"/>
+    <rect x="780" y="280" width="18" height="10" rx="2"/>
+    <rect x="888" y="288" width="16" height="10" rx="2"/>
+    <rect x="914" y="288" width="16" height="10" rx="2"/>
+  </g>
+</svg>

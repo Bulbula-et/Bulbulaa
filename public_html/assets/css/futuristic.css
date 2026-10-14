@@ -1,0 +1,42 @@
+/**
+ * ============================================================================
+ * BULBULA.ET V1 — UNIFIED FUTURISTIC & SUBTLE MOTION LAYER (futuristic.css)
+ * Apple-style glass surfaces, tactile active states, and unified Web + Telegram
+ * Mini App adaptation.
+ * ============================================================================
+ */
+
+/* Subtle frosted glass helper */
+.b-glass {
+  background: rgba(255, 255, 255, 0.84);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid rgba(234, 106, 21, 0.14);
+}
+
+/* Smooth hover lift for interactive cards */
+[data-gsap="card"] {
+  will-change: transform, opacity;
+}
+
+/* Native touch feedback on mobile & Telegram Mini App */
+@media (hover: none) and (pointer: coarse) {
+  .b-card:active,
+  .b-cat-bento:active,
+  .b-area-card:active,
+  .b-btn:active,
+  .b-chip:active {
+    transform: scale(0.985);
+    transition: transform 90ms ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
