@@ -44,6 +44,20 @@ php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); $s=$p->prepare("DELETE F
 rm -f "public_html$MEDIA_PATH"
 pass "Multipart media byte validation + decode/re-encode + randomized storage flow"
 
+# Central authorization policy: Operator may use operational routes but cannot reach Administrator routes or mutations.
+curl -fsS -b "$TMP/staff.cookies" -c "$TMP/staff.cookies" "$BASE/staff?switch_staff=2" -o /dev/null
+STATUS="$(curl -sS -o "$TMP/operator-denied.html" -w '%{http_code}' -b "$TMP/staff.cookies" "$BASE/staff/users")"
+[[ "$STATUS" == "403" ]] || fail "Operator access to Administrator staff-users route expected 403, got $STATUS"
+grep -q 'Administrator role' "$TMP/operator-denied.html" || fail "Central authorization denial page missing"
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/taxonomy" -o "$TMP/operator-taxonomy.html"
+CSRF="$(csrf_from "$TMP/operator-taxonomy.html")"; [[ -n "$CSRF" ]] || fail "Operator taxonomy CSRF missing"
+BEFORE="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); echo $p->query("SELECT COUNT(*) FROM categories")->fetchColumn();')"
+STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" -X POST "$BASE/staff/taxonomy/save" \
+  --data-urlencode "_csrf=$CSRF" --data-urlencode 'name_en=Unauthorized Category' --data-urlencode 'slug=unauthorized-category')"
+AFTER="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); echo $p->query("SELECT COUNT(*) FROM categories")->fetchColumn();')"
+[[ "$STATUS" == "403" && "$BEFORE" == "$AFTER" ]] || fail "Administrator-only taxonomy mutation was not blocked before state change"
+pass "Central Staff policy denies Operator access and mutation on Administrator routes"
+
 # Customer OTP: request, HMAC-backed code preview in development, verification, account session.
 TEST_EMAIL="ci-otp-$(date +%s)-$$@example.com"
 curl -fsS -c "$TMP/customer.cookies" "$BASE/auth/login" -o "$TMP/customer-login.html"

@@ -50,39 +50,39 @@ return [
     // 3. STAFF INTERNAL OPERATIONS CONSOLE (C-19 to C-29, Gate D-45)
     // Web-only internal console (Strong auth + RBAC + Audit Logs)
     // =========================================================================
-    ['GET',  '/staff/login',                         ['Staff\StaffAuthController', 'showLogin']],       // D-45 Bcrypt + rate-limited login
-    ['POST', '/staff/login',                         ['Staff\StaffAuthController', 'login']],           // D-45 Password step
-    ['GET',  '/staff/2fa',                           ['Staff\StaffAuthController', 'showTwoFactor']],   // D-45 RFC 6238 challenge/enrollment
-    ['POST', '/staff/2fa',                           ['Staff\StaffAuthController', 'verifyTwoFactor']], // D-45 TOTP verification
-    ['POST', '/staff/logout',                        ['Staff\StaffAuthController', 'logout']],          // D-45 Audited logout
-    ['GET',  '/staff',                               ['Staff\DashboardController', 'index']],           // Console overview & pilot metrics
-    ['POST', '/staff/system/flush-cache',            ['Staff\DashboardController', 'flushCache']],      // Zero-restart cache & OPcache flush
-    ['POST', '/staff/gates/toggle',                  ['Staff\DashboardController', 'toggleGate']],      // D-31..D-45 Readiness Gate toggle
-    ['GET',  '/staff/listings',                      ['Staff\ListingController', 'index']],             // C-19, C-20 Business & Branch directory
-    ['POST', '/staff/listings/create',               ['Staff\ListingController', 'create']],            // C-19 Create prospect/draft + Permission
-    ['POST', '/staff/listings/{branch_id}/update',   ['Staff\ListingController', 'update']],            // C-20 Edit Business/Branch attributes
-    ['POST', '/staff/listings/{branch_id}/media',    ['Staff\ListingController', 'uploadMedia']],       // C-22 Permitted media management
-    ['GET',  '/staff/verification',                  ['Staff\VerificationController', 'index']],        // C-21 Verification & QC queue
-    ['POST', '/staff/verification/{branch_id}/qc',   ['Staff\VerificationController', 'recordQc']],     // C-21 Pass/Fail QC + Publish gate
-    ['GET',  '/staff/taxonomy',                      ['Staff\TaxonomyController', 'index']],            // C-23 2-level Category & Alias manager
-    ['POST', '/staff/taxonomy/save',                 ['Staff\TaxonomyController', 'save']],             // C-23 Reference-data taxonomy update
-    ['GET',  '/staff/locations',                     ['Staff\LocationController', 'index']],            // C-24 Area & Sub-city manager
-    ['POST', '/staff/locations/save',                ['Staff\LocationController', 'save']],             // C-24 Area update
-    ['GET',  '/staff/moderation',                    ['Staff\ModerationController', 'index']],          // C-25 Pre-publication review queue
-    ['POST', '/staff/moderation/{review_id}/decide', ['Staff\ModerationController', 'decide']],         // C-25 Approve / Reject / Appeal
-    ['GET',  '/staff/reports',                       ['Staff\ReportQueueController', 'index']],         // C-26 Public report triage queue
-    ['POST', '/staff/reports/{report_id}/resolve',   ['Staff\ReportQueueController', 'resolve']],       // C-26 Resolve / Escalate report
-    ['GET',  '/staff/campaigns',                     ['Staff\CampaignController', 'index']],            // C-27 Staff-managed sponsorships
-    ['POST', '/staff/campaigns/create',              ['Staff\CampaignController', 'create']],           // C-27 Operator records campaign
-    ['POST', '/staff/campaigns/{id}/approve',        ['Staff\CampaignController', 'approve']],          // C-27 Admin approves (blocked by D-39 if off)
-    ['GET',  '/staff/analytics',                     ['Staff\AnalyticsController', 'index']],           // C-28 Operational & zero-result analytics
-    ['GET',  '/staff/audit-logs',                    ['Staff\AuditLogController', 'index']],            // C-29 Admin-only append-only audit trail
-    ['GET',  '/staff/users',                         ['Staff\StaffUserController', 'index']],           // D-45 Admin Staff/RBAC manager
-    ['POST', '/staff/users/create',                  ['Staff\StaffUserController', 'create']],          // D-45 Create staff account
-    ['POST', '/staff/users/{id}/toggle',             ['Staff\StaffUserController', 'toggleActive']],    // D-45 Suspend/activate staff
-    ['POST', '/staff/users/{id}/password',           ['Staff\StaffUserController', 'resetPassword']],   // D-45 Admin password reset
-    ['POST', '/staff/users/{id}/2fa-reset',          ['Staff\StaffUserController', 'resetTotp']],       // D-45 Admin-assisted TOTP recovery
-    ['GET',  '/staff/settings',                      ['Staff\SettingsController', 'index']],            // Auth/SMTP/System settings
-    ['POST', '/staff/settings/save',                 ['Staff\SettingsController', 'save']],             // Zero-restart config hot reload
-    ['POST', '/staff/settings/test-email',           ['Staff\SettingsController', 'testEmail']],        // SMTP live delivery test
+    ['GET',  '/staff/login',                         ['Staff\StaffAuthController', 'showLogin'], ['access' => 'guest']],       // D-45 Bcrypt + rate-limited login
+    ['POST', '/staff/login',                         ['Staff\StaffAuthController', 'login'], ['access' => 'guest']],           // D-45 Password step
+    ['GET',  '/staff/2fa',                           ['Staff\StaffAuthController', 'showTwoFactor'], ['access' => 'guest']],   // D-45 RFC 6238 challenge/enrollment
+    ['POST', '/staff/2fa',                           ['Staff\StaffAuthController', 'verifyTwoFactor'], ['access' => 'guest']], // D-45 TOTP verification
+    ['POST', '/staff/logout',                        ['Staff\StaffAuthController', 'logout'], ['access' => 'authenticated']],          // D-45 Audited logout
+    ['GET',  '/staff',                               ['Staff\DashboardController', 'index'], ['access' => 'authenticated']],           // Console overview & pilot metrics
+    ['POST', '/staff/system/flush-cache',            ['Staff\DashboardController', 'flushCache'], ['access' => 'administrator']],      // Zero-restart cache & OPcache flush
+    ['POST', '/staff/gates/toggle',                  ['Staff\DashboardController', 'toggleGate'], ['access' => 'administrator']],      // D-31..D-45 Readiness Gate toggle
+    ['GET',  '/staff/listings',                      ['Staff\ListingController', 'index'], ['access' => 'authenticated']],             // C-19, C-20 Business & Branch directory
+    ['POST', '/staff/listings/create',               ['Staff\ListingController', 'create'], ['access' => 'authenticated']],            // C-19 Create prospect/draft + Permission
+    ['POST', '/staff/listings/{branch_id}/update',   ['Staff\ListingController', 'update'], ['access' => 'authenticated']],            // C-20 Edit Business/Branch attributes
+    ['POST', '/staff/listings/{branch_id}/media',    ['Staff\ListingController', 'uploadMedia'], ['access' => 'authenticated']],       // C-22 Permitted media management
+    ['GET',  '/staff/verification',                  ['Staff\VerificationController', 'index'], ['access' => 'authenticated']],        // C-21 Verification & QC queue
+    ['POST', '/staff/verification/{branch_id}/qc',   ['Staff\VerificationController', 'recordQc'], ['access' => 'authenticated']],     // C-21 Pass/Fail QC + Publish gate
+    ['GET',  '/staff/taxonomy',                      ['Staff\TaxonomyController', 'index'], ['access' => 'authenticated']],            // C-23 2-level Category & Alias manager
+    ['POST', '/staff/taxonomy/save',                 ['Staff\TaxonomyController', 'save'], ['access' => 'administrator']],             // C-23 Reference-data taxonomy update
+    ['GET',  '/staff/locations',                     ['Staff\LocationController', 'index'], ['access' => 'authenticated']],            // C-24 Area & Sub-city manager
+    ['POST', '/staff/locations/save',                ['Staff\LocationController', 'save'], ['access' => 'administrator']],             // C-24 Area update
+    ['GET',  '/staff/moderation',                    ['Staff\ModerationController', 'index'], ['access' => 'authenticated']],          // C-25 Pre-publication review queue
+    ['POST', '/staff/moderation/{review_id}/decide', ['Staff\ModerationController', 'decide'], ['access' => 'authenticated']],         // C-25 Approve / Reject / Appeal
+    ['GET',  '/staff/reports',                       ['Staff\ReportQueueController', 'index'], ['access' => 'authenticated']],         // C-26 Public report triage queue
+    ['POST', '/staff/reports/{report_id}/resolve',   ['Staff\ReportQueueController', 'resolve'], ['access' => 'authenticated']],       // C-26 Resolve / Escalate report
+    ['GET',  '/staff/campaigns',                     ['Staff\CampaignController', 'index'], ['access' => 'authenticated']],            // C-27 Staff-managed sponsorships
+    ['POST', '/staff/campaigns/create',              ['Staff\CampaignController', 'create'], ['access' => 'authenticated']],           // C-27 Operator records campaign
+    ['POST', '/staff/campaigns/{id}/approve',        ['Staff\CampaignController', 'approve'], ['access' => 'administrator']],          // C-27 Admin approves (blocked by D-39 if off)
+    ['GET',  '/staff/analytics',                     ['Staff\AnalyticsController', 'index'], ['access' => 'authenticated']],           // C-28 Operational & zero-result analytics
+    ['GET',  '/staff/audit-logs',                    ['Staff\AuditLogController', 'index'], ['access' => 'administrator']],            // C-29 Admin-only append-only audit trail
+    ['GET',  '/staff/users',                         ['Staff\StaffUserController', 'index'], ['access' => 'administrator']],           // D-45 Admin Staff/RBAC manager
+    ['POST', '/staff/users/create',                  ['Staff\StaffUserController', 'create'], ['access' => 'administrator']],          // D-45 Create staff account
+    ['POST', '/staff/users/{id}/toggle',             ['Staff\StaffUserController', 'toggleActive'], ['access' => 'administrator']],    // D-45 Suspend/activate staff
+    ['POST', '/staff/users/{id}/password',           ['Staff\StaffUserController', 'resetPassword'], ['access' => 'administrator']],   // D-45 Admin password reset
+    ['POST', '/staff/users/{id}/2fa-reset',          ['Staff\StaffUserController', 'resetTotp'], ['access' => 'administrator']],       // D-45 Admin-assisted TOTP recovery
+    ['GET',  '/staff/settings',                      ['Staff\SettingsController', 'index'], ['access' => 'administrator']],            // Auth/SMTP/System settings
+    ['POST', '/staff/settings/save',                 ['Staff\SettingsController', 'save'], ['access' => 'administrator']],             // Zero-restart config hot reload
+    ['POST', '/staff/settings/test-email',           ['Staff\SettingsController', 'testEmail'], ['access' => 'administrator']],        // SMTP live delivery test
 ];

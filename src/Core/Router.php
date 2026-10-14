@@ -8,7 +8,15 @@ namespace Bulbula\Core;
  */
 final class Router
 {
-    public function __construct(private readonly array $routes) {}
+    public function __construct(private readonly array $routes)
+    {
+        foreach ($routes as $route) {
+            $path = (string) ($route[1] ?? '');
+            if (str_starts_with($path, '/staff') && !isset($route[3]['access'])) {
+                throw new \InvalidArgumentException("Staff route {$path} is missing an explicit access policy.");
+            }
+        }
+    }
 
     public function dispatch(Request $request): Response
     {
@@ -39,16 +47,10 @@ final class Router
 
                 [$controllerClass, $action] = $handler;
 
-                // Central Gate D-45 Auth Guard for all /staff/* routes (except /staff/login)
-                if (str_starts_with($path, '/staff') && !in_array($path, ['/staff/login', '/staff/2fa'], true)) {
-                    if ($path === '/staff' && $request->query('switch_staff')) {
-                        // Allow role switcher in preview mode
-                    } else {
-                        $staffAuth = new \Bulbula\Services\StaffAuthService();
-                        if ($staffAuth->currentStaff() === null) {
-                            return Response::redirect('/staff/login?return_to=' . rawurlencode($path));
-                        }
-                    }
+                if (str_starts_with($path, '/staff')) {
+                    $policy = new \Bulbula\Services\StaffAccessPolicy();
+                    $denied = $policy->authorize((string) ($route[3]['access'] ?? ''), $request);
+                    if ($denied !== null) return $denied;
                 }
 
                 $fqcn = 'Bulbula\\Controllers\\' . $controllerClass;

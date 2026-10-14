@@ -77,6 +77,10 @@ php database/migrate.php migrate
 
 Migrations are ordered, checksummed, batch-tracked, locked against concurrent deployment, and idempotent. Never edit an applied migration; add a new timestamped file in `database/migrations/`.
 
+### Staff authorization policy
+
+Every `/staff` route must declare an explicit `guest`, `authenticated`, or `administrator` access policy in `config/routes.php`. The router fails during construction if a Staff route omits policy metadata, and checks authorization before constructing its controller. Never add a Staff route without selecting the least-privileged policy.
+
 ### Live configuration safety
 
 Administrator-managed settings are stored in ignored `config/env.local.json`; server environment variables remain authoritative. Updates are field-allowlisted, format-validated, lock-serialized, written through a `0600` temporary file, synchronized, and atomically activated. Secret values are never returned to the settings view or audit log. Keep `config/` outside direct web access and ensure PHP can write only the local overlay and `storage/config-update.lock`.
