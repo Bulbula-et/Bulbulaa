@@ -43,7 +43,7 @@ final class ListingOpsService
         if ($permission === null) {
             return [
                 'ok'     => false,
-                'errors' => ['Hard Gate (C-19): Cannot record QC or publish without a GRANTED Business Permission record.'],
+                'errors' => ['Cannot record quality control or publish without a granted business permission record.'],
             ];
         }
 

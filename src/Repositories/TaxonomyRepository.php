@@ -117,7 +117,7 @@ final class TaxonomyRepository
                 throw new InvalidArgumentException('Parent category does not exist.');
             }
             if ((int) $parent['depth_level'] !== 1) {
-                throw new InvalidArgumentException('C-23 Taxonomy Rule: Bulbula supports exactly 2 taxonomy levels (Category -> Subcategory).');
+                throw new InvalidArgumentException('Bulbula supports exactly two taxonomy levels: category and subcategory.');
             }
             $depth = 2;
         }

@@ -219,7 +219,7 @@ final class ListingController
 
         $permId = (int) ($branch['active_permission_id'] ?? 0);
         if ($permId <= 0) {
-            Session::flash('error', 'Hard Gate (C-22): Permitted media requires an active Business Permission record.');
+            Session::flash('error', 'Media upload blocked: an active business permission record is required.');
             return Response::redirect('/staff/listings');
         }
 
@@ -268,7 +268,7 @@ final class ListingController
         );
         Cache::flushAll();
 
-        Session::flash('success', 'Permitted media asset (#' . $mediaId . ') attached to Branch #' . $branchId . ' (C-22).');
+        Session::flash('success', 'Permitted media asset (#' . $mediaId . ') attached to Branch #' . $branchId . '.');
         return Response::redirect('/staff/listings');
     }
 }

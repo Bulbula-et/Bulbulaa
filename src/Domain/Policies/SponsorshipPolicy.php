@@ -33,11 +33,11 @@ final class SponsorshipPolicy
         $violations = [];
 
         if (!$approverRole->canApproveCampaigns()) {
-            $violations[] = 'Only an Administrator can approve or activate a Sponsorship Campaign (C-27).';
+            $violations[] = 'Only an Administrator can approve or activate a sponsorship campaign.';
         }
 
         if (!$gateD39Enabled) {
-            $violations[] = 'Readiness Gate D-39: Paid campaign activation is currently blocked pending commercial-integrity, billing (D-11), and legal/tax sign-off.';
+            $violations[] = 'Paid campaign activation is currently blocked pending commercial-integrity, billing, and legal or tax approval.';
         }
 
         $format = (string) ($campaign['placement_format'] ?? '');
@@ -48,7 +48,7 @@ final class SponsorshipPolicy
         if (in_array($format, [CampaignStatus::FORMAT_SEARCH_PLACEMENT, CampaignStatus::FORMAT_CATEGORY_SPONSORSHIP], true)
             && empty($campaign['target_category_id'])
         ) {
-            $violations[] = sprintf('Format %s requires a controlled target Category or Subcategory (C-16).', $format);
+            $violations[] = sprintf('Format %s requires a controlled target category or subcategory.', $format);
         }
 
         if (($targetBranch['publication_status'] ?? '') !== 'PUBLISHED') {
@@ -59,7 +59,7 @@ final class SponsorshipPolicy
         $endsAt   = new DateTimeImmutable((string) ($campaign['ends_at'] ?? 'now'));
 
         if ($endsAt <= $startsAt) {
-            $violations[] = 'Campaign end date must be strictly after its start date (time-bounded rule C-27).';
+            $violations[] = 'Campaign end date must be after its start date.';
         }
 
         return [

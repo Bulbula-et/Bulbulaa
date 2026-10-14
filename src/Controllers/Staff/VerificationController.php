@@ -64,7 +64,7 @@ final class VerificationController
         );
 
         if ($result['ok'] && $result['published']) {
-            Session::flash('success', 'Branch #' . $branchId . ' passed QC and Publication Gate (C-19/C-21) and is now PUBLISHED & VERIFIED.');
+            Session::flash('success', 'Branch #' . $branchId . ' passed quality control and is now published and verified.');
         } else {
             Session::flash('error', 'QC recorded, but publication gate blocked: ' . implode(' ', $result['violations'] ?? $result['errors'] ?? []));
         }

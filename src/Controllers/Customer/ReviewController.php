@@ -89,7 +89,7 @@ final class ReviewController
                     $validation['rating'],
                     $validation['sanitized_text']
                 );
-                Session::flash('success', 'Your existing review for this branch was updated and submitted to pre-publication moderation (C-13).');
+                Session::flash('success', 'Your existing review was updated and submitted for moderation.');
                 return Response::redirect($returnTo);
             }
 
@@ -112,7 +112,7 @@ final class ReviewController
             ['branch_id' => $branchId, 'rating' => $validation['rating']]
         );
 
-        Session::flash('success', 'Thank you! Your review has been submitted and will appear once approved by Bulbula moderation (C-13).');
+        Session::flash('success', 'Thank you! Your review has been submitted and will appear once approved by Bulbula moderation.');
         return Response::redirect($returnTo);
     }
 
@@ -154,7 +154,7 @@ final class ReviewController
             $validation['sanitized_text']
         );
 
-        Session::flash('success', 'Your review was updated and returned to Pending Moderation (C-13, C-35).');
+        Session::flash('success', 'Your review was updated and returned to pending moderation.');
         return Response::redirect('/account/reviews');
     }
 
@@ -176,7 +176,7 @@ final class ReviewController
         if ($review !== null && (int) $review['customer_id'] === (int) $customer['id']) {
             $this->reviewRepo->withdrawByAuthor($reviewId, (int) $review['branch_id'], (int) $customer['id']);
             $this->auditService->logCustomerAction((int) $customer['id'], 'REVIEW_WITHDRAWN_BY_AUTHOR', 'review', $reviewId);
-            Session::flash('success', 'Your review has been withdrawn and is no longer publicly visible (C-35).');
+            Session::flash('success', 'Your review has been withdrawn and is no longer publicly visible.');
         }
 
         return Response::redirect('/account/reviews');

@@ -34,7 +34,7 @@ final class PublicationGate
             $violations[] = 'Business English name (name_en) is required.';
         }
         if (empty($business['primary_category_id'])) {
-            $violations[] = 'Every published listing must have exactly one Primary Category (C-04).';
+            $violations[] = 'Every published listing must have exactly one primary category.';
         }
 
         // 2. Branch-level completeness checks (Page 3 & Page 5)
@@ -42,7 +42,7 @@ final class PublicationGate
             $violations[] = 'Branch name (branch_name_en) is required.';
         }
         if (empty($branch['area_id']) || trim((string) ($branch['sub_city_en'] ?? '')) === '') {
-            $violations[] = 'Branch Area and Sub-city must be assigned (C-05).';
+            $violations[] = 'Branch area and sub-city must be assigned.';
         }
         if (trim((string) ($branch['address_line_en'] ?? '')) === '') {
             $violations[] = 'Branch physical address description is required.';
@@ -50,20 +50,20 @@ final class PublicationGate
 
         // 3. Hard Permission Gate (C-19)
         if ($permission === null) {
-            $violations[] = 'Hard Gate (C-19): No Business Permission record is linked to this branch.';
+            $violations[] = 'Publication blocked: no business permission record is linked to this branch.';
         } elseif (($permission['status'] ?? '') !== 'GRANTED') {
             $violations[] = sprintf(
-                'Hard Gate (C-19): Linked Business Permission status is "%s" (must be GRANTED).',
+                'Publication blocked: linked business permission status is "%s" (must be granted).',
                 (string) ($permission['status'] ?? 'UNKNOWN')
             );
         }
 
         // 4. Hard Quality Control & Verification Gate (C-21)
         if ($latestQcReview === null) {
-            $violations[] = 'Hard Gate (C-21): Branch has not completed a Quality Control verification review.';
+            $violations[] = 'Publication blocked: the branch has not completed a quality-control review.';
         } elseif (($latestQcReview['outcome'] ?? '') !== 'PASSED') {
             $violations[] = sprintf(
-                'Hard Gate (C-21): Latest Quality Control review outcome is "%s" (must be PASSED).',
+                'Publication blocked: the latest quality-control outcome is "%s" (must be passed).',
                 (string) ($latestQcReview['outcome'] ?? 'UNKNOWN')
             );
         }

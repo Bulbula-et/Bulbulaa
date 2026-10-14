@@ -80,13 +80,13 @@ final class PolicyPageController
 
         $titles = [
             'about'        => 'How Bulbula.et Works — Permissioned Local Discovery',
-            'editorial'    => 'Editorial & Permissioned Listing Standards (C-18)',
-            'verification' => 'Field Verification & Quality Control Policy (C-12, C-21)',
-            'reviews'      => 'Review Participation & Pre-Publication Moderation Policy (C-13)',
-            'sponsorship'  => 'Commercial Integrity & Sponsorship Labelling Policy (C-16)',
-            'sponsored'    => 'Commercial Integrity & Sponsorship Labelling Policy (C-16)',
-            'privacy'      => 'Privacy, Data Minimisation & Account Rights Policy (C-36, C-40)',
-            'terms'        => 'Terms of Use & Community Guidelines (C-18)',
+            'editorial'    => 'Editorial & Permissioned Listing Standards',
+            'verification' => 'Field Verification & Quality Control Policy',
+            'reviews'      => 'Review Participation & Pre-Publication Moderation Policy',
+            'sponsorship'  => 'Commercial Integrity & Sponsorship Labelling Policy',
+            'sponsored'    => 'Commercial Integrity & Sponsorship Labelling Policy',
+            'privacy'      => 'Privacy, Data Minimisation & Account Rights Policy',
+            'terms'        => 'Terms of Use & Community Guidelines',
         ];
 
         $selectedSlug = isset($titles[$slug]) ? $slug : 'about';
