@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 define('BULBULA_ROOT', dirname(__DIR__));
+define('BULBULA_PUBLIC', BULBULA_ROOT . '/public_html');
 require BULBULA_ROOT . '/vendor/autoload.php';
 require BULBULA_ROOT . '/src/Core/Autoloader.php';
 \Bulbula\Core\Autoloader::register(BULBULA_ROOT . '/src');

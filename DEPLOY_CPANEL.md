@@ -41,7 +41,13 @@ Bulbula.et pins production dependencies in `composer.lock`:
 - `google/apiclient` — official Google Identity ID-token verification.
 - `robthree/twofactorauth` — standalone zero-dependency RFC 6238 TOTP verification for Staff Gate D-45.
 
-PHP must include the native Sodium extension (`ext-sodium`) so authenticator secrets are encrypted at rest with `sodium_crypto_secretbox`.
+PHP must include:
+
+- `ext-sodium` for encrypted Staff TOTP secrets.
+- `ext-fileinfo` for server-side image MIME detection.
+- `ext-gd` for safe image decoding, resizing, metadata stripping, and JPEG re-encoding.
+
+In cPanel, enable these under **Select PHP Version → Extensions** before deployment.
 
 From cPanel Terminal (or locally before upload), run from the application root:
 

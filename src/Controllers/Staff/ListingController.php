@@ -14,6 +14,7 @@ use Bulbula\Repositories\AreaRepository;
 use Bulbula\Repositories\BranchRepository;
 use Bulbula\Repositories\TaxonomyRepository;
 use Bulbula\Services\AuditService;
+use Bulbula\Services\MediaUploadService;
 use Bulbula\Services\StaffAuthService;
 
 /**
@@ -26,7 +27,8 @@ final class ListingController
         private readonly BranchRepository $branchRepo = new BranchRepository(),
         private readonly TaxonomyRepository $taxonomyRepo = new TaxonomyRepository(),
         private readonly AreaRepository $areaRepo = new AreaRepository(),
-        private readonly AuditService $auditService = new AuditService()
+        private readonly AuditService $auditService = new AuditService(),
+        private readonly MediaUploadService $mediaUpload = new MediaUploadService()
     ) {}
 
     public function index(Request $request): Response
@@ -221,25 +223,40 @@ final class ListingController
             return Response::redirect('/staff/listings');
         }
 
-        $filePath = trim((string) $request->input('file_path', 'img/cards/photo-biz-clinic.jpg'));
-        $altText  = trim((string) $request->input('alt_text_en', (string) ($branch['branch_name_en'] ?? 'Branch Photo')));
+        $altText = mb_substr(trim((string) $request->input('alt_text_en', (string) ($branch['branch_name_en'] ?? 'Branch Photo'))), 0, 180, 'UTF-8');
+        if ($altText === '') $altText = (string) ($branch['branch_name_en'] ?? 'Branch Photo');
+        $processed = $this->mediaUpload->process($request->file('branch_image') ?? [], $branchId);
+        if (!$processed['ok']) {
+            Session::flash('error', 'Media rejected: ' . (string) ($processed['error'] ?? 'Invalid image.'));
+            return Response::redirect('/staff/listings');
+        }
+        $filePath = (string) $processed['file_path'];
         $staff    = $this->staffAuth->currentStaff();
         $staffId  = (int) ($staff['id'] ?? 1);
 
-        $stmt = Database::pdo()->prepare(
-            'INSERT INTO media_assets (business_id, branch_id, permission_id, media_type, file_path, width_px, height_px, file_size_bytes, alt_text_en, display_order, is_active, uploaded_by_staff_id)
-             VALUES (:biz_id, :br_id, :perm_id, :mtype, :fpath, 720, 520, 68000, :alt, 1, 1, :staff_id)'
-        );
-        $stmt->execute([
-            ':biz_id'   => (int) $branch['business_id'],
-            ':br_id'    => $branchId,
-            ':perm_id'  => $permId,
-            ':mtype'    => 'COVER',
-            ':fpath'    => $filePath,
-            ':alt'      => $altText,
-            ':staff_id' => $staffId,
-        ]);
-        $mediaId = (int) Database::pdo()->lastInsertId();
+        try {
+            $stmt = Database::pdo()->prepare(
+                'INSERT INTO media_assets (business_id, branch_id, permission_id, media_type, file_path, width_px, height_px, file_size_bytes, alt_text_en, display_order, is_active, uploaded_by_staff_id)
+                 VALUES (:biz_id, :br_id, :perm_id, :mtype, :fpath, :width, :height, :bytes, :alt, 1, 1, :staff_id)'
+            );
+            $stmt->execute([
+                ':biz_id'   => (int) $branch['business_id'],
+                ':br_id'    => $branchId,
+                ':perm_id'  => $permId,
+                ':mtype'    => 'COVER',
+                ':fpath'    => $filePath,
+                ':width'    => (int) $processed['width'],
+                ':height'   => (int) $processed['height'],
+                ':bytes'    => (int) $processed['size'],
+                ':alt'      => $altText,
+                ':staff_id' => $staffId,
+            ]);
+            $mediaId = (int) Database::pdo()->lastInsertId();
+        } catch (\Throwable $e) {
+            $this->mediaUpload->deleteProcessed($filePath);
+            Session::flash('error', 'Image was processed but its media record could not be saved.');
+            return Response::redirect('/staff/listings');
+        }
 
         $this->auditService->logStaffAction(
             $staffId,

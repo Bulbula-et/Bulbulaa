@@ -6,6 +6,8 @@
     "require": {
         "php": "^8.2",
         "ext-curl": "*",
+        "ext-fileinfo": "*",
+        "ext-gd": "*",
         "ext-json": "*",
         "ext-mbstring": "*",
         "ext-openssl": "*",

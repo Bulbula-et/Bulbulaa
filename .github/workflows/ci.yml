@@ -32,7 +32,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: curl, json, mbstring, openssl, pdo_sqlite, sqlite3
+          extensions: curl, fileinfo, gd, json, mbstring, openssl, pdo_sqlite, sodium, sqlite3
           coverage: none
           tools: composer:v2
 

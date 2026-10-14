@@ -110,6 +110,13 @@ $areas      = $areas ?? [];
               </select>
               <button type="submit" class="b-btn b-btn--outline b-btn--sm" style="padding: 0.2rem 0.55rem; font-size: 0.7rem;">Save</button>
             </form>
+            <form action="/staff/listings/<?= (int) $br['branch_id'] ?>/media" method="POST" enctype="multipart/form-data" style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;margin-top:.45rem;">
+              <?= Csrf::field() ?>
+              <input type="hidden" name="MAX_FILE_SIZE" value="8388608">
+              <input type="file" name="branch_image" accept="image/jpeg,image/png,image/webp" required class="b-input" style="width:170px;min-height:30px;padding:.2rem;font-size:.68rem;">
+              <input type="text" name="alt_text_en" value="<?= View::e((string) $br['branch_name_en']) ?>" required maxlength="180" class="b-input" style="width:125px;min-height:30px;padding:.2rem .4rem;font-size:.68rem;" aria-label="Image alternative text">
+              <button type="submit" class="b-btn b-btn--outline b-btn--sm" style="padding:.2rem .5rem;font-size:.7rem;">Upload Photo</button>
+            </form>
           </td>
         </tr>
       <?php endforeach; ?>

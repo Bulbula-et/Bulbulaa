@@ -14,14 +14,15 @@ final class Request
         private readonly array $queryParams,
         private readonly array $postParams,
         private readonly array $serverParams,
-        private array $routeParams = []
+        private array $routeParams = [],
+        private readonly array $uploadedFiles = []
     ) {}
 
     public static function capture(): self
     {
         $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
         $uri    = (string) ($_SERVER['REQUEST_URI'] ?? '/');
-        return new self($method, $uri, $_GET, $_POST, $_SERVER);
+        return new self($method, $uri, $_GET, $_POST, $_SERVER, [], $_FILES);
     }
 
     public function method(): string
@@ -53,6 +54,13 @@ final class Request
             return $this->postParams;
         }
         return $this->postParams[$key] ?? $default;
+    }
+
+    /** @return array{name?: string, type?: string, tmp_name?: string, error?: int, size?: int}|null */
+    public function file(string $key): ?array
+    {
+        $file = $this->uploadedFiles[$key] ?? null;
+        return is_array($file) ? $file : null;
     }
 
     public function setRouteParams(array $params): void

@@ -7,6 +7,10 @@
 /.phpunit.cache/
 /.phpstan.cache/
 
+# Uploaded/processed branch media (deployment data, not source control)
+/public_html/media/branches/
+!/public_html/media/.htaccess
+
 # Runtime ephemeral files (auto-created by Bulbula.et V1)
 storage/cache/*.cache
 storage/cache/*.cache.json

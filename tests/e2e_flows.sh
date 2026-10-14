@@ -30,6 +30,20 @@ curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/users" -o "$TMP/staff-users.html"
 grep -q 'RBAC Management' "$TMP/staff-users.html" || fail "Authenticated staff RBAC page inaccessible"
 pass "Staff CSRF + password + RFC 6238 TOTP + session + Administrator RBAC flow"
 
+# Real multipart media pipeline: byte MIME validation, GD decode/re-encode, random filename, measured metadata.
+CSRF="$(csrf_from "$TMP/staff-users.html")"
+php -r '$im=imagecreatetruecolor(420,300); $c=imagecolorallocate($im,234,106,21); imagefill($im,0,0,$c); imagepng($im,$argv[1]); imagedestroy($im);' "$TMP/upload.png"
+STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" -c "$TMP/staff.cookies" "$BASE/staff/listings/1/media" \
+  -F "_csrf=$CSRF" -F 'alt_text_en=CI verified branch image' -F "branch_image=@$TMP/upload.png;type=image/png")"
+[[ "$STATUS" == "302" ]] || fail "Secure media upload expected 302, got $STATUS"
+MEDIA_PATH="$(php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); echo $p->query("SELECT file_path FROM media_assets WHERE branch_id=1 AND alt_text_en=\"CI verified branch image\" ORDER BY id DESC LIMIT 1")->fetchColumn() ?: "";')"
+[[ "$MEDIA_PATH" =~ ^/media/branches/1/[a-f0-9]{32}\.jpg$ ]] || fail "Secure media record/path missing"
+[[ -f "public_html$MEDIA_PATH" ]] || fail "Processed media file missing"
+MIME="$(file -b --mime-type "public_html$MEDIA_PATH")"; [[ "$MIME" == "image/jpeg" ]] || fail "Processed media is not JPEG"
+php -r '$p=new PDO("sqlite:storage/bulbula_v1.sqlite"); $s=$p->prepare("DELETE FROM media_assets WHERE file_path=:p"); $s->execute([":p"=>$argv[1]]);' "$MEDIA_PATH"
+rm -f "public_html$MEDIA_PATH"
+pass "Multipart media byte validation + decode/re-encode + randomized storage flow"
+
 # Customer OTP: request, HMAC-backed code preview in development, verification, account session.
 TEST_EMAIL="ci-otp-$(date +%s)-$$@example.com"
 curl -fsS -c "$TMP/customer.cookies" "$BASE/auth/login" -o "$TMP/customer-login.html"

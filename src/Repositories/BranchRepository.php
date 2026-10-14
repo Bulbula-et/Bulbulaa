@@ -17,6 +17,7 @@ final class BranchRepository
         SELECT
             br.id AS branch_id,
             br.business_id,
+            br.active_permission_id,
             br.branch_slug,
             br.branch_name_en,
             br.branch_name_am,
