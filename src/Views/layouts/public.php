@@ -20,7 +20,7 @@ $flashError   = Session::flash('error');
     <link rel="canonical" href="<?= View::e($canonicalUrl) ?>">
   <?php endif; ?>
 
-  <!-- Unified Design System CSS (Automatic ?v=filemtime() Cache-Busting) -->
+  <!-- Unified Design System CSS (content-hash cache busting) -->
   <link rel="stylesheet" href="<?= View::asset('css/tokens.css') ?>">
   <link rel="stylesheet" href="<?= View::asset('css/base.css') ?>">
   <link rel="stylesheet" href="<?= View::asset('css/layout.css') ?>">

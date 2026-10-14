@@ -15,7 +15,7 @@
 .b-staff-nav__label { padding:0 11px 7px; color:#86a5bf; font-size:10px; font-weight:750; letter-spacing:.09em; text-transform:uppercase; }
 .b-staff-nav__link { min-height:39px; display:flex; align-items:center; gap:11px; padding:8px 10px; margin:2px 0; border-radius:8px; color:#c6d5e2; font-size:13px; font-weight:570; transition:background .16s,color .16s,box-shadow .16s; }
 .b-staff-nav__link:hover { color:#fff; background:rgba(255,255,255,.09); }
-.b-staff-nav__link.is-active { color:#173f66; background:#fff; box-shadow:inset 3px 0 #ea6a15,0 5px 16px rgba(4,20,34,.2); font-weight:680; }
+.b-staff-nav__link.is-active { color:#fff; background:#ea6a15; box-shadow:0 7px 18px rgba(5,22,37,.3); font-weight:700; }
 .b-staff-nav__icon { width:18px; height:18px; flex:0 0 auto; display:grid; place-items:center; }
 .b-staff-nav__icon svg,.b-mobile-menu svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .b-staff-nav__link:first-child .b-staff-nav__icon svg { fill:currentColor; stroke:none; }

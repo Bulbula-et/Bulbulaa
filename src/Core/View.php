@@ -6,8 +6,8 @@ namespace Bulbula\Core;
 /**
  * Server-Rendered HTML Template Engine.
  * - Enforces XSS output encoding via `View::e()`.
- * - Appends automatic `?v=filemtime()` to CSS/JS assets via `View::asset()`
- *   so browsers and Telegram Mini App WebViews never serve stale styles or scripts.
+ * - Appends a content-derived version to CSS/JS assets via `View::asset()`
+ *   so browsers, CDNs, and Telegram Mini App WebViews never serve stale files.
  */
 final class View
 {
@@ -26,8 +26,8 @@ final class View
         $clean = ltrim($relativePath, '/');
         $fullPath = (defined('BULBULA_PUBLIC') ? BULBULA_PUBLIC : dirname(__DIR__, 2) . '/public_html') . '/assets/' . $clean;
         clearstatcache(true, $fullPath);
-        $mtime = is_file($fullPath) ? (int) @filemtime($fullPath) : time();
-        return '/assets/' . $clean . '?v=' . $mtime;
+        $version = is_file($fullPath) ? substr((string) @hash_file('sha256', $fullPath), 0, 12) : (string) time();
+        return '/assets/' . $clean . '?v=' . $version;
     }
 
     public static function categoryImage(string $slug): string
