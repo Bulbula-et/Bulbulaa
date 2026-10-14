@@ -62,6 +62,7 @@ if ($isAdmin) $navGroups['Administration'] = [
   <?php if ($activeNav === 'taxonomy'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-taxonomy.css') ?>"><?php endif; ?>
   <?php if ($activeNav === 'locations'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-locations.css') ?>"><?php endif; ?>
   <?php if ($activeNav === 'audit-logs'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-audit.css') ?>"><?php endif; ?>
+  <?php if ($activeNav === 'users'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-users.css') ?>"><?php endif; ?>
 </head>
 <body class="b-staff-body">
   <div class="b-staff-shell">
