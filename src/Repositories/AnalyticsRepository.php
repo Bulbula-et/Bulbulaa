@@ -118,10 +118,54 @@ final class AnalyticsRepository
              LIMIT 10'
         );
 
+        $startDate = date('Y-m-d', strtotime('-6 days'));
+        $dailyRows = Database::fetchAll(
+            'SELECT metric_date,
+                    SUM(profile_views) AS views,
+                    SUM(action_call_clicks) AS calls,
+                    SUM(action_map_clicks) AS directions,
+                    SUM(action_website_clicks) AS websites,
+                    SUM(action_email_clicks) AS emails,
+                    SUM(action_share_clicks) AS shares
+             FROM branch_daily_analytics
+             WHERE metric_date >= :start_date
+             GROUP BY metric_date
+             ORDER BY metric_date ASC',
+            [':start_date' => $startDate]
+        );
+        $dailyIndex = [];
+        foreach ($dailyRows as $row) $dailyIndex[(string) $row['metric_date']] = $row;
+        $dailyActivity = [];
+        for ($offset = 6; $offset >= 0; $offset--) {
+            $date = date('Y-m-d', strtotime("-{$offset} days"));
+            $row = $dailyIndex[$date] ?? [];
+            $dailyActivity[] = [
+                'date' => $date,
+                'views' => (int) ($row['views'] ?? 0),
+                'calls' => (int) ($row['calls'] ?? 0),
+                'directions' => (int) ($row['directions'] ?? 0),
+                'websites' => (int) ($row['websites'] ?? 0),
+                'emails' => (int) ($row['emails'] ?? 0),
+                'shares' => (int) ($row['shares'] ?? 0),
+            ];
+        }
+
+        $surfaceBreakdown = Database::fetchAll(
+            'SELECT surface, SUM(profile_views) AS views
+             FROM branch_daily_analytics
+             WHERE metric_date >= :start_date
+             GROUP BY surface
+             ORDER BY views DESC',
+            [':start_date' => $startDate]
+        );
+
         return [
             'totals'              => $totals,
             'zero_result_queries' => $zeroResultQueries,
             'top_branches'        => $topBranches,
+            'daily_activity'      => $dailyActivity,
+            'surface_breakdown'   => $surfaceBreakdown,
+            'period_days'         => 7,
         ];
     }
 }

@@ -14,6 +14,20 @@ $gateDescriptions=[
   'D_40_LAUNCH_AREA_BOUNDARY'=>'Restricts publication to the approved launch geography.',
   'D_45_STAFF_2FA_REQUIRED'=>'Requires authenticator protection for Staff access.',
 ];
+$dailyActivity=$summary['daily_activity']??[];
+$overviewTrend=[
+  'type'=>'line',
+  'labels'=>array_map(static fn(array $row):string=>date('D',strtotime((string)$row['date'])),$dailyActivity),
+  'datasets'=>[
+    ['label'=>'Profile views','data'=>array_column($dailyActivity,'views'),'color'=>'#397eb5','fill'=>true],
+    ['label'=>'Contact actions','data'=>array_map(static fn(array $row):int=>(int)$row['calls']+(int)$row['directions']+(int)$row['websites']+(int)$row['emails'],$dailyActivity),'color'=>'#ea6a15'],
+  ],
+];
+$workloadChart=[
+  'type'=>'bar','indexAxis'=>'y','legend'=>false,
+  'labels'=>['Pending reviews','Open reports','Draft or QC'],
+  'datasets'=>[['label'=>'Items','data'=>[(int)($totals['pending_reviews']??0),(int)($totals['open_reports']??0),(int)($totals['draft_or_qc_branches']??0)],'color'=>'#ea6a15']],
+];
 ?>
 <section class="b-admin-welcome">
   <div><h2>Good to see you, <?= View::e(explode(' ', trim((string)($staff['full_name']??'Team')))[0]) ?>.</h2><p>Here is the current health of the Bulbula.et directory and its operational queues.</p></div>
@@ -26,6 +40,11 @@ $gateDescriptions=[
   <article class="b-metric"><div class="b-metric__top"><span>Open reports</span><span>Triage</span></div><div class="b-metric__value b-tabular"><?= (int)($totals['open_reports']??0) ?></div><div class="b-metric__meta"><a href="/staff/reports">Open reports workspace →</a></div></article>
   <article class="b-metric"><div class="b-metric__top"><span>Profile views</span><span>All time</span></div><div class="b-metric__value b-tabular"><?= (int)($totals['total_profile_views']??0) ?></div><div class="b-metric__meta"><?= (int)($totals['total_contact_actions']??0) ?> tracked contact actions</div></article>
 </div>
+
+<section class="b-dashboard-charts" aria-label="Operational charts">
+  <article class="b-panel b-dashboard-chart"><header class="b-panel__header"><div><h2>Directory activity</h2><p>Discovery and high-intent actions from the last 7 days</p></div><span class="b-badge b-badge--blue">7 days</span></header><div class="b-dashboard-chart__frame"><canvas data-bulbula-chart data-chart-config="<?= View::e((string)json_encode($overviewTrend)) ?>" role="img" aria-label="Seven-day line chart of profile views and contact actions">Seven-day directory activity trend.</canvas></div></article>
+  <article class="b-panel b-dashboard-chart"><header class="b-panel__header"><div><h2>Current workload</h2><p>Items requiring operational attention</p></div></header><div class="b-dashboard-chart__frame"><canvas data-bulbula-chart data-chart-config="<?= View::e((string)json_encode($workloadChart)) ?>" role="img" aria-label="Horizontal bar chart of pending operational work">Pending reviews, open reports, and branches awaiting quality control.</canvas></div></article>
+</section>
 
 <div class="b-dashboard-grid">
   <section class="b-panel">

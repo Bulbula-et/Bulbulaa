@@ -9,11 +9,29 @@ $gateD39Open = !empty($gateD39Open);
 $activeCampaigns = 0;
 $totalImpressions = 0;
 $totalClicks = 0;
+$statusCounts = [];
 foreach ($campaigns as $campaign) {
     if (($campaign['status'] ?? '') === 'ACTIVE') $activeCampaigns++;
     $totalImpressions += (int) ($campaign['total_impressions'] ?? 0);
     $totalClicks += (int) ($campaign['total_clicks'] ?? 0);
+    $status = (string) ($campaign['status'] ?? 'Unknown');
+    $statusCounts[$status] = ($statusCounts[$status] ?? 0) + 1;
 }
+$campaignChartRows = array_slice($campaigns, 0, 8);
+$deliveryChart = [
+    'type' => 'bar', 'indexAxis' => 'y',
+    'labels' => array_map(static fn(array $row): string => (string) $row['campaign_code'], $campaignChartRows),
+    'datasets' => [
+        ['label' => 'Impressions', 'data' => array_map(static fn(array $row): int => (int) $row['total_impressions'], $campaignChartRows), 'color' => '#397eb5'],
+        ['label' => 'Clicks', 'data' => array_map(static fn(array $row): int => (int) $row['total_clicks'], $campaignChartRows), 'color' => '#ea6a15'],
+    ],
+];
+$statusChart = [
+    'type' => 'doughnut', 'scales' => false,
+    'labels' => array_map(static fn(string $status): string => ucwords(strtolower(str_replace('_', ' ', $status))), array_keys($statusCounts)),
+    'datasets' => [['label' => 'Campaigns', 'data' => array_values($statusCounts)]],
+];
+$clickThroughRate = $totalImpressions > 0 ? ($totalClicks / $totalImpressions) * 100 : 0;
 ?>
 <section class="b-campaign-policy">
   <div class="b-campaign-policy__main">
@@ -34,6 +52,11 @@ foreach ($campaigns as $campaign) {
     <div><label class="b-label" for="cmp-days">Duration</label><input id="cmp-days" type="number" name="duration_days" class="b-input" value="30" min="1" max="365" required></div>
     <div><button type="submit" class="b-btn b-btn--primary b-btn--sm">Record campaign</button></div>
   </form>
+</section>
+
+<section class="b-campaign-charts" aria-label="Campaign performance charts">
+  <article class="b-card b-campaign-chart"><header class="b-campaign-chart__head"><div><h2>Campaign delivery</h2><p>Measured impressions and clicks from first-party campaign events.</p></div><span><?= number_format($clickThroughRate, 1) ?>% click-through rate</span></header><div class="b-campaign-chart__frame"><canvas data-bulbula-chart data-chart-config="<?= View::e((string) json_encode($deliveryChart)) ?>" role="img" aria-label="Horizontal bar chart comparing campaign impressions and clicks">Campaign delivery includes <?= number_format($totalImpressions) ?> impressions and <?= number_format($totalClicks) ?> clicks.</canvas></div></article>
+  <article class="b-card b-campaign-chart"><header class="b-campaign-chart__head"><div><h2>Campaign portfolio</h2><p>Current records grouped by approval status.</p></div><span><?= count($campaigns) ?> total</span></header><div class="b-campaign-chart__frame b-campaign-chart__frame--compact"><canvas data-bulbula-chart data-chart-config="<?= View::e((string) json_encode($statusChart)) ?>" role="img" aria-label="Doughnut chart of campaigns by approval status">The portfolio contains <?= count($campaigns) ?> campaign records.</canvas></div></article>
 </section>
 
 <section class="b-card b-campaign-register">

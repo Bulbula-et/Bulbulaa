@@ -121,5 +121,9 @@ if ($isAdmin) $navGroups['Administration'] = [
   </div>
   <script src="<?= View::asset('js/core/confirm-actions.js') ?>" defer></script>
   <script src="<?= View::asset('js/staff-shell.js') ?>" defer></script>
+  <?php if (in_array($activeNav, ['dashboard', 'analytics', 'campaigns'], true)): ?>
+    <script src="<?= View::asset('vendor/chartjs/chart.umd.min.js') ?>" defer></script>
+    <script src="<?= View::asset('js/staff-charts.js') ?>" defer></script>
+  <?php endif; ?>
 </body>
 </html>
