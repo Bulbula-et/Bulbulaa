@@ -3,19 +3,26 @@ declare(strict_types=1);
 
 namespace Bulbula\Controllers\Public;
 
+use Bulbula\Core\Config;
 use Bulbula\Core\Request;
 use Bulbula\Core\Response;
 use Bulbula\Core\View;
+use Bulbula\Repositories\AreaRepository;
+use Bulbula\Repositories\BranchRepository;
+use Bulbula\Repositories\TaxonomyRepository;
 use Bulbula\Services\CustomerAuthService;
 
 /**
- * C-18 Information & Policy Pages Controller.
+ * C-18 Information & Policy Pages + C-37 Dynamic XML Sitemap Controller.
  * Explains how Bulbula works, how permissioned listings are collected, review rules, sponsorship boundaries, and privacy rights.
  */
 final class PolicyPageController
 {
     public function __construct(
-        private readonly CustomerAuthService $authService = new CustomerAuthService()
+        private readonly CustomerAuthService $authService = new CustomerAuthService(),
+        private readonly BranchRepository $branchRepo = new BranchRepository(),
+        private readonly TaxonomyRepository $taxonomyRepo = new TaxonomyRepository(),
+        private readonly AreaRepository $areaRepo = new AreaRepository()
     ) {}
 
     public function about(Request $request): Response
@@ -29,15 +36,57 @@ final class PolicyPageController
         return $this->renderPolicyPage($request, $slug);
     }
 
+    /**
+     * C-37 Indexable Destination Sitemap (`GET /sitemap.xml`).
+     */
+    public function sitemap(Request $request): Response
+    {
+        $baseUrl    = rtrim((string) Config::get('app.url', 'https://bulbula.et'), '/');
+        $categories = $this->taxonomyRepo->getFullTree(true);
+        $areas      = $this->areaRepo->listAll(true);
+        $branches   = $this->branchRepo->listPublishedForHome(200);
+
+        $paths = ['/', '/search', '/categories', '/areas', '/nearby', '/about'];
+        foreach ($categories as $cat) {
+            $paths[] = '/c/' . $cat['slug'];
+            foreach ($cat['subcategories'] ?? [] as $sub) {
+                $paths[] = '/c/' . $sub['slug'];
+            }
+        }
+        foreach ($areas as $a) {
+            $paths[] = '/a/' . $a['slug'];
+            foreach ($categories as $cat) {
+                $paths[] = '/a/' . $a['slug'] . '/' . $cat['slug'];
+            }
+        }
+        foreach ($branches as $b) {
+            $paths[] = '/b/' . $b['business_slug'] . '/' . $b['branch_slug'];
+        }
+
+        $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+        $xml .= "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
+        foreach (array_unique($paths) as $p) {
+            $loc = htmlspecialchars($baseUrl . $p, ENT_XML1);
+            $xml .= "  <url><loc>{$loc}</loc><changefreq>daily</changefreq></url>\n";
+        }
+        $xml .= "</urlset>\n";
+
+        return new Response($xml, 200, ['Content-Type' => 'application/xml; charset=utf-8']);
+    }
+
     private function renderPolicyPage(Request $request, string $slug): Response
     {
         $customer = $this->authService->currentCustomer();
 
         $titles = [
-            'about'       => 'How Bulbula.et Works — Permissioned Local Discovery',
-            'reviews'     => 'Review Participation & Pre-Publication Moderation Policy (C-13)',
-            'sponsorship' => 'Commercial Integrity & Sponsorship Labelling Policy (C-16)',
-            'privacy'     => 'Privacy, Data Minimisation & Account Rights Policy (C-36, C-40)',
+            'about'        => 'How Bulbula.et Works — Permissioned Local Discovery',
+            'editorial'    => 'Editorial & Permissioned Listing Standards (C-18)',
+            'verification' => 'Field Verification & Quality Control Policy (C-12, C-21)',
+            'reviews'      => 'Review Participation & Pre-Publication Moderation Policy (C-13)',
+            'sponsorship'  => 'Commercial Integrity & Sponsorship Labelling Policy (C-16)',
+            'sponsored'    => 'Commercial Integrity & Sponsorship Labelling Policy (C-16)',
+            'privacy'      => 'Privacy, Data Minimisation & Account Rights Policy (C-36, C-40)',
+            'terms'        => 'Terms of Use & Community Guidelines (C-18)',
         ];
 
         $selectedSlug = isset($titles[$slug]) ? $slug : 'about';

@@ -4,10 +4,11 @@ use Bulbula\Core\Csrf;
 use Bulbula\Core\View;
 
 $campaigns   = $campaigns ?? [];
+$branches    = $branches ?? [];
 $gateD39Open = !empty($gateD39Open);
 ?>
 <div class="b-card" style="margin-bottom: var(--space-5); padding: var(--space-4);">
-  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-bottom: var(--space-4);">
     <div>
       <strong>Commercial Integrity Boundary (C-16, C-27, Gate D-39):</strong>
       <span style="font-size: var(--text-sm); color: var(--neutral-600);">
@@ -18,6 +19,37 @@ $gateD39Open = !empty($gateD39Open);
       Gate D-39: <?= $gateD39Open ? 'ACTIVE' : 'BLOCKED' ?>
     </span>
   </div>
+
+  <form action="/staff/campaigns/create" method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--space-3); align-items: end; padding-top: var(--space-3); border-top: 1px solid var(--color-border-subtle);">
+    <?= Csrf::field() ?>
+    <div>
+      <label class="b-label" for="cmp-branch">Published Branch</label>
+      <select id="cmp-branch" name="branch_id" class="b-select" required>
+        <?php foreach ($branches as $br): ?>
+          <option value="<?= (int) $br['branch_id'] ?>"><?= View::e($br['branch_name_en']) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div>
+      <label class="b-label" for="cmp-format">Placement Format (C-16)</label>
+      <select id="cmp-format" name="placement_format" class="b-select">
+        <option value="HOMEPAGE_PROMOTION">HOMEPAGE_PROMOTION</option>
+        <option value="CATEGORY_SPONSORSHIP">CATEGORY_SPONSORSHIP</option>
+        <option value="SEARCH_PLACEMENT">SEARCH_PLACEMENT</option>
+      </select>
+    </div>
+    <div>
+      <label class="b-label" for="cmp-price">Fixed Price (ETB)</label>
+      <input id="cmp-price" type="number" step="0.01" name="agreed_price_etb" class="b-input" value="4500.00" required>
+    </div>
+    <div>
+      <label class="b-label" for="cmp-days">Duration (Days)</label>
+      <input id="cmp-days" type="number" name="duration_days" class="b-input" value="30" min="1" max="365" required>
+    </div>
+    <div>
+      <button type="submit" class="b-btn b-btn--primary b-btn--sm" style="width: 100%;">Record Campaign</button>
+    </div>
+  </form>
 </div>
 
 <div class="b-table-wrap">
