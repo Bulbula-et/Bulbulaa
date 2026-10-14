@@ -57,6 +57,7 @@ if ($isAdmin) $navGroups['Administration'] = [
   <?php if ($activeNav === 'verification'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-verification.css') ?>"><?php endif; ?>
   <?php if ($activeNav === 'moderation'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-moderation.css') ?>"><?php endif; ?>
   <?php if ($activeNav === 'reports'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-reports.css') ?>"><?php endif; ?>
+  <?php if ($activeNav === 'campaigns'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-campaigns.css') ?>"><?php endif; ?>
 </head>
 <body class="b-staff-body">
   <div class="b-staff-shell">
