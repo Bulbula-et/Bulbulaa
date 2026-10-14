@@ -339,7 +339,8 @@ $pdo->exec($schemaSql);
 
 // Load seed SQL and convert MySQL ON DUPLICATE KEY UPDATE clauses into SQLite INSERT OR REPLACE
 $seedSql = file_get_contents(__DIR__ . '/seeds/seed_v1_pilot.sql');
-$seedSql = preg_replace('/INSERT\s+INTO/i', 'INSERT OR REPLACE INTO', $seedSql);
+$seedSql = preg_replace('/^\s*SET\s+NAMES\s+utf8mb4\s*;\s*$/im', '', (string) $seedSql);
+$seedSql = preg_replace('/INSERT\s+INTO/i', 'INSERT OR REPLACE INTO', (string) $seedSql);
 $seedSql = preg_replace('/^\s*ON\s+DUPLICATE\s+KEY\s+UPDATE\s+.*$/im', ';', $seedSql);
 $pdo->exec($seedSql);
 
