@@ -88,4 +88,41 @@ final class DashboardController
         );
         return Response::redirect('/staff');
     }
+
+    /**
+     * D-31, D-39, D-40, D-45 One-click Readiness Gate toggle (Administrator role).
+     */
+    public function toggleGate(Request $request): Response
+    {
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security token expired.');
+            return Response::redirect('/staff');
+        }
+
+        $role = $this->staffAuth->currentRole();
+        if (!$role->canApproveCampaigns()) {
+            Session::flash('error', 'Only an Administrator can toggle V1 Readiness & Decision Gates.');
+            return Response::redirect('/staff');
+        }
+
+        $gateKey  = trim((string) $request->input('gate_key', ''));
+        $newState = (string) $request->input('new_state', '0') === '1';
+        $staff    = $this->staffAuth->currentStaff();
+        $staffId  = (int) ($staff['id'] ?? 1);
+
+        if ($gateKey !== '') {
+            $this->gateRepo->setGateState($gateKey, $newState, $staffId);
+            $this->auditService->logStaffAction(
+                $staffId,
+                'SYSTEM_GATE_TOGGLED',
+                'system_gate',
+                1,
+                null,
+                ['gate_key' => $gateKey, 'is_enabled' => $newState ? 1 : 0]
+            );
+            Session::flash('success', 'Readiness Gate ' . $gateKey . ' set to ' . ($newState ? 'ENABLED' : 'GATED / PENDING') . '.');
+        }
+
+        return Response::redirect('/staff');
+    }
 }

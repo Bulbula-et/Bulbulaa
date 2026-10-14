@@ -151,11 +151,107 @@ final class ListingController
 
     public function update(Request $request): Response
     {
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security token expired.');
+            return Response::redirect('/staff/listings');
+        }
+
+        $branchId    = (int) $request->param('branch_id', 0);
+        $branch      = $this->branchRepo->findByIdForStaff($branchId);
+        if ($branch === null) {
+            Session::flash('error', 'Branch not found.');
+            return Response::redirect('/staff/listings');
+        }
+
+        $phone       = trim((string) $request->input('phone_primary', (string) ($branch['phone_primary'] ?? ''))) ?: null;
+        $addressEn   = trim((string) $request->input('address_line_en', (string) ($branch['address_line_en'] ?? '')));
+        $hoursStatus = (string) $request->input('opening_hours_status', (string) ($branch['opening_hours_status'] ?? 'UNKNOWN'));
+        if (!in_array($hoursStatus, ['KNOWN', 'UNKNOWN', 'BY_APPOINTMENT'], true)) {
+            $hoursStatus = 'UNKNOWN';
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'UPDATE branches
+             SET phone_primary = :phone,
+                 address_line_en = :addr,
+                 opening_hours_status = :hours_status,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = :id'
+        );
+        $stmt->execute([
+            ':phone'        => $phone,
+            ':addr'         => $addressEn,
+            ':hours_status' => $hoursStatus,
+            ':id'           => $branchId,
+        ]);
+
+        $staff   = $this->staffAuth->currentStaff();
+        $staffId = (int) ($staff['id'] ?? 1);
+        $this->auditService->logStaffAction(
+            $staffId,
+            'BRANCH_ATTRIBUTES_UPDATED',
+            'branch',
+            $branchId,
+            ['phone_primary' => $branch['phone_primary'], 'opening_hours_status' => $branch['opening_hours_status']],
+            ['phone_primary' => $phone, 'opening_hours_status' => $hoursStatus]
+        );
+        Cache::flushAll();
+
+        Session::flash('success', 'Branch #' . $branchId . ' attributes updated and directory cache invalidated.');
         return Response::redirect('/staff/listings');
     }
 
     public function uploadMedia(Request $request): Response
     {
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security token expired.');
+            return Response::redirect('/staff/listings');
+        }
+
+        $branchId = (int) $request->param('branch_id', 0);
+        $branch   = $this->branchRepo->findByIdForStaff($branchId);
+        if ($branch === null) {
+            Session::flash('error', 'Branch not found.');
+            return Response::redirect('/staff/listings');
+        }
+
+        $permId = (int) ($branch['active_permission_id'] ?? 0);
+        if ($permId <= 0) {
+            Session::flash('error', 'Hard Gate (C-22): Permitted media requires an active Business Permission record.');
+            return Response::redirect('/staff/listings');
+        }
+
+        $filePath = trim((string) $request->input('file_path', 'img/cards/photo-biz-clinic.jpg'));
+        $altText  = trim((string) $request->input('alt_text_en', (string) ($branch['branch_name_en'] ?? 'Branch Photo')));
+        $staff    = $this->staffAuth->currentStaff();
+        $staffId  = (int) ($staff['id'] ?? 1);
+
+        $stmt = Database::pdo()->prepare(
+            'INSERT INTO media_assets (business_id, branch_id, permission_id, media_type, file_path, width_px, height_px, file_size_bytes, alt_text_en, display_order, is_active, uploaded_by_staff_id)
+             VALUES (:biz_id, :br_id, :perm_id, :mtype, :fpath, 720, 520, 68000, :alt, 1, 1, :staff_id)'
+        );
+        $stmt->execute([
+            ':biz_id'   => (int) $branch['business_id'],
+            ':br_id'    => $branchId,
+            ':perm_id'  => $permId,
+            ':mtype'    => 'COVER',
+            ':fpath'    => $filePath,
+            ':alt'      => $altText,
+            ':staff_id' => $staffId,
+        ]);
+        $mediaId = (int) Database::pdo()->lastInsertId();
+
+        $this->auditService->logStaffAction(
+            $staffId,
+            'PERMITTED_MEDIA_ATTACHED',
+            'media_asset',
+            $mediaId,
+            null,
+            ['branch_id' => $branchId, 'file_path' => $filePath]
+        );
+        Cache::flushAll();
+
+        Session::flash('success', 'Permitted media asset (#' . $mediaId . ') attached to Branch #' . $branchId . ' (C-22).');
         return Response::redirect('/staff/listings');
     }
 }

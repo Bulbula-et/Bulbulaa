@@ -52,6 +52,7 @@ return [
     // =========================================================================
     ['GET',  '/staff',                               ['Staff\DashboardController', 'index']],           // Console overview & pilot metrics
     ['POST', '/staff/system/flush-cache',            ['Staff\DashboardController', 'flushCache']],      // Zero-restart cache & OPcache flush
+    ['POST', '/staff/gates/toggle',                  ['Staff\DashboardController', 'toggleGate']],      // D-31..D-45 Readiness Gate toggle
     ['GET',  '/staff/listings',                      ['Staff\ListingController', 'index']],             // C-19, C-20 Business & Branch directory
     ['POST', '/staff/listings/create',               ['Staff\ListingController', 'create']],            // C-19 Create prospect/draft + Permission
     ['POST', '/staff/listings/{branch_id}/update',   ['Staff\ListingController', 'update']],            // C-20 Edit Business/Branch attributes

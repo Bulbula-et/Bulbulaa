@@ -80,6 +80,7 @@ $areas      = $areas ?? [];
         <th>Area &amp; Sub-City (C-05)</th>
         <th>Hours Status (C-09)</th>
         <th>Publication Status</th>
+        <th>Quick Edit (C-20)</th>
       </tr>
     </thead>
     <tbody>
@@ -97,6 +98,19 @@ $areas      = $areas ?? [];
           <td><?= View::e($br['area_name_en']) ?> (<?= View::e($br['sub_city_en']) ?>)</td>
           <td><span class="b-badge b-badge--blue"><?= View::e($br['opening_hours_status']) ?></span></td>
           <td><span class="b-badge b-badge--verified"><?= View::e($br['publication_status']) ?></span></td>
+          <td>
+            <form action="/staff/listings/<?= (int) $br['branch_id'] ?>/update" method="POST" style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+              <?= Csrf::field() ?>
+              <input type="hidden" name="address_line_en" value="<?= View::e((string) ($br['address_line_en'] ?? '')) ?>">
+              <input type="text" name="phone_primary" value="<?= View::e((string) ($br['phone_primary'] ?? '')) ?>" class="b-input" style="width: 125px; min-height: 30px; padding: 0.2rem 0.45rem; font-size: 0.72rem;" placeholder="+251...">
+              <select name="opening_hours_status" class="b-select" style="width: 118px; min-height: 30px; padding: 0.2rem 0.4rem; font-size: 0.72rem;">
+                <option value="KNOWN" <?= ($br['opening_hours_status'] ?? '') === 'KNOWN' ? 'selected' : '' ?>>KNOWN</option>
+                <option value="UNKNOWN" <?= ($br['opening_hours_status'] ?? '') === 'UNKNOWN' ? 'selected' : '' ?>>UNKNOWN</option>
+                <option value="BY_APPOINTMENT" <?= ($br['opening_hours_status'] ?? '') === 'BY_APPOINTMENT' ? 'selected' : '' ?>>BY_APPOINTMENT</option>
+              </select>
+              <button type="submit" class="b-btn b-btn--outline b-btn--sm" style="padding: 0.2rem 0.55rem; font-size: 0.7rem;">Save</button>
+            </form>
+          </td>
         </tr>
       <?php endforeach; ?>
     </tbody>

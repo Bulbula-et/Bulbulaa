@@ -45,7 +45,7 @@ $branches = $branches ?? [];
         <tr>
           <th>Decision Ref</th>
           <th>Gate Key</th>
-          <th>Status</th>
+          <th>Status &amp; Control</th>
           <th>Configuration / Scope Note</th>
         </tr>
       </thead>
@@ -55,9 +55,19 @@ $branches = $branches ?? [];
             <td><span class="b-badge b-badge--blue"><?= View::e($gate['decision_ref']) ?></span></td>
             <td style="font-family: var(--font-mono); font-size: var(--text-xs); font-weight: 600;"><?= View::e($gate['gate_key']) ?></td>
             <td>
-              <span class="b-badge <?= !empty($gate['is_enabled']) ? 'b-badge--verified' : 'b-badge--orange' ?>">
-                <?= !empty($gate['is_enabled']) ? 'ENABLED' : 'GATED / PENDING' ?>
-              </span>
+              <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+                <span class="b-badge <?= !empty($gate['is_enabled']) ? 'b-badge--verified' : 'b-badge--orange' ?>">
+                  <?= !empty($gate['is_enabled']) ? 'ENABLED' : 'GATED / PENDING' ?>
+                </span>
+                <form action="/staff/gates/toggle" method="POST" style="display: inline;">
+                  <?= View::csrfField() ?>
+                  <input type="hidden" name="gate_key" value="<?= View::e($gate['gate_key']) ?>">
+                  <input type="hidden" name="new_state" value="<?= !empty($gate['is_enabled']) ? '0' : '1' ?>">
+                  <button type="submit" class="b-btn b-btn--outline b-btn--sm" style="padding: 0.2rem 0.55rem; font-size: 0.7rem;">
+                    <?= !empty($gate['is_enabled']) ? 'Disable' : 'Enable' ?>
+                  </button>
+                </form>
+              </div>
             </td>
             <td style="font-size: var(--text-xs); color: var(--neutral-600);"><?= View::e($gate['config_json'] ?? '') ?></td>
           </tr>
