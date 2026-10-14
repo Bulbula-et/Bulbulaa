@@ -21,6 +21,8 @@ use Bulbula\Core\Autoloader;
 use Bulbula\Core\Config;
 use Bulbula\Core\LiveReload;
 use Bulbula\Core\Cache;
+use Bulbula\Core\Logger;
+use Bulbula\Core\ErrorHandler;
 use Bulbula\Core\Session;
 use Bulbula\Core\Request;
 use Bulbula\Core\Response;
@@ -28,11 +30,14 @@ use Bulbula\Core\Router;
 
 Autoloader::register(BULBULA_ROOT . '/src');
 Config::load(BULBULA_ROOT . '/config/env.json');
+Logger::initialize(isset($_SERVER['HTTP_X_REQUEST_ID']) ? (string) $_SERVER['HTTP_X_REQUEST_ID'] : null);
+ErrorHandler::register();
+header('X-Request-ID: ' . Logger::requestId());
 
 // Fail closed when a production deployment still contains unsafe development configuration.
 $productionProblems = Config::productionProblems();
 if ($productionProblems !== []) {
-    error_log('Bulbula.et production configuration blocked: ' . implode(' ', $productionProblems));
+    Logger::error('Production configuration blocked', ['problems' => $productionProblems]);
     http_response_code(503);
     header('Content-Type: text/plain; charset=UTF-8');
     header('Cache-Control: no-store');

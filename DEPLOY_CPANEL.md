@@ -77,6 +77,10 @@ php database/migrate.php migrate
 
 Migrations are ordered, checksummed, batch-tracked, locked against concurrent deployment, and idempotent. Never edit an applied migration; add a new timestamped file in `database/migrations/`.
 
+### Production logs
+
+Structured JSON logs rotate daily under `storage/logs/` and retain fourteen files. Ensure PHP can write this directory while it remains inaccessible from the web root. Every HTTP response includes an `X-Request-ID`; use that value to correlate a user-visible failure with its log record. Never expose or download logs publicly.
+
 ---
 
 ## 3. Configure `config/env.json` (Hot-Reloaded on Every Request)

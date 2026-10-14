@@ -13,6 +13,7 @@
         "ext-openssl": "*",
         "ext-sodium": "*",
         "google/apiclient": "^2.18",
+        "monolog/monolog": "^3.9",
         "phpmailer/phpmailer": "^6.10",
         "robthree/twofactorauth": "^3.0"
     },
