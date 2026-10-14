@@ -29,7 +29,7 @@ STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" -c "$T
   --data-urlencode "_csrf=$CSRF" --data-urlencode "totp_code=$TOTP_CODE")"
 [[ "$STATUS" == "302" ]] || fail "Staff TOTP verification expected 302, got $STATUS"
 curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/users" -o "$TMP/staff-users.html"
-grep -q 'RBAC Management' "$TMP/staff-users.html" || fail "Authenticated staff RBAC page inaccessible"
+grep -q 'Staff access register' "$TMP/staff-users.html" || fail "Authenticated staff access page inaccessible"
 pass "Staff CSRF + password + RFC 6238 TOTP + session + Administrator RBAC flow"
 
 # Real multipart media pipeline: byte MIME validation, GD decode/re-encode, random filename, measured metadata.
