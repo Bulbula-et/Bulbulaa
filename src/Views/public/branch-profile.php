@@ -16,7 +16,40 @@ $flashSuccess   = $flashSuccess ?? null;
 $flashError     = $flashError ?? null;
 $dayNames       = [0 => 'Sunday', 1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday'];
 $coverImg       = View::branchImage($b);
+
+$jsonLd = [
+    '@context'    => 'https://schema.org',
+    '@type'       => 'LocalBusiness',
+    'name'        => (string) ($b['branch_name_en'] ?? $b['business_name_en'] ?? 'Bole Bulbula Business'),
+    'description' => (string) ($b['brand_summary_en'] ?? ''),
+    'url'         => 'https://bulbula.et' . $canonicalPath,
+    'address'     => [
+        '@type'           => 'PostalAddress',
+        'streetAddress'   => (string) ($b['address_line_en'] ?? ''),
+        'addressLocality' => (string) ($b['area_name_en'] ?? 'Bole Bulbula'),
+        'addressRegion'   => 'Addis Ababa',
+        'addressCountry'  => 'ET',
+    ],
+];
+if (!empty($b['phone_primary'])) {
+    $jsonLd['telephone'] = (string) $b['phone_primary'];
+}
+if (!empty($b['latitude']) && !empty($b['longitude'])) {
+    $jsonLd['geo'] = [
+        '@type'     => 'GeoCoordinates',
+        'latitude'  => (float) $b['latitude'],
+        'longitude' => (float) $b['longitude'],
+    ];
+}
+if ((int) ($b['published_review_count'] ?? 0) > 0 && $b['published_rating_avg'] !== null) {
+    $jsonLd['aggregateRating'] = [
+        '@type'       => 'AggregateRating',
+        'ratingValue' => round((float) $b['published_rating_avg'], 2),
+        'reviewCount' => (int) $b['published_review_count'],
+    ];
+}
 ?>
+<script type="application/ld+json"><?= json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
 
 <section class="b-section" style="padding-top: var(--space-5);">
   <div class="b-container">
