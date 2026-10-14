@@ -19,6 +19,7 @@ storage/logs/*.log
 storage/sessions/*
 storage/rate_limits/*
 storage/migration.lock
+storage/config-update.lock
 !storage/cache/.gitkeep
 !storage/logs/.gitkeep
 !storage/sessions/.gitkeep

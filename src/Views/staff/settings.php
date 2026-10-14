@@ -52,7 +52,7 @@ $mail      = $env['mail'] ?? [];
         </div>
         <div>
           <label class="b-label" for="cfg-gsec">Google OAuth Client Secret</label>
-          <input id="cfg-gsec" type="password" name="google_client_secret" class="b-input" value="<?= !empty($auth['google_client_secret']) ? '••••••••' : '' ?>" placeholder="GOCSPX-...">
+          <input id="cfg-gsec" type="password" name="google_client_secret" class="b-input" value="<?= !empty($auth['google_client_secret_is_set']) ? '••••••••' : '' ?>" placeholder="GOCSPX-...">
         </div>
         <div>
           <label class="b-label" for="cfg-tg-user">Telegram Bot Username</label>
@@ -60,7 +60,7 @@ $mail      = $env['mail'] ?? [];
         </div>
         <div>
           <label class="b-label" for="cfg-tg-tok">Telegram Bot Token (HMAC-SHA256)</label>
-          <input id="cfg-tg-tok" type="password" name="telegram_bot_token" class="b-input" value="<?= !empty($auth['telegram_bot_token']) ? '••••••••' : '' ?>" placeholder="123456:ABC-DEF...">
+          <input id="cfg-tg-tok" type="password" name="telegram_bot_token" class="b-input" value="<?= !empty($auth['telegram_bot_token_is_set']) ? '••••••••' : '' ?>" placeholder="123456:ABC-DEF...">
         </div>
       </div>
     </section>
@@ -98,7 +98,7 @@ $mail      = $env['mail'] ?? [];
         </div>
         <div>
           <label class="b-label" for="cfg-mpass">SMTP Password</label>
-          <input id="cfg-mpass" type="password" name="mail_password" class="b-input" value="<?= !empty($mail['password']) ? '••••••••' : '' ?>" placeholder="••••••••">
+          <input id="cfg-mpass" type="password" name="mail_password" class="b-input" value="<?= !empty($mail['password_is_set']) ? '••••••••' : '' ?>" placeholder="••••••••">
         </div>
         <div>
           <label class="b-label" for="cfg-mfrom">From Email</label>

@@ -57,6 +57,9 @@ jobs:
       - name: Atomic rate-limiter concurrency test
         run: tests/rate_limiter_concurrency.sh
 
+      - name: Atomic configuration concurrency test
+        run: tests/config_update_concurrency.sh
+
       - name: Rebuild deterministic SQLite test database
         run: php database/init_sqlite.php
 

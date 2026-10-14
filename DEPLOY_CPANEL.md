@@ -77,6 +77,10 @@ php database/migrate.php migrate
 
 Migrations are ordered, checksummed, batch-tracked, locked against concurrent deployment, and idempotent. Never edit an applied migration; add a new timestamped file in `database/migrations/`.
 
+### Live configuration safety
+
+Administrator-managed settings are stored in ignored `config/env.local.json`; server environment variables remain authoritative. Updates are field-allowlisted, format-validated, lock-serialized, written through a `0600` temporary file, synchronized, and atomically activated. Secret values are never returned to the settings view or audit log. Keep `config/` outside direct web access and ensure PHP can write only the local overlay and `storage/config-update.lock`.
+
 ### Session security
 
 Production forces `Secure`, `HttpOnly`, and appropriate `SameSite` session cookies independently of proxy headers. Default server-side limits are a 30-minute idle / 8-hour absolute Staff session and a 7-day idle / 14-day absolute Customer session. Override only through `BULBULA_STAFF_SESSION_IDLE`, `BULBULA_STAFF_SESSION_ABSOLUTE`, `BULBULA_CUSTOMER_SESSION_IDLE`, and `BULBULA_CUSTOMER_SESSION_ABSOLUTE` environment values.

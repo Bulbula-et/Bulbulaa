@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace Bulbula\Controllers\Staff;
 
-use Bulbula\Core\Cache;
-use Bulbula\Core\Config;
 use Bulbula\Core\Csrf;
 use Bulbula\Core\Mailer;
 use Bulbula\Core\Request;
@@ -12,6 +10,7 @@ use Bulbula\Core\Response;
 use Bulbula\Core\Session;
 use Bulbula\Core\View;
 use Bulbula\Services\AuditService;
+use Bulbula\Services\ConfigurationService;
 use Bulbula\Services\StaffAuthService;
 
 /**
@@ -21,13 +20,14 @@ final class SettingsController
 {
     public function __construct(
         private readonly StaffAuthService $staffAuth = new StaffAuthService(),
-        private readonly AuditService $auditService = new AuditService()
+        private readonly AuditService $auditService = new AuditService(),
+        private readonly ConfigurationService $configuration = new ConfigurationService()
     ) {}
 
     public function index(Request $request): Response
     {
         $role   = $this->staffAuth->currentRole();
-        $rawEnv = Config::all();
+        $rawEnv = $this->configuration->safeSnapshot();
 
         $html = View::render('staff/settings', [
             'pageTitle' => 'System, Auth & SMTP Settings (Zero-Restart) — Staff Console',
@@ -52,58 +52,22 @@ final class SettingsController
             return Response::redirect('/staff/settings');
         }
 
-        // Secrets and site-specific settings are written only to an ignored local overlay.
-        // Real server environment variables still take precedence after reload.
-        $basePath  = BULBULA_ROOT . '/config/env.json';
-        $localPath = BULBULA_ROOT . '/config/env.local.json';
-        $data      = is_file($localPath)
-            ? (json_decode((string) file_get_contents($localPath), true) ?: [])
-            : [];
-
-        // 1. Security & Staff Login Mode
-        $data['security']['require_staff_login']     = (string) $request->input('require_staff_login', '0') === '1';
-        $data['security']['otp_expiry_seconds']      = max(120, min(3600, (int) $request->input('otp_expiry_seconds', 600)));
-        $data['security']['review_edit_window_days'] = max(1, min(90, (int) $request->input('review_edit_window_days', 30)));
-
-        // 2. Google OAuth 2.0 & Telegram Mini App Settings (C-30)
-        $data['auth']['google_client_id']      = trim((string) $request->input('google_client_id', ''));
-        $googleSecretInput                     = trim((string) $request->input('google_client_secret', ''));
-        if ($googleSecretInput !== '' && $googleSecretInput !== '••••••••') {
-            $data['auth']['google_client_secret'] = $googleSecretInput;
-        }
-        $data['auth']['telegram_bot_username'] = trim((string) $request->input('telegram_bot_username', 'BulbulaEtBot'));
-        $tgTokenInput                          = trim((string) $request->input('telegram_bot_token', ''));
-        if ($tgTokenInput !== '' && $tgTokenInput !== '••••••••') {
-            $data['auth']['telegram_bot_token'] = $tgTokenInput;
-        }
-
-        // 3. SMTP Email OTP Settings (C-31)
-        $data['mail']['driver']     = in_array($request->input('mail_driver'), ['smtp', 'mail'], true) ? (string) $request->input('mail_driver') : 'smtp';
-        $data['mail']['host']       = trim((string) $request->input('mail_host', 'mail.bulbula.et'));
-        $data['mail']['port']       = max(1, min(65535, (int) $request->input('mail_port', 587)));
-        $data['mail']['encryption'] = in_array($request->input('mail_encryption'), ['tls', 'ssl', 'none'], true) ? (string) $request->input('mail_encryption') : 'tls';
-        $data['mail']['username']   = trim((string) $request->input('mail_username', 'no-reply@bulbula.et'));
-        $mailPassInput              = trim((string) $request->input('mail_password', ''));
-        if ($mailPassInput !== '' && $mailPassInput !== '••••••••') {
-            $data['mail']['password'] = $mailPassInput;
-        }
-        $data['mail']['from_email'] = trim((string) $request->input('mail_from_email', 'no-reply@bulbula.et'));
-        $data['mail']['from_name']  = trim((string) $request->input('mail_from_name', 'Bulbula.et Verification'));
-
-        $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
-        $tmp  = $localPath . '.tmp.' . bin2hex(random_bytes(6));
-        if (file_put_contents($tmp, $json, LOCK_EX) === false) {
-            Session::flash('error', 'Could not write the protected local configuration file.');
+        $input = $request->input();
+        if (!is_array($input)) $input = [];
+        unset($input['_csrf']);
+        $actor = $this->staffAuth->currentStaff();
+        try {
+            $summary = $this->configuration->update($input);
+        } catch (\Throwable $exception) {
+            $this->auditService->logStaffAction(
+                (int) ($actor['id'] ?? 1), 'SYSTEM_SETTINGS_REJECTED', 'system_config', 1,
+                null, ['reason_class' => $exception::class, 'reason_sha256' => hash('sha256', $exception->getMessage())]
+            );
+            Session::flash('error', $exception instanceof \InvalidArgumentException
+                ? $exception->getMessage()
+                : 'Configuration was not changed because secure validation or atomic activation failed.');
             return Response::redirect('/staff/settings');
         }
-        @chmod($tmp, 0600);
-        if (!rename($tmp, $localPath)) {
-            @unlink($tmp);
-            Session::flash('error', 'Could not atomically activate the protected local configuration.');
-            return Response::redirect('/staff/settings');
-        }
-        Config::load($basePath);
-        Cache::flushAll();
 
         $actor = $this->staffAuth->currentStaff();
         $this->auditService->logStaffAction(
@@ -112,13 +76,7 @@ final class SettingsController
             'system_config',
             1,
             null,
-            [
-                'require_staff_login'   => $data['security']['require_staff_login'],
-                'google_client_id_set'  => $data['auth']['google_client_id'] !== '',
-                'mail_host'             => $data['mail']['host'],
-                'mail_port'             => $data['mail']['port'],
-                'telegram_bot_username' => $data['auth']['telegram_bot_username'],
-            ]
+            $summary
         );
 
         Session::flash('success', 'Settings saved atomically to protected config/env.local.json and hot-reloaded without a server restart. Server environment variables remain authoritative.');
