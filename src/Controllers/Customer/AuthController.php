@@ -103,6 +103,73 @@ final class AuthController
         return Response::redirect($returnTo);
     }
 
+    public function showForgotPassword(Request $request): Response
+    {
+        if ((string) $request->query('restart', '') === '1') {
+            Session::forget('password_reset_email');
+            Session::forget('password_reset_dev_preview');
+            Session::forget('password_reset_customer_id');
+            Session::forget('password_reset_verified_at');
+        }
+        return Response::html(View::render('customer/forgot-password', [
+            'pageTitle' => 'Recover Your Password — Bulbula.et', 'canonicalUrl' => '/auth/forgot-password',
+            'request' => $request, 'customer' => null,
+            'pendingEmail' => Session::get('password_reset_email'), 'devOtp' => Session::get('password_reset_dev_preview'),
+            'resetVerified' => (int) Session::get('password_reset_customer_id', 0) > 0,
+        ]));
+    }
+
+    public function requestPasswordReset(Request $request): Response
+    {
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security session expired.'); return Response::redirect('/auth/forgot-password');
+        }
+        $email = mb_strtolower(trim((string) $request->input('email', '')), 'UTF-8');
+        $existing = $this->authService->issuePasswordResetOtp($email, $request->clientIpHash());
+        if (!empty($existing['ok'])) {
+            Session::set('password_reset_email', $email);
+            if (!empty($existing['dev_preview_otp'])) Session::set('password_reset_dev_preview', $existing['dev_preview_otp']);
+        }
+        Session::flash('success', 'If an active account matches that email, a password recovery code has been sent.');
+        return Response::redirect('/auth/forgot-password');
+    }
+
+    public function verifyPasswordReset(Request $request): Response
+    {
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security session expired.'); return Response::redirect('/auth/forgot-password');
+        }
+        $result = $this->authService->verifyPasswordResetOtp((string) Session::get('password_reset_email', ''), (string) $request->input('otp_code', ''));
+        if (!$result['ok']) { Session::flash('error', (string) $result['error']); return Response::redirect('/auth/forgot-password'); }
+        Session::forget('password_reset_dev_preview');
+        return Response::redirect('/auth/reset-password');
+    }
+
+    public function showResetPassword(Request $request): Response
+    {
+        if ((int) Session::get('password_reset_customer_id', 0) <= 0) return Response::redirect('/auth/forgot-password');
+        return Response::html(View::render('customer/reset-password', [
+            'pageTitle' => 'Choose a New Password — Bulbula.et', 'canonicalUrl' => '/auth/reset-password',
+            'request' => $request, 'customer' => null,
+        ]));
+    }
+
+    public function resetPassword(Request $request): Response
+    {
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security session expired.'); return Response::redirect('/auth/reset-password');
+        }
+        $password = (string) $request->input('password', '');
+        if (!hash_equals($password, (string) $request->input('password_confirmation', ''))) {
+            Session::flash('error', 'Password confirmation does not match.'); return Response::redirect('/auth/reset-password');
+        }
+        $result = $this->authService->completePasswordReset($password);
+        if (!$result['ok']) { Session::flash('error', (string) $result['error']); return Response::redirect('/auth/reset-password'); }
+        Session::forget('password_reset_email');
+        Session::flash('success', 'Your password has been reset and you are signed in.');
+        return Response::redirect('/account');
+    }
+
     public function requestEmailOtp(Request $request): Response
     {
         $returnTo = (string) $request->input('return_to', '/account');

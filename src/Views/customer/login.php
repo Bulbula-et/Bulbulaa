@@ -31,7 +31,7 @@ $devOtp       = $devOtp ?? null;
       <form method="POST" action="/auth/password/login" style="display:flex;flex-direction:column;gap:var(--space-3)">
         <?= Csrf::field() ?><input type="hidden" name="return_to" value="<?= View::e($returnTo) ?>">
         <div><label class="b-label" for="login-email">Email address</label><input id="login-email" type="email" name="email" class="b-input" autocomplete="email" placeholder="you@example.com" required></div>
-        <div><label class="b-label" for="login-password">Password</label><input id="login-password" type="password" name="password" class="b-input" autocomplete="current-password" required></div>
+        <div><div style="display:flex;justify-content:space-between;gap:var(--space-2)"><label class="b-label" for="login-password">Password</label><a href="/auth/forgot-password" style="font-size:var(--text-xs)">Forgot password?</a></div><input id="login-password" type="password" name="password" class="b-input" autocomplete="current-password" required></div>
         <button type="submit" class="b-btn b-btn--primary">Sign in</button>
       </form>
       <p style="font-size:var(--text-xs);text-align:center;margin:var(--space-3) 0">New to Bulbula.et? <a href="/auth/register">Create an account</a></p>

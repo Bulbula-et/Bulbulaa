@@ -275,6 +275,7 @@ CREATE TABLE IF NOT EXISTS customers (
 CREATE TABLE IF NOT EXISTS customer_otp_tokens (
     id                      BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     email                   VARCHAR(190) NOT NULL,
+    purpose                 VARCHAR(24) NOT NULL DEFAULT 'SIGN_IN',
     code_hmac_sha256        CHAR(64) NOT NULL COMMENT 'C-31: Stored as hash, never plain text',
     attempt_count           TINYINT UNSIGNED NOT NULL DEFAULT 0,
     requester_ip_hash       CHAR(64) NOT NULL,

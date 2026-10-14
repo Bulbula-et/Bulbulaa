@@ -96,14 +96,17 @@ final class CustomerAuthService
     }
 
     /** Generates and stores a short-lived email verification code. */
-    public function issueEmailOtp(string $rawEmail, string $clientIpHash): array
+    public function issueEmailOtp(string $rawEmail, string $clientIpHash, string $purpose = 'SIGN_IN'): array
     {
         $email = mb_strtolower(trim($rawEmail), 'UTF-8');
+        if (!in_array($purpose, ['SIGN_IN', 'VERIFY_EMAIL', 'PASSWORD_RESET'], true)) {
+            return ['ok' => false, 'error' => 'Unsupported verification request.'];
+        }
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return ['ok' => false, 'error' => 'Please enter a valid email address.'];
         }
 
-        if (!RateLimiter::allow('otp_req:' . md5($email . ':' . $clientIpHash), 5, 600)) {
+        if (!RateLimiter::allow('otp_req:' . md5($purpose . ':' . $email . ':' . $clientIpHash), 5, 600)) {
             return ['ok' => false, 'error' => 'Too many code requests. Please wait a few minutes before requesting another code.'];
         }
 
@@ -115,13 +118,14 @@ final class CustomerAuthService
         $isDev = Config::previewFeaturesEnabled();
         $minutes = max(1, (int) ceil($ttl / 60));
         $safeCode = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $action = match ($purpose) { 'PASSWORD_RESET' => 'reset your password', 'VERIFY_EMAIL' => 'verify your email', default => 'sign in' };
         $html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:28px;color:#1f2937">'
               . '<div style="color:#EA6A15;font-weight:800;font-size:20px">Bulbula.et</div>'
               . '<h1 style="font-size:24px;margin:20px 0 8px">Your verification code</h1>'
-              . '<p>Use this one-time code to sign in. It expires in ' . $minutes . ' minutes.</p>'
+              . '<p>Use this one-time code to ' . $action . '. It expires in ' . $minutes . ' minutes.</p>'
               . '<div style="font-size:34px;letter-spacing:8px;font-weight:800;background:#FFF5EB;border:1px solid #FFEBDA;border-radius:14px;padding:18px;text-align:center">' . $safeCode . '</div>'
               . '<p style="font-size:13px;color:#6b7280">If you did not request this code, you can safely ignore this email. Never share the code with anyone.</p></div>';
-        $text = "Your Bulbula.et verification code is {$code}. It expires in {$minutes} minutes. Never share this code.";
+        $text = "Your Bulbula.et code to {$action} is {$code}. It expires in {$minutes} minutes. Never share this code.";
 
         $mail = Mailer::send($email, $code . ' is your Bulbula.et verification code', $html, $text);
         if (!$mail['ok'] && !$isDev) {
@@ -129,7 +133,7 @@ final class CustomerAuthService
         }
 
         // Persist only after successful production delivery; development preview remains usable without SMTP credentials.
-        $this->customerRepo->storeOtpToken($email, $hmac, $clientIpHash, $ttl);
+        $this->customerRepo->storeOtpToken($email, $hmac, $clientIpHash, $ttl, $purpose);
 
         return [
             'ok'              => true,
@@ -180,9 +184,55 @@ final class CustomerAuthService
         return ['ok' => true, 'customer' => $customer];
     }
 
-    /**
-     * C-30 Server-side Google Sign-In callback handler.
-     */
+    public function issuePasswordResetOtp(string $rawEmail, string $clientIpHash): array
+    {
+        $email = mb_strtolower(trim($rawEmail), 'UTF-8');
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return ['ok' => true, 'email' => $email];
+        $customer = $this->customerRepo->findByEmail($email);
+        if ($customer === null || ($customer['account_status'] ?? '') !== 'ACTIVE') return ['ok' => true, 'email' => $email];
+        return $this->issueEmailOtp($email, $clientIpHash, 'PASSWORD_RESET');
+    }
+
+    public function verifyPasswordResetOtp(string $rawEmail, string $submittedCode): array
+    {
+        $email = mb_strtolower(trim($rawEmail), 'UTF-8');
+        $code = preg_replace('/\D/', '', $submittedCode);
+        if ($email === '' || strlen((string) $code) !== 6) return ['ok' => false, 'error' => 'Enter the 6-digit password recovery code.'];
+        $otpRow = $this->customerRepo->findLatestActiveOtp($email, 'PASSWORD_RESET');
+        if ($otpRow === null) return ['ok' => false, 'error' => 'The recovery code has expired. Request a new code.'];
+        $maxAttempts = (int) Config::get('security.otp_max_attempts', 5);
+        if ((int) $otpRow['attempt_count'] >= $maxAttempts) return ['ok' => false, 'error' => 'Maximum recovery attempts exceeded. Request a new code.'];
+        $this->customerRepo->incrementOtpAttempts((int) $otpRow['id']);
+        $secret = (string) Config::get('app.secret_key', 'bulbula_secret');
+        $expected = hash_hmac('sha256', $email . ':' . $code, $secret);
+        if (!hash_equals((string) $otpRow['code_hmac_sha256'], $expected)) return ['ok' => false, 'error' => 'The recovery code is incorrect.'];
+        $customer = $this->customerRepo->findByEmail($email);
+        if ($customer === null || ($customer['account_status'] ?? '') !== 'ACTIVE') return ['ok' => false, 'error' => 'This account cannot be recovered.'];
+        $this->customerRepo->markOtpConsumed((int) $otpRow['id']);
+        Session::regenerate();
+        Session::set('password_reset_customer_id', (int) $customer['id']);
+        Session::set('password_reset_verified_at', time());
+        return ['ok' => true];
+    }
+
+    public function completePasswordReset(string $newPassword): array
+    {
+        $customerId = (int) Session::get('password_reset_customer_id', 0);
+        $verifiedAt = (int) Session::get('password_reset_verified_at', 0);
+        if ($customerId <= 0 || $verifiedAt < time() - 900) return ['ok' => false, 'error' => 'Your password recovery session has expired.'];
+        $error = $this->passwordValidationError($newPassword);
+        if ($error !== null) return ['ok' => false, 'error' => $error];
+        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+        if (!is_string($hash)) return ['ok' => false, 'error' => 'The new password could not be secured.'];
+        $this->customerRepo->updatePassword($customerId, $hash);
+        Session::forget('password_reset_customer_id');
+        Session::forget('password_reset_verified_at');
+        Session::regenerate();
+        Session::set('customer_id', $customerId);
+        return ['ok' => true, 'customer' => $this->customerRepo->findById($customerId)];
+    }
+
+    /** Server-side Google Sign-In callback handler. */
     public function signInWithVerifiedGoogleIdentity(string $email, string $displayName, string $googleSubId, string $surface = 'WEB'): array
     {
         $customer = $this->customerRepo->findOrCreateByEmail($email, $displayName, $googleSubId, $surface);

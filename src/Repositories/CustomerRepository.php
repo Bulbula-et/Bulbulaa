@@ -90,16 +90,17 @@ final class CustomerRepository
     }
 
     /** Store Email OTP strictly as HMAC-SHA256 hash. */
-    public function storeOtpToken(string $email, string $codeHmacSha256, string $ipHash, int $ttlSeconds = 600): int
+    public function storeOtpToken(string $email, string $codeHmacSha256, string $ipHash, int $ttlSeconds = 600, string $purpose = 'SIGN_IN'): int
     {
         $normEmail = mb_strtolower(trim($email), 'UTF-8');
         $expiresAt = date('Y-m-d H:i:s', time() + $ttlSeconds);
 
         return Database::insert(
-            'INSERT INTO customer_otp_tokens (email, code_hmac_sha256, attempt_count, requester_ip_hash, expires_at)
-             VALUES (:email, :hash, 0, :ip, :exp)',
+            'INSERT INTO customer_otp_tokens (email, purpose, code_hmac_sha256, attempt_count, requester_ip_hash, expires_at)
+             VALUES (:email, :purpose, :hash, 0, :ip, :exp)',
             [
                 ':email' => $normEmail,
+                ':purpose' => $purpose,
                 ':hash'  => $codeHmacSha256,
                 ':ip'    => $ipHash,
                 ':exp'   => $expiresAt,
@@ -107,18 +108,20 @@ final class CustomerRepository
         );
     }
 
-    public function findLatestActiveOtp(string $email): ?array
+    public function findLatestActiveOtp(string $email, string $purpose = 'SIGN_IN'): ?array
     {
         $normEmail = mb_strtolower(trim($email), 'UTF-8');
         return Database::fetchOne(
             'SELECT * FROM customer_otp_tokens
              WHERE email = :email
+               AND purpose = :purpose
                AND consumed_at IS NULL
                AND expires_at >= :now
              ORDER BY id DESC
              LIMIT 1',
             [
                 ':email' => $normEmail,
+                ':purpose' => $purpose,
                 ':now'   => date('Y-m-d H:i:s'),
             ]
         );

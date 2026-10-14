@@ -208,6 +208,7 @@ CREATE TABLE customers (
 CREATE TABLE customer_otp_tokens (
     id                      INTEGER PRIMARY KEY AUTOINCREMENT,
     email                   TEXT NOT NULL,
+    purpose                 TEXT NOT NULL DEFAULT 'SIGN_IN',
     code_hmac_sha256        TEXT NOT NULL,
     attempt_count           INTEGER NOT NULL DEFAULT 0,
     requester_ip_hash       TEXT NOT NULL,

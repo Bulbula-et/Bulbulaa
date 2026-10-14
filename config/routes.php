@@ -36,6 +36,11 @@ return [
     ['POST', '/auth/password/login',                 ['Customer\AuthController', 'passwordLogin']],
     ['GET',  '/auth/register',                       ['Customer\AuthController', 'showRegister']],
     ['POST', '/auth/register',                       ['Customer\AuthController', 'register']],
+    ['GET',  '/auth/forgot-password',                ['Customer\AuthController', 'showForgotPassword']],
+    ['POST', '/auth/forgot-password',                ['Customer\AuthController', 'requestPasswordReset']],
+    ['POST', '/auth/forgot-password/verify',         ['Customer\AuthController', 'verifyPasswordReset']],
+    ['GET',  '/auth/reset-password',                 ['Customer\AuthController', 'showResetPassword']],
+    ['POST', '/auth/reset-password',                 ['Customer\AuthController', 'resetPassword']],
     ['POST', '/auth/otp/request',                    ['Customer\AuthController', 'requestEmailOtp']],   // C-31 Request Email OTP
     ['POST', '/auth/otp/verify',                     ['Customer\AuthController', 'verifyEmailOtp']],    // C-31 Verify Email OTP
     ['POST', '/auth/google/callback',                ['Customer\AuthController', 'googleCallback']],    // C-30 Verify Google ID Token
