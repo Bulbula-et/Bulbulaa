@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 use Bulbula\Core\Csrf;
+use Bulbula\Core\SecurityHeaders;
 use Bulbula\Core\View;
 
 $returnTo     = $returnTo ?? '/account';
@@ -65,8 +66,8 @@ $devOtp       = $devOtp ?? null;
            data-auto_prompt="false"
            data-ux_mode="popup"></div>
       <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="continue_with" data-size="large" data-logo_alignment="left" data-width="360"></div>
-      <script src="https://accounts.google.com/gsi/client" async defer></script>
-      <script>
+      <script nonce="<?= SecurityHeaders::nonce() ?>" src="https://accounts.google.com/gsi/client" async defer></script>
+      <script nonce="<?= SecurityHeaders::nonce() ?>">
         function bulbulaGoogleCredential(response) {
           if (!response || !response.credential) return;
           document.getElementById('google-credential').value = response.credential;

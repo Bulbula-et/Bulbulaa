@@ -79,9 +79,9 @@ $staffUsers = $staffUsers ?? [];
                 </form>
 
                 <?php if (!empty($su['totp_enabled'])): ?>
-                  <form action="/staff/users/<?= (int) $su['id'] ?>/2fa-reset" method="POST" style="display:inline;">
+                  <form action="/staff/users/<?= (int) $su['id'] ?>/2fa-reset" method="POST" style="display:inline;" data-confirm="Reset this staff member’s authenticator enrollment?">
                     <?= Csrf::field() ?>
-                    <button type="submit" class="b-btn b-btn--outline b-btn--sm" style="padding:.2rem .5rem;font-size:.7rem;" onclick="return confirm('Reset this staff member’s authenticator enrollment?');">Reset 2FA</button>
+                    <button type="submit" class="b-btn b-btn--outline b-btn--sm" style="padding:.2rem .5rem;font-size:.7rem;">Reset 2FA</button>
                   </form>
                 <?php endif; ?>
                 <form action="/staff/users/<?= (int) $su['id'] ?>/toggle" method="POST" style="display: inline;">

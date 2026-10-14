@@ -77,6 +77,10 @@ php database/migrate.php migrate
 
 Migrations are ordered, checksummed, batch-tracked, locked against concurrent deployment, and idempotent. Never edit an applied migration; add a new timestamped file in `database/migrations/`.
 
+### Browser security policy
+
+All responses receive a nonce-based Content Security Policy, restrictive Permissions Policy, `nosniff`, strict referrer handling, and cross-origin isolation controls. Production additionally emits one-year HSTS and upgrades insecure subresources. Framing is denied except for same-origin and Telegram Web origins required by the Mini App. Do not add inline scripts without `SecurityHeaders::nonce()` or external hosts without a reviewed CSP update.
+
 ### Mandatory production preflight
 
 Set `app.preview_features=false` (or `BULBULA_PREVIEW_FEATURES=0`). Production starts only with debug and preview disabled, strict Staff login, MySQL, a unique application secret, at least one active Administrator, no known pilot password (`password` or `BulbulaStaff2026!`), and encrypted TOTP enrollment for every active Staff account. Never import `database/seeds/seed_v1_pilot.sql` into production; if pilot data was imported, replace all Staff credentials and complete TOTP before serving web traffic.

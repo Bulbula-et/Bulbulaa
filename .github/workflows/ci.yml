@@ -86,6 +86,9 @@ jobs:
       - name: Public, API, SEO and Staff route verification
         run: php tests/verify_v1_all.php
 
+      - name: Browser security headers and CSP nonce verification
+        run: tests/security_headers.sh
+
       - name: Authenticated CSRF, staff RBAC and customer OTP E2E flows
         run: tests/e2e_flows.sh
 

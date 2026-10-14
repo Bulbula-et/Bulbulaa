@@ -131,5 +131,6 @@ $flashError   = Session::flash('error');
       <?= $content ?? '' ?>
     </div>
   </div>
+  <script src="<?= View::asset('js/core/confirm-actions.js') ?>" defer></script>
 </body>
 </html>

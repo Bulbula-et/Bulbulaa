@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 use Bulbula\Core\View;
+use Bulbula\Core\SecurityHeaders;
 
 /**
  * C-08..C-14 Branch Profile Details View — Cloned from Image 1 Middle-Left "Details" Screen
@@ -49,7 +50,7 @@ if ((int) ($b['published_review_count'] ?? 0) > 0 && $b['published_rating_avg'] 
     ];
 }
 ?>
-<script type="application/ld+json"><?= json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
+<script nonce="<?= SecurityHeaders::nonce() ?>" type="application/ld+json"><?= json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
 
 <section class="b-section" style="padding-top: var(--space-5);">
   <div class="b-container">

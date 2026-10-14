@@ -24,6 +24,7 @@ use Bulbula\Core\Cache;
 use Bulbula\Core\Logger;
 use Bulbula\Core\ErrorHandler;
 use Bulbula\Core\ProductionGuard;
+use Bulbula\Core\SecurityHeaders;
 use Bulbula\Core\Session;
 use Bulbula\Core\Request;
 use Bulbula\Core\Response;
@@ -31,6 +32,7 @@ use Bulbula\Core\Router;
 
 Autoloader::register(BULBULA_ROOT . '/src');
 Config::load(BULBULA_ROOT . '/config/env.json');
+SecurityHeaders::apply();
 Logger::initialize(isset($_SERVER['HTTP_X_REQUEST_ID']) ? (string) $_SERVER['HTTP_X_REQUEST_ID'] : null);
 ErrorHandler::register();
 header('X-Request-ID: ' . Logger::requestId());

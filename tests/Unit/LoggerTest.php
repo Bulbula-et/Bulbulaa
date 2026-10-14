@@ -32,9 +32,11 @@ final class LoggerTest extends TestCase
 
         $files = glob(BULBULA_ROOT . '/storage/logs/bulbula-*.log') ?: [];
         self::assertNotEmpty($files);
-        $line = file_get_contents(end($files));
-        self::assertIsString($line);
-        $decoded = json_decode(trim($line), true, flags: JSON_THROW_ON_ERROR);
+        $contents = file_get_contents(end($files));
+        self::assertIsString($contents);
+        $lines = array_values(array_filter(explode("\n", trim($contents)), static fn(string $line): bool => $line !== ''));
+        $line = (string) end($lines);
+        $decoded = json_decode($line, true, flags: JSON_THROW_ON_ERROR);
         self::assertSame('test-request-1234', $decoded['context']['request_id']);
         self::assertSame('[REDACTED]', $decoded['context']['password']);
         self::assertSame('[REDACTED]', $decoded['context']['nested']['authorization']);
