@@ -1,6 +1,20 @@
 # Bulbula.et Engineering Rules
 
-## Mature Open-Source Integration First (Locked — 2026-10-14)
+## Plain PHP, Clean Architecture & Selective Dependency Rule (Locked — 2026-10-14)
+
+Bulbula.et must remain a **plain PHP application without a framework**. It must stay easy to understand, upload, configure, and run on inexpensive shared hosting.
+
+- Do not introduce Laravel, Symfony Framework, Slim, CodeIgniter, or another application framework.
+- Do not replace small, stable, application-specific code merely because a package exists.
+- A dependency is allowed only when it is a focused, mature, security-reviewed library that removes substantial protocol/security risk (for example PHPMailer or Google's official API client).
+- Prefer zero-dependency PHP and native PHP functionality when the implementation is small, clear, testable, and not security/protocol sensitive.
+- Reject dependency-heavy packages, framework components with large transitive graphs, daemon/Redis requirements, and solutions that complicate cPanel/shared-hosting deployment.
+- Keep every approved library behind a small Bulbula.et adapter so it can be replaced without changing domain logic.
+- `vendor/` is generated from the pinned `composer.lock`; it is not source code and must not be committed. Shared hosting receives it via `composer install` or a deployment upload bundle.
+- Clean architecture boundaries remain mandatory: Core infrastructure, Domain rules, Repositories, Services, Controllers, and Views.
+- When no clean, lightweight library is suitable, keep or improve the plain-PHP implementation and cover it with tests.
+
+## Mature Open-Source Integration First (Qualified by the Plain-PHP Rule)
 
 For security-sensitive, protocol-heavy, infrastructure, interoperability, and standards-based functionality, Bulbula.et must prefer a mature, actively maintained, widely adopted, security-reviewed open-source library over a custom implementation.
 
