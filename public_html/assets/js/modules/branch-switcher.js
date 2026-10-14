@@ -1,6 +1,7 @@
 /**
  * ============================================================================
- * BULBULA.ET V1 — MULTI-BRANCH CONTEXT SWITCHER (C-08) & LIVE VENDOR FILTER
+ * BULBULA.ET V1 — MULTI-BRANCH CONTEXT SWITCHER (C-08), LIVE VENDOR FILTER
+ * & INTERACTIVE BRANCH PHOTO GALLERY
  * ============================================================================
  */
 (function () {
@@ -38,6 +39,38 @@
           });
         });
       });
+    }
+
+    // Interactive 3-Photo Carousel Dots on Branch Detail Page
+    const gallery = document.querySelector('[data-profile-gallery]');
+    if (gallery) {
+      const mainImg = gallery.querySelector('[data-gallery-main-img]');
+      const caption = gallery.querySelector('[data-gallery-caption]');
+      const dots = Array.from(gallery.querySelectorAll('[data-gallery-dot]'));
+      let currentIdx = 0;
+
+      const setSlide = (idx) => {
+        const dot = dots[idx];
+        if (!dot || !mainImg) return;
+        currentIdx = idx;
+        mainImg.src = dot.getAttribute('data-gallery-src') || mainImg.src;
+        if (caption) {
+          caption.textContent = dot.getAttribute('data-gallery-label') || '';
+        }
+        dots.forEach((d, i) => {
+          d.style.background = i === idx ? '#FFFFFF' : 'rgba(255,255,255,0.45)';
+        });
+      };
+
+      dots.forEach((dot, idx) => {
+        dot.addEventListener('click', () => setSlide(idx));
+      });
+
+      if (mainImg && dots.length > 1) {
+        mainImg.addEventListener('click', () => {
+          setSlide((currentIdx + 1) % dots.length);
+        });
+      }
     }
   });
 })();

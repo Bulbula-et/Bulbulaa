@@ -57,14 +57,31 @@ $coverImg       = View::branchImage($b);
       <div class="b-alert b-alert--error"><?= View::e((string) $flashError) ?></div>
     <?php endif; ?>
 
-    <!-- Cloned Details Hero Card with Large Rounded Visual & Carousel Dots -->
+    <!-- Cloned Details Hero Card with Large Rounded Visual & Interactive 3-Photo Carousel Dots -->
+    <?php
+      $catImg  = View::categoryImage((string) ($b['primary_category_slug'] ?? ''));
+      $areaImg = View::areaImage((string) ($b['area_slug'] ?? ''));
+      $gallerySlides = [
+          ['src' => $coverImg, 'label' => ($b['branch_name_en'] ?? 'Branch') . ' — Main View'],
+          ['src' => $catImg,   'label' => ($b['primary_category_name_en'] ?? 'Category') . ' — Interior'],
+          ['src' => $areaImg,  'label' => ($b['area_name_en'] ?? 'Bole Bulbula') . ' — Corridor'],
+      ];
+    ?>
     <div class="b-profile-header">
-      <div style="position: relative; border-radius: 18px; overflow: hidden; aspect-ratio: 21 / 9; max-height: 310px; background: var(--orange-50); margin-bottom: var(--space-5);">
-        <img src="<?= View::e($coverImg) ?>" alt="<?= View::e($b['branch_name_en'] ?? '') ?>" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-        <div style="position: absolute; bottom: 0.75rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.35rem; background: rgba(17,19,21,0.35); padding: 0.25rem 0.6rem; border-radius: 999px; backdrop-filter: blur(6px);">
-          <span style="width: 7px; height: 7px; border-radius: 50%; background: #FFFFFF;"></span>
-          <span style="width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.45);"></span>
-          <span style="width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.45);"></span>
+      <div style="position: relative; border-radius: 18px; overflow: hidden; aspect-ratio: 21 / 9; max-height: 310px; background: var(--orange-50); margin-bottom: var(--space-5);" data-profile-gallery>
+        <img src="<?= View::e($coverImg) ?>" alt="<?= View::e($b['branch_name_en'] ?? '') ?>" data-gallery-main-img style="width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 180ms ease; cursor: pointer;">
+        <span data-gallery-caption style="position: absolute; top: 0.75rem; left: 0.75rem; background: rgba(17,19,21,0.62); color: #FFFFFF; font-size: 0.72rem; font-weight: 600; padding: 0.25rem 0.65rem; border-radius: 999px; backdrop-filter: blur(6px);">
+          <?= View::e($gallerySlides[0]['label']) ?>
+        </span>
+        <div style="position: absolute; bottom: 0.75rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.45rem; background: rgba(17,19,21,0.48); padding: 0.32rem 0.7rem; border-radius: 999px; backdrop-filter: blur(6px);">
+          <?php foreach ($gallerySlides as $idx => $slide): ?>
+            <button type="button"
+                    data-gallery-dot="<?= $idx ?>"
+                    data-gallery-src="<?= View::e($slide['src']) ?>"
+                    data-gallery-label="<?= View::e($slide['label']) ?>"
+                    aria-label="View photo <?= $idx + 1 ?>"
+                    style="width: 9px; height: 9px; border-radius: 50%; border: none; padding: 0; cursor: pointer; background: <?= $idx === 0 ? '#FFFFFF' : 'rgba(255,255,255,0.45)' ?>;"></button>
+          <?php endforeach; ?>
         </div>
       </div>
 
@@ -167,6 +184,20 @@ $coverImg       = View::branchImage($b);
               <strong style="color: var(--orange-700);">Landmark:</strong> <?= View::e($b['landmark_en']) ?>
             </div>
           <?php endif; ?>
+
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border-subtle);">
+            <?php if (!empty($b['area_slug'])): ?>
+              <a href="/a/<?= View::e((string) $b['area_slug']) ?>" class="b-subcat-pill">
+                Corridor: <?= View::e($b['area_name_en'] ?? 'Bole Bulbula') ?> &rarr;
+              </a>
+            <?php endif; ?>
+            <?php if (!empty($b['latitude']) && !empty($b['longitude'])): ?>
+              <a href="/nearby?lat=<?= View::e((string) $b['latitude']) ?>&amp;lng=<?= View::e((string) $b['longitude']) ?>&amp;radius=1500"
+                 style="font-size: var(--text-xs); font-weight: 700; color: var(--orange-500);">
+                See Nearby Within 1.5 km &rarr;
+              </a>
+            <?php endif; ?>
+          </div>
         </div>
 
         <div class="b-card" style="padding: var(--space-5);">

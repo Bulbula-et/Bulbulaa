@@ -52,16 +52,19 @@ final class AreaController
         $customerId = $customer ? (int) $customer['id'] : null;
         $search     = $this->discoveryService->search('', null, $slug, false, $request->surface(), $customerId);
 
-        $html = View::render('public/areas', [
+        $html = View::render('public/category-area', [
             'pageTitle'       => 'Businesses in ' . $area['name_en'] . ' (' . $area['sub_city_en'] . ') — Bulbula.et',
             'metaDescription' => 'Explore verified businesses, opening hours, and directions in ' . $area['name_en'] . ', Addis Ababa.',
             'canonicalUrl'    => '/a/' . $area['slug'],
             'request'         => $request,
             'customer'        => $customer,
-            'selectedArea'    => $area,
-            'areaBranches'    => $search['organic_results'],
-            'areas'           => $this->areaRepo->listAll(true),
-            'categories'      => $this->taxonomyRepo->getFullTree(true),
+            'mode'            => 'area',
+            'area'            => $area,
+            'category'        => null,
+            'organicResults'  => $search['organic_results'],
+            'sponsoredResults'=> $search['sponsored_results'] ?? [],
+            'allAreas'        => $this->areaRepo->listAll(true),
+            'allCategories'   => $this->taxonomyRepo->getFullTree(true),
         ]);
 
         return Response::html($html);

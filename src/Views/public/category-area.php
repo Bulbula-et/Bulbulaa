@@ -2,11 +2,19 @@
 declare(strict_types=1);
 use Bulbula\Core\View;
 
-$mode           = $mode ?? 'category';
 $category       = $category ?? null;
 $area           = $area ?? null;
-$branches       = $branches ?? [];
-$sponsoredItems = $sponsoredItems ?? [];
+if (!isset($mode)) {
+    if ($area && $category) {
+        $mode = 'area_category';
+    } elseif ($area) {
+        $mode = 'area';
+    } else {
+        $mode = 'category';
+    }
+}
+$branches       = $branches ?? ($organicResults ?? []);
+$sponsoredItems = $sponsoredItems ?? ($sponsoredResults ?? []);
 $allCategories  = $allCategories ?? [];
 $allAreas       = $allAreas ?? [];
 

@@ -137,15 +137,19 @@ $sponsoredHome = $sponsoredHome ?? [];
       <div class="b-hero-map-hotspots" aria-label="Bole Bulbula Map Quick Links">
         <a href="/areas" class="b-hero-hotspot b-hero-hotspot--loc" title="Explore Bole Bulbula, Addis Ababa">
           <span class="sr-only">Bole Bulbula, Addis Ababa</span>
+          <span class="b-hero-hotspot__tip">Explore 4 Corridors &rarr;</span>
         </a>
         <a href="/c/cafes-coffee-roasters" class="b-hero-hotspot b-hero-hotspot--coffee" title="Explore Coffee &amp; Cafés in Bole Bulbula">
           <span class="sr-only">Coffee</span>
+          <span class="b-hero-hotspot__tip">Coffee &amp; Roasteries &rarr;</span>
         </a>
         <a href="/c/health-medical" class="b-hero-hotspot b-hero-hotspot--health" title="Explore Healthcare &amp; Clinics in Bole Bulbula">
           <span class="sr-only">Healthcare</span>
+          <span class="b-hero-hotspot__tip">Clinics &amp; Pharmacies &rarr;</span>
         </a>
         <a href="/c/home-auto-services" class="b-hero-hotspot b-hero-hotspot--services" title="Explore Local Services in Bole Bulbula">
           <span class="sr-only">Services</span>
+          <span class="b-hero-hotspot__tip">Auto &amp; Home Services &rarr;</span>
         </a>
       </div>
     </div>

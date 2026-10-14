@@ -3,14 +3,15 @@ declare(strict_types=1);
 use Bulbula\Core\View;
 
 $filters        = $filters ?? [];
-$branches       = $branches ?? [];
-$sponsoredItems = $sponsoredItems ?? [];
+$branches       = $branches ?? ($organicResults ?? []);
+$sponsoredItems = $sponsoredItems ?? ($sponsoredResults ?? []);
 $categories     = $categories ?? [];
 $areas          = $areas ?? [];
-$q              = (string) ($filters['q'] ?? '');
-$catFilter      = (string) ($filters['category_slug'] ?? $filters['category'] ?? '');
-$areaFilter     = (string) ($filters['area_slug'] ?? $filters['area'] ?? '');
+$q              = (string) ($query ?? ($filters['q'] ?? ''));
+$catFilter      = (string) (($selectedCategory['slug'] ?? null) ?? ($filters['category_slug'] ?? ($filters['category'] ?? '')));
+$areaFilter     = (string) (($selectedArea['slug'] ?? null) ?? ($filters['area_slug'] ?? ($filters['area'] ?? '')));
 $sortFilter     = (string) ($filters['sort'] ?? 'organic');
+$isVerifiedOnly = !empty($verifiedOnly) || !empty($filters['verified_only']);
 ?>
 
 <!-- Clean Light-Orange Header Strip -->
