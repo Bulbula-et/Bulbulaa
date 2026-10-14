@@ -355,7 +355,7 @@ CREATE TABLE IF NOT EXISTS public_reports (
     CONSTRAINT fk_report_branch FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL,
     CONSTRAINT fk_report_business FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE SET NULL,
     CONSTRAINT fk_report_review FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE SET NULL,
-    CONSTRAINT fk_report_customer FOREIGN KEY (reporter_customer_id) REFERENCES customers(id) ON DELETE SET NULL,
+    CONSTRAINT fk_report_customer FOREIGN KEY (reporter_customer_id) REFERENCES customers(id) ON DELETE RESTRICT,
     CONSTRAINT chk_review_report_auth CHECK (
         (target_type != 'REVIEW') OR (reporter_customer_id IS NOT NULL)
     ),
