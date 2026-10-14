@@ -81,6 +81,14 @@ final class StaffRepository
         );
     }
 
+    public function updateProfile(int $staffId, string $fullName, string $email): void
+    {
+        Database::execute(
+            'UPDATE staff_users SET full_name = :name, email = :email, updated_at = CURRENT_TIMESTAMP WHERE id = :id',
+            [':name' => trim($fullName), ':email' => mb_strtolower(trim($email), 'UTF-8'), ':id' => $staffId]
+        );
+    }
+
     public function updatePasswordHash(int $staffId, string $passwordHash): void
     {
         Database::execute(

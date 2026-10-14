@@ -68,6 +68,9 @@ return [
     ['POST', '/staff/2fa',                           ['Staff\StaffAuthController', 'verifyTwoFactor'], ['access' => 'guest']], // D-45 TOTP verification
     ['POST', '/staff/logout',                        ['Staff\StaffAuthController', 'logout'], ['access' => 'authenticated']],          // D-45 Audited logout
     ['GET',  '/staff',                               ['Staff\DashboardController', 'index'], ['access' => 'authenticated']],           // Console overview & pilot metrics
+    ['GET',  '/staff/profile',                       ['Staff\ProfileController', 'index'], ['access' => 'authenticated']],             // Staff self-service profile and security
+    ['POST', '/staff/profile',                       ['Staff\ProfileController', 'updateProfile'], ['access' => 'authenticated']],     // Staff personal identity
+    ['POST', '/staff/profile/password',              ['Staff\ProfileController', 'changePassword'], ['access' => 'authenticated']],    // Staff self-service password change
     ['POST', '/staff/system/flush-cache',            ['Staff\DashboardController', 'flushCache'], ['access' => 'administrator']],      // Zero-restart cache & OPcache flush
     ['POST', '/staff/gates/toggle',                  ['Staff\DashboardController', 'toggleGate'], ['access' => 'administrator']],      // D-31..D-45 Readiness Gate toggle
     ['GET',  '/staff/listings',                      ['Staff\ListingController', 'index'], ['access' => 'authenticated']],             // C-19, C-20 Business & Branch directory

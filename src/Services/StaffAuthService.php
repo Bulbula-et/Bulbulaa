@@ -56,6 +56,9 @@ final class StaffAuthService
             $this->auditService->logStaffAction((int) $user['id'], 'STAFF_LOGIN_FAILED', 'staff_user', (int) $user['id'], null, ['email' => $cleanEmail]);
             return ['ok' => false, 'error' => 'Invalid staff email or password.'];
         }
+        if (password_needs_rehash((string) $user['password_hash'], PASSWORD_DEFAULT)) {
+            $this->staffRepo->updatePasswordHash((int) $user['id'], password_hash($password, PASSWORD_DEFAULT));
+        }
 
         $totpRequired = (bool) Config::get('gates.D_45_STAFF_2FA_REQUIRED', true);
         $encrypted = trim((string) ($user['totp_secret_enc'] ?? ''));
@@ -141,6 +144,30 @@ final class StaffAuthService
         Session::remove('staff_2fa_pending_id');
         Session::remove('staff_2fa_pending_at');
         Session::remove('staff_2fa_enrollment_secret');
+    }
+
+    public function verifyCurrentPassword(array $staff, string $password): bool
+    {
+        $record = $this->staffRepo->findByEmailForAuth((string) $staff['email']);
+        return $record !== null && password_verify($password, (string) ($record['password_hash'] ?? ''));
+    }
+
+    public function changePassword(array $staff, string $currentPassword, string $newPassword): array
+    {
+        $authRecord = $this->staffRepo->findByEmailForAuth((string) $staff['email']);
+        if ($authRecord === null || !password_verify($currentPassword, (string) ($authRecord['password_hash'] ?? ''))) {
+            return ['ok' => false, 'error' => 'Current password is incorrect.'];
+        }
+        if (strlen($newPassword) < 12 || strlen($newPassword) > 128 || !preg_match('/[A-Z]/', $newPassword) || !preg_match('/[a-z]/', $newPassword) || !preg_match('/[0-9]/', $newPassword)) {
+            return ['ok' => false, 'error' => 'Use 12–128 characters with uppercase, lowercase, and a number.'];
+        }
+        if (password_verify($newPassword, (string) $authRecord['password_hash'])) {
+            return ['ok' => false, 'error' => 'Choose a password different from your current password.'];
+        }
+        $this->staffRepo->updatePasswordHash((int) $staff['id'], password_hash($newPassword, PASSWORD_DEFAULT));
+        Session::regenerate();
+        Session::set('staff_id', (int) $staff['id']);
+        return ['ok' => true];
     }
 
     public function logout(): void

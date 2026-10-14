@@ -100,10 +100,10 @@ if ($isAdmin) $navGroups['Administration'] = [
         </div>
         <div class="b-staff-header__actions">
           <span class="b-system-status"><i></i> Systems operational</span>
-          <div class="b-staff-account">
+          <a class="b-staff-account" href="/staff/profile" style="text-decoration:none" aria-label="Open my profile and security settings">
             <span class="b-staff-avatar"><?= View::e($initials) ?></span>
             <div><strong><?= View::e((string) ($staff['full_name'] ?? '')) ?></strong><span><?= $isAdmin ? 'Administrator' : 'Operator' ?> · 2FA protected</span></div>
-          </div>
+          </a>
           <form method="POST" action="/staff/logout" class="b-logout-form"><?= Csrf::field() ?><button type="submit" title="Sign out">Sign out</button></form>
         </div>
       </header>
