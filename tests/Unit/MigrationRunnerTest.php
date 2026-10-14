@@ -16,6 +16,7 @@ final class MigrationRunnerTest extends TestCase
         foreach (['staff_users','categories','areas','businesses','branches','business_permissions','media_assets','customers','reviews','audit_logs'] as $table) {
             $this->pdo->exec("CREATE TABLE {$table} (id INTEGER PRIMARY KEY)");
         }
+        $this->pdo->exec('CREATE TABLE customer_otp_tokens (id INTEGER PRIMARY KEY, email TEXT NOT NULL, expires_at DATETIME NOT NULL)');
         @unlink(BULBULA_ROOT . '/storage/migration.lock');
     }
 
