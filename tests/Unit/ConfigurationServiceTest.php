@@ -44,6 +44,24 @@ final class ConfigurationServiceTest extends TestCase
         self::assertTrue($snapshot['mail']['password_is_set']);
     }
 
+    public function testSectionUpdateValidatesAndChangesOnlyRequestedSection(): void
+    {
+        $service = new ConfigurationService($this->base, $this->local, $this->lock);
+        $service->update($this->validInput());
+        $summary = $service->updateSection('auth', [
+            'google_client_id' => '999999-newclient.apps.googleusercontent.com',
+            'google_client_secret' => '••••••••',
+            'telegram_bot_username' => '',
+            'telegram_bot_token' => '••••••••',
+        ]);
+        $saved = json_decode((string) file_get_contents($this->local), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame('auth', $summary['section']);
+        self::assertSame('999999-newclient.apps.googleusercontent.com', $saved['auth']['google_client_id']);
+        self::assertSame('google-secret-value', $saved['auth']['google_client_secret']);
+        self::assertSame('smtp.example.com', $saved['mail']['host']);
+        self::assertSame('very-secret-password', $saved['mail']['password']);
+    }
+
     public function testUnknownOrInvalidFieldsNeverReplaceCurrentFile(): void
     {
         $service = new ConfigurationService($this->base, $this->local, $this->lock);

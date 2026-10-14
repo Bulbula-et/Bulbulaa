@@ -61,6 +61,46 @@ final class ConfigurationService
         ];
     }
 
+    /** @param array<string,mixed> $input @return array<string,mixed> */
+    public function updateSection(string $section, array $input): array
+    {
+        $allowedBySection = [
+            'security' => ['require_staff_login', 'otp_expiry_seconds', 'review_edit_window_days'],
+            'auth' => ['google_client_id', 'google_client_secret', 'telegram_bot_username', 'telegram_bot_token'],
+            'mail' => ['mail_driver', 'mail_host', 'mail_port', 'mail_encryption', 'mail_username', 'mail_password', 'mail_from_email', 'mail_from_name'],
+        ];
+        if (!isset($allowedBySection[$section])) throw new InvalidArgumentException('Unknown configuration section.');
+        $allowed = $allowedBySection[$section];
+        $unknown = array_diff(array_keys($input), $allowed);
+        if ($unknown !== []) throw new InvalidArgumentException('Unsupported configuration field: ' . reset($unknown));
+        foreach ($allowed as $required) {
+            if (!array_key_exists($required, $input)) throw new InvalidArgumentException("Missing configuration field: {$required}");
+        }
+        $validated = match ($section) {
+            'security' => $this->validateSecurity($input),
+            'auth' => $this->validateAuth($input),
+            'mail' => $this->validateMail($input),
+        };
+
+        $lock = fopen($this->lockFile(), 'c+b');
+        if ($lock === false) throw new RuntimeException('Configuration update lock is unavailable.');
+        @chmod($this->lockFile(), 0600);
+        if (!flock($lock, LOCK_EX)) { fclose($lock); throw new RuntimeException('Configuration update lock is unavailable.'); }
+        try {
+            $data = $this->readLocal();
+            foreach ($validated as $key => $value) {
+                if ($value !== null) $data[$section][$key] = $value;
+            }
+            $this->atomicWrite($data);
+            Config::load($this->baseFile());
+            Cache::flushAll();
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+        return ['section' => $section, 'updated_fields' => array_keys(array_filter($validated, static fn(mixed $value): bool => $value !== null))];
+    }
+
     /** @return array<string,mixed> */
     public function safeSnapshot(): array
     {
@@ -76,12 +116,41 @@ final class ConfigurationService
     /** @param array<string,mixed> $input @return array<string,array<string,mixed>> */
     private function validate(array $input): array
     {
+        return [
+            'security' => $this->validateSecurity($input),
+            'auth' => $this->validateAuth($input),
+            'mail' => $this->validateMail($input),
+        ];
+    }
+
+    /** @param array<string,mixed> $input @return array<string,mixed> */
+    private function validateSecurity(array $input): array
+    {
+        $otp = filter_var($input['otp_expiry_seconds'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 120, 'max_range' => 3600]]);
+        if ($otp === false) throw new InvalidArgumentException('OTP expiry must be between 120 and 3600 seconds.');
+        $review = filter_var($input['review_edit_window_days'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 90]]);
+        if ($review === false) throw new InvalidArgumentException('Review edit window must be between 1 and 90 days.');
+        return ['require_staff_login' => (string) $input['require_staff_login'] === '1', 'otp_expiry_seconds' => $otp, 'review_edit_window_days' => $review];
+    }
+
+    /** @param array<string,mixed> $input @return array<string,mixed> */
+    private function validateAuth(array $input): array
+    {
         $clientId = trim((string) $input['google_client_id']);
-        if ($clientId !== '' && preg_match('/^[0-9]+-[a-z0-9_-]+\.apps\.googleusercontent\.com$/i', $clientId) !== 1) {
-            throw new InvalidArgumentException('Google client ID format is invalid.');
-        }
+        if ($clientId !== '' && preg_match('/^[0-9]+-[a-z0-9_-]+\.apps\.googleusercontent\.com$/i', $clientId) !== 1) throw new InvalidArgumentException('Google client ID format is invalid.');
         $bot = trim((string) $input['telegram_bot_username']);
-        if (preg_match('/^[A-Za-z0-9_]{5,32}$/', $bot) !== 1) throw new InvalidArgumentException('Telegram bot username format is invalid.');
+        if ($bot !== '' && preg_match('/^[A-Za-z0-9_]{5,32}$/', $bot) !== 1) throw new InvalidArgumentException('Telegram bot username format is invalid.');
+        return [
+            'google_client_id' => $clientId,
+            'google_client_secret' => $this->optionalSecret($input['google_client_secret'], 'Google client secret'),
+            'telegram_bot_username' => $bot,
+            'telegram_bot_token' => $this->optionalSecret($input['telegram_bot_token'], 'Telegram bot token'),
+        ];
+    }
+
+    /** @param array<string,mixed> $input @return array<string,mixed> */
+    private function validateMail(array $input): array
+    {
         $host = trim((string) $input['mail_host']);
         if (!$this->validHost($host)) throw new InvalidArgumentException('SMTP host must be a valid hostname or IP address without a scheme.');
         $fromEmail = trim((string) $input['mail_from_email']);
@@ -96,24 +165,10 @@ final class ConfigurationService
         if (!in_array($encryption, ['tls', 'ssl', 'none'], true)) throw new InvalidArgumentException('Mail encryption mode is invalid.');
         $port = filter_var($input['mail_port'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
         if ($port === false) throw new InvalidArgumentException('SMTP port must be between 1 and 65535.');
-        $otp = filter_var($input['otp_expiry_seconds'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 120, 'max_range' => 3600]]);
-        if ($otp === false) throw new InvalidArgumentException('OTP expiry must be between 120 and 3600 seconds.');
-        $review = filter_var($input['review_edit_window_days'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 90]]);
-        if ($review === false) throw new InvalidArgumentException('Review edit window must be between 1 and 90 days.');
-
         return [
-            'security' => ['require_staff_login' => (string) $input['require_staff_login'] === '1', 'otp_expiry_seconds' => $otp, 'review_edit_window_days' => $review],
-            'auth' => [
-                'google_client_id' => $clientId,
-                'google_client_secret' => $this->optionalSecret($input['google_client_secret'], 'Google client secret'),
-                'telegram_bot_username' => $bot,
-                'telegram_bot_token' => $this->optionalSecret($input['telegram_bot_token'], 'Telegram bot token'),
-            ],
-            'mail' => [
-                'driver' => $driver, 'host' => $host, 'port' => $port, 'encryption' => $encryption,
-                'username' => $username, 'password' => $this->optionalSecret($input['mail_password'], 'SMTP password'),
-                'from_email' => $fromEmail, 'from_name' => $fromName,
-            ],
+            'driver' => $driver, 'host' => $host, 'port' => $port, 'encryption' => $encryption,
+            'username' => $username, 'password' => $this->optionalSecret($input['mail_password'], 'SMTP password'),
+            'from_email' => $fromEmail, 'from_name' => $fromName,
         ];
     }
 

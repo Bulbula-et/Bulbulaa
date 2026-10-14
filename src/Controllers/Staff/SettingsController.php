@@ -55,9 +55,13 @@ final class SettingsController
         $input = $request->input();
         if (!is_array($input)) $input = [];
         unset($input['_csrf']);
+        $section = trim((string) ($input['settings_section'] ?? ''));
+        unset($input['settings_section']);
         $actor = $this->staffAuth->currentStaff();
         try {
-            $summary = $this->configuration->update($input);
+            $summary = $section !== ''
+                ? $this->configuration->updateSection($section, $input)
+                : $this->configuration->update($input);
         } catch (\Throwable $exception) {
             $this->auditService->logStaffAction(
                 (int) ($actor['id'] ?? 1), 'SYSTEM_SETTINGS_REJECTED', 'system_config', 1,
@@ -79,7 +83,8 @@ final class SettingsController
             $summary
         );
 
-        Session::flash('success', 'Settings saved atomically to protected config/env.local.json and hot-reloaded without a server restart. Server environment variables remain authoritative.');
+        $label = match ($section) { 'security' => 'Security settings', 'auth' => 'Identity-provider settings', 'mail' => 'Email-delivery settings', default => 'Settings' };
+        Session::flash('success', $label . ' saved atomically and activated without a server restart. Server environment variables remain authoritative.');
         return Response::redirect('/staff/settings');
     }
 
