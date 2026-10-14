@@ -31,7 +31,7 @@ $gateD39Open = !empty($gateD39Open);
         <th>Period (Time-Bounded)</th>
         <th>Fixed Price (ETB)</th>
         <th>Impressions / Clicks</th>
-        <th>Status</th>
+        <th>Status &amp; Action</th>
       </tr>
     </thead>
     <tbody>
@@ -44,7 +44,17 @@ $gateD39Open = !empty($gateD39Open);
           <td class="b-tabular" style="font-size: var(--text-xs);"><?= View::e(substr((string) $c['starts_at'], 0, 10)) ?> &rarr; <?= View::e(substr((string) $c['ends_at'], 0, 10)) ?></td>
           <td class="b-tabular"><?= number_format((float) $c['agreed_price_etb'], 2) ?> ETB</td>
           <td class="b-tabular"><?= (int) $c['total_impressions'] ?> imp / <?= (int) $c['total_clicks'] ?> clicks</td>
-          <td><span class="b-badge b-badge--verified"><?= View::e($c['status']) ?></span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+              <span class="b-badge <?= ($c['status'] ?? '') === 'ACTIVE' ? 'b-badge--verified' : 'b-badge--orange' ?>"><?= View::e($c['status']) ?></span>
+              <?php if (($c['status'] ?? '') !== 'ACTIVE' && $gateD39Open): ?>
+                <form action="/staff/campaigns/<?= (int) ($c['id'] ?? 0) ?>/approve" method="POST" style="display: inline;">
+                  <?= View::csrfField() ?>
+                  <button type="submit" class="b-btn b-btn--primary b-btn--sm" style="padding: 0.25rem 0.65rem; font-size: 0.72rem;">Approve</button>
+                </form>
+              <?php endif; ?>
+            </div>
+          </td>
         </tr>
       <?php endforeach; ?>
     </tbody>
