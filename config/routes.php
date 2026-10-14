@@ -50,6 +50,9 @@ return [
     // 3. STAFF INTERNAL OPERATIONS CONSOLE (C-19 to C-29, Gate D-45)
     // Web-only internal console (Strong auth + RBAC + Audit Logs)
     // =========================================================================
+    ['GET',  '/staff/login',                         ['Staff\StaffAuthController', 'showLogin']],       // D-45 Bcrypt + rate-limited login
+    ['POST', '/staff/login',                         ['Staff\StaffAuthController', 'login']],           // D-45 Authenticate and rotate session
+    ['POST', '/staff/logout',                        ['Staff\StaffAuthController', 'logout']],          // D-45 Audited logout
     ['GET',  '/staff',                               ['Staff\DashboardController', 'index']],           // Console overview & pilot metrics
     ['POST', '/staff/system/flush-cache',            ['Staff\DashboardController', 'flushCache']],      // Zero-restart cache & OPcache flush
     ['POST', '/staff/gates/toggle',                  ['Staff\DashboardController', 'toggleGate']],      // D-31..D-45 Readiness Gate toggle
