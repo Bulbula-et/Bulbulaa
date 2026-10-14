@@ -1648,9 +1648,108 @@
   text-decoration: none;
 }
 
-.b-autocomplete__item:hover {
+.b-autocomplete__item:hover,
+.b-autocomplete__item.is-highlighted {
   background: var(--orange-50);
   color: var(--orange-700);
+}
+
+.b-autocomplete__label {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.b-autocomplete__amharic {
+  color: var(--neutral-600);
+  margin-left: 0.4rem;
+}
+
+.b-autocomplete__type {
+  flex: 0 0 auto;
+  margin-left: 0.75rem;
+}
+
+.b-autocomplete__item--submit {
+  background: var(--neutral-50);
+  color: var(--orange-600);
+  font-weight: 600;
+}
+
+@media (max-width: 539px) {
+  .b-wander-hero.has-search-open {
+    overflow: visible;
+    z-index: 30;
+  }
+
+  .b-hero-search-wrap.has-open-suggestions {
+    z-index: 40;
+    margin-bottom: 0;
+  }
+
+  .b-wander-hero.has-search-open .b-hero-redesign__actions,
+  .b-wander-hero.has-search-open .b-hero-redesign__trust {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .b-autocomplete {
+    top: calc(100% + 7px);
+    padding: 0.35rem;
+    max-height: min(300px, 43dvh);
+    border-color: rgba(234, 106, 21, 0.28);
+    border-radius: 15px;
+    box-shadow: 0 18px 42px rgba(20, 14, 10, 0.3);
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  .b-autocomplete__item {
+    min-height: 54px;
+    gap: 0.6rem;
+    padding: 0.62rem 0.7rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+  }
+
+  .b-autocomplete__item + .b-autocomplete__item {
+    border-top: 1px solid var(--neutral-100);
+  }
+
+  .b-autocomplete__label {
+    display: block;
+    line-height: 1.25;
+  }
+
+  .b-autocomplete__label strong,
+  .b-autocomplete__amharic {
+    display: block;
+  }
+
+  .b-autocomplete__amharic {
+    margin: 0.22rem 0 0;
+    color: var(--neutral-600);
+    font-size: 0.72rem;
+    line-height: 1.25;
+  }
+
+  .b-autocomplete__type {
+    max-width: 92px;
+    margin-left: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.58rem;
+  }
+
+  .b-autocomplete__item--submit {
+    position: sticky;
+    bottom: 0;
+    min-height: 46px;
+    background: #fff8f3;
+    box-shadow: 0 -1px 0 var(--orange-100);
+  }
 }
 
 .b-rating {

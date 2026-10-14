@@ -19,6 +19,11 @@
     let debounceTimer = null;
     let currentItems = [];
     let activeIndex = -1;
+    let requestSequence = 0;
+    const hero = dock.closest('.b-wander-hero');
+    input.setAttribute('aria-expanded', 'false');
+    input.setAttribute('aria-controls', 'home-search-suggestions');
+    dropdown.id = 'home-search-suggestions';
 
     function escapeHtml(str) {
       const div = document.createElement('div');
@@ -28,6 +33,9 @@
 
     function closeDropdown() {
       dropdown.classList.remove('is-open');
+      dock.classList.remove('has-open-suggestions');
+      if (hero) hero.classList.remove('has-search-open');
+      input.setAttribute('aria-expanded', 'false');
       dropdown.innerHTML = '';
       currentItems = [];
       activeIndex = -1;
@@ -43,44 +51,49 @@
       activeIndex = -1;
 
       const rowsHtml = suggestions.map((item, idx) => {
-        const amharic = item.label_am ? `<span class="b-lang-am" style="color: var(--neutral-600); margin-left: 0.4rem;">(${escapeHtml(item.label_am)})</span>` : '';
+        const amharic = item.label_am ? `<span class="b-autocomplete__amharic b-lang-am" lang="am">${escapeHtml(item.label_am)}</span>` : '';
         const badgeClass = item.type === 'CATEGORY' ? 'b-badge--blue' : (item.type === 'AREA' ? 'b-badge--orange' : 'b-badge--verified');
         return `
-          <a href="${escapeHtml(item.url)}" class="b-autocomplete__item" data-ac-index="${idx}">
-            <div>
+          <a href="${escapeHtml(item.url)}" class="b-autocomplete__item" data-ac-index="${idx}" role="option">
+            <span class="b-autocomplete__label">
               <strong>${escapeHtml(item.label_en)}</strong>
               ${amharic}
-            </div>
-            <span class="b-badge ${badgeClass}">${escapeHtml(item.badge)}</span>
+            </span>
+            <span class="b-badge b-autocomplete__type ${badgeClass}">${escapeHtml(item.badge)}</span>
           </a>
         `;
       }).join('');
 
       const submitOriginalHtml = `
-        <a href="/search?q=${encodeURIComponent(query)}" class="b-autocomplete__item" style="background: var(--neutral-50); font-weight: 600; color: var(--orange-600);">
+        <a href="/search?q=${encodeURIComponent(query)}" class="b-autocomplete__item b-autocomplete__item--submit" role="option">
           <span>Search directory for &ldquo;${escapeHtml(query)}&rdquo;</span>
-          <span>Enter &rarr;</span>
+          <span aria-hidden="true">Enter &rarr;</span>
         </a>
       `;
 
       dropdown.innerHTML = rowsHtml + submitOriginalHtml;
       dropdown.classList.add('is-open');
+      dock.classList.add('has-open-suggestions');
+      if (hero) hero.classList.add('has-search-open');
+      input.setAttribute('aria-expanded', 'true');
     }
 
     input.addEventListener('input', () => {
       const q = input.value.trim();
       clearTimeout(debounceTimer);
       if (q.length < 1) {
+        requestSequence++;
         closeDropdown();
         return;
       }
 
+      const sequence = ++requestSequence;
       debounceTimer = setTimeout(async () => {
         try {
           const res = await fetch('/api/v1/autocomplete?q=' + encodeURIComponent(q), {
             headers: { 'Accept': 'application/json' }
           });
-          if (!res.ok) return;
+          if (!res.ok || sequence !== requestSequence || input.value.trim() !== q) return;
           const data = await res.json();
           renderSuggestions(q, data.suggestions || []);
         } catch (_) {}
