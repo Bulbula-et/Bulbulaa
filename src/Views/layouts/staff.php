@@ -1,136 +1,114 @@
 <?php
 declare(strict_types=1);
+use Bulbula\Core\Config;
 use Bulbula\Core\Csrf;
 use Bulbula\Core\Session;
 use Bulbula\Core\View;
 
-$activeNav    = $activeNav ?? 'dashboard';
-$staff        = $staff ?? ['id' => 1, 'full_name' => 'Dawit Tadesse (Admin)', 'role' => 'ADMINISTRATOR'];
+$activeNav = $activeNav ?? 'dashboard';
+$staff = $staff ?? ['id' => 0, 'full_name' => 'Staff member', 'role' => 'OPERATOR'];
 $flashSuccess = Session::flash('success');
-$flashError   = Session::flash('error');
+$flashError = Session::flash('error');
+$isAdmin = ($staff['role'] ?? '') === 'ADMINISTRATOR';
+$isPreview = Config::previewFeaturesEnabled();
+$initials = '';
+foreach (preg_split('/\s+/', trim((string) ($staff['full_name'] ?? 'Staff'))) ?: [] as $part) $initials .= mb_substr($part, 0, 1);
+$initials = mb_strtoupper(mb_substr($initials, 0, 2));
+$icons = [
+  'dashboard'=>'<path d="M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z"/>',
+  'listings'=>'<path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5"/>',
+  'verification'=>'<path d="m5 12 4 4L19 6M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"/>',
+  'taxonomy'=>'<path d="M4 4h6v6H4zM14 4h6v6h-6zM9 14h6v6H9zM7 10v2a2 2 0 0 0 2 2h3M17 10v2a2 2 0 0 1-2 2h-3"/>',
+  'locations'=>'<path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
+  'moderation'=>'<path d="M4 5h16M4 12h10M4 19h7M18 15v6M15 18h6"/>',
+  'reports'=>'<path d="M12 9v4m0 4h.01M10.3 3.7 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.7a2 2 0 0 0-3.4 0Z"/>',
+  'campaigns'=>'<path d="m3 11 18-7-7 18-3-8-8-3Zm8 3 4-4"/>',
+  'analytics'=>'<path d="M4 20V10m6 10V4m6 16v-7m4 7H2"/>',
+  'audit-logs'=>'<path d="M6 3h12v18H6zM9 8h6m-6 4h6m-6 4h4"/>',
+  'users'=>'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+  'settings'=>'<path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/>',
+];
+$icon = static fn(string $key): string => '<svg aria-hidden="true" viewBox="0 0 24 24">' . ($icons[$key] ?? '') . '</svg>';
+$navGroups = [
+  'Workspace' => [
+    ['dashboard','/staff','Overview'], ['listings','/staff/listings','Listings'], ['verification','/staff/verification','Verification'],
+  ],
+  'Operations' => [
+    ['moderation','/staff/moderation','Moderation'], ['reports','/staff/reports','Reports'], ['campaigns','/staff/campaigns','Campaigns'], ['analytics','/staff/analytics','Analytics'],
+  ],
+  'Directory setup' => [
+    ['taxonomy','/staff/taxonomy','Taxonomy'], ['locations','/staff/locations','Locations'],
+  ],
+];
+if ($isAdmin) $navGroups['Administration'] = [
+  ['audit-logs','/staff/audit-logs','Audit log'], ['users','/staff/users','Staff & access'], ['settings','/staff/settings','System settings'],
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?= View::e($pageTitle ?? 'Staff Console — Bulbula.et V1') ?></title>
-  <meta name="robots" content="noindex, nofollow">
-  <link rel="stylesheet" href="<?= View::asset('css/tokens.css') ?>">
-  <link rel="stylesheet" href="<?= View::asset('css/base.css') ?>">
-  <link rel="stylesheet" href="<?= View::asset('css/layout.css') ?>">
-  <link rel="stylesheet" href="<?= View::asset('css/components.css') ?>">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><?= View::e($pageTitle ?? 'Staff Console — Bulbula.et') ?></title>
+  <meta name="robots" content="noindex, nofollow"><meta name="theme-color" content="#ffffff">
+  <link rel="stylesheet" href="<?= View::asset('css/tokens.css') ?>"><link rel="stylesheet" href="<?= View::asset('css/base.css') ?>">
+  <link rel="stylesheet" href="<?= View::asset('css/layout.css') ?>"><link rel="stylesheet" href="<?= View::asset('css/components.css') ?>">
   <link rel="stylesheet" href="<?= View::asset('css/staff.css') ?>">
 </head>
-<body>
+<body class="b-staff-body">
   <div class="b-staff-shell">
-    <!-- Left Sidebar (Deep Navy #102438 + Orange Active Indicators) -->
-    <aside class="b-staff-sidebar">
-      <div>
-        <div style="background: #FFFFFF; padding: 0.45rem 0.7rem; border-radius: var(--radius-sm); display: inline-block;">
-          <img src="<?= View::asset('img/logo-temp.svg') ?>" alt="Bulbula.et" style="height: 30px; width: auto; display: block;">
-        </div>
-        <div style="margin-top: 0.6rem; font-size: var(--text-xs); color: var(--orange-300); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">
-          Internal Operations Console (Web-Only)
-        </div>
-
-        <nav class="b-staff-nav" aria-label="Staff Operations Navigation">
-          <a href="/staff" class="b-staff-nav__link <?= $activeNav === 'dashboard' ? 'is-active' : '' ?>">
-            <span>Overview &amp; Gates</span>
-            <span style="font-size: 0.7rem; opacity: 0.8;">D-31</span>
-          </a>
-          <a href="/staff/listings" class="b-staff-nav__link <?= $activeNav === 'listings' ? 'is-active' : '' ?>">
-            <span>Listings &amp; Permissions</span>
-            <span style="font-size: 0.7rem; opacity: 0.8;">C-19/20</span>
-          </a>
-          <a href="/staff/verification" class="b-staff-nav__link <?= $activeNav === 'verification' ? 'is-active' : '' ?>">
-            <span>Verification &amp; QC Gate</span>
-            <span style="font-size: 0.7rem; opacity: 0.8;">C-21</span>
-          </a>
-          <a href="/staff/taxonomy" class="b-staff-nav__link <?= $activeNav === 'taxonomy' ? 'is-active' : '' ?>">
-            <span>2-Level Taxonomy</span>
-            <span style="font-size: 0.7rem; opacity: 0.8;">C-23</span>
-          </a>
-          <a href="/staff/locations" class="b-staff-nav__link <?= $activeNav === 'locations' ? 'is-active' : '' ?>">
-            <span>Areas &amp; Locations</span>
-            <span style="font-size: 0.7rem; opacity: 0.8;">C-24</span>
-          </a>
-          <a href="/staff/moderation" class="b-staff-nav__link <?= $activeNav === 'moderation' ? 'is-active' : '' ?>">
-            <span>Review Moderation</span>
-            <span style="font-size: 0.7rem; opacity: 0.8;">C-25</span>
-          </a>
-          <a href="/staff/reports" class="b-staff-nav__link <?= $activeNav === 'reports' ? 'is-active' : '' ?>">
-            <span>Public Reports Queue</span>
-            <span style="font-size: 0.7rem; opacity: 0.8;">C-26</span>
-          </a>
-          <a href="/staff/campaigns" class="b-staff-nav__link <?= $activeNav === 'campaigns' ? 'is-active' : '' ?>">
-            <span>Sponsorship Campaigns</span>
-            <span style="font-size: 0.7rem; opacity: 0.8;">C-27</span>
-          </a>
-          <a href="/staff/analytics" class="b-staff-nav__link <?= $activeNav === 'analytics' ? 'is-active' : '' ?>">
-            <span>Operational Analytics</span>
-            <span style="font-size: 0.7rem; opacity: 0.8;">C-28</span>
-          </a>
-          <a href="/staff/audit-logs" class="b-staff-nav__link <?= $activeNav === 'audit-logs' ? 'is-active' : '' ?>">
-            <span>Audit Logs (Admin)</span>
-            <span style="font-size: 0.7rem; opacity: 0.8;">C-29</span>
-          </a>
-          <a href="/staff/users" class="b-staff-nav__link <?= $activeNav === 'users' ? 'is-active' : '' ?>">
-            <span>Staff Accounts &amp; RBAC</span>
-            <span style="font-size: 0.7rem; opacity: 0.8;">D-45</span>
-          </a>
-          <a href="/staff/settings" class="b-staff-nav__link <?= $activeNav === 'settings' ? 'is-active' : '' ?>">
-            <span>Auth &amp; SMTP Settings</span>
-            <span style="font-size: 0.7rem; opacity: 0.8;">C-30/31</span>
-          </a>
-        </nav>
+    <aside class="b-staff-sidebar" id="staff-sidebar">
+      <div class="b-staff-brand">
+        <a href="/staff" class="b-staff-brand__mark"><img src="<?= View::asset('img/logo-temp.svg') ?>" alt="Bulbula.et"></a>
+        <div><strong>Control Center</strong><span>Internal operations</span></div>
+        <button class="b-sidebar-close" type="button" data-sidebar-close aria-label="Close navigation">×</button>
       </div>
-
-      <div style="margin-top: var(--space-8); padding-top: var(--space-4); border-top: 1px solid rgba(255,255,255,0.12); font-size: var(--text-xs);">
-        <div style="color: var(--blue-200);">Signed in Staff (D-45 2FA):</div>
-        <div style="font-weight: 700; color: #FFF; margin-top: 0.2rem;"><?= View::e($staff['full_name'] ?? '') ?></div>
-        <div style="margin-top: 0.2rem;">
-          <span class="b-badge b-badge--orange"><?= View::e($staff['role'] ?? 'ADMINISTRATOR') ?></span>
-        </div>
-        <div style="margin-top: 0.75rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
-          <a href="/staff?switch_staff=1" style="color: var(--blue-200); text-decoration: underline;">Admin Role</a> &middot;
-          <a href="/staff?switch_staff=2" style="color: var(--blue-200); text-decoration: underline;">Operator Role</a>
-        </div>
-        <div style="margin-top: 0.85rem;">
-          <a href="/" class="b-btn b-btn--outline b-btn--sm" style="width: 100%;">&larr; Public Directory</a>
-        </div>
+      <nav class="b-staff-nav" aria-label="Staff navigation">
+        <?php foreach ($navGroups as $group => $items): ?>
+          <div class="b-staff-nav__group">
+            <div class="b-staff-nav__label"><?= View::e($group) ?></div>
+            <?php foreach ($items as [$key,$href,$label]): ?>
+              <a href="<?= $href ?>" class="b-staff-nav__link <?= $activeNav === $key ? 'is-active' : '' ?>" <?= $activeNav === $key ? 'aria-current="page"' : '' ?>>
+                <span class="b-staff-nav__icon"><?= $icon($key) ?></span><span><?= View::e($label) ?></span>
+              </a>
+            <?php endforeach; ?>
+          </div>
+        <?php endforeach; ?>
+      </nav>
+      <div class="b-staff-sidebar__footer">
+        <a href="/" class="b-staff-public-link"><span>←</span> View public directory</a>
+        <?php if ($isPreview): ?><div class="b-preview-switch"><span>Preview role</span><a href="/staff?switch_staff=1">Admin</a><a href="/staff?switch_staff=2">Operator</a></div><?php endif; ?>
       </div>
     </aside>
+    <button class="b-sidebar-scrim" data-sidebar-close aria-label="Close navigation"></button>
 
-    <!-- Main Console Workspace -->
-    <div class="b-staff-main">
-      <div class="b-staff-topbar">
-        <div>
-          <h1 style="font-size: var(--text-xl);"><?= View::e($pageTitle ?? 'Staff Operations Console') ?></h1>
-          <p style="font-size: var(--text-xs); color: var(--neutral-600);">
-            Company-operated directory workflow &middot; Business permission (C-19) &amp; QC check (C-21) required before publication
-          </p>
+    <div class="b-staff-workspace">
+      <header class="b-staff-header">
+        <div class="b-staff-header__left">
+          <button class="b-mobile-menu" type="button" data-sidebar-open aria-label="Open navigation"><?= $icon('listings') ?></button>
+          <div class="b-staff-breadcrumb"><span>Bulbula.et</span><span>/</span><strong><?= View::e(ucwords(str_replace('-', ' ', (string) $activeNav))) ?></strong></div>
         </div>
+        <div class="b-staff-header__actions">
+          <span class="b-system-status"><i></i> Systems operational</span>
+          <div class="b-staff-account">
+            <span class="b-staff-avatar"><?= View::e($initials) ?></span>
+            <div><strong><?= View::e((string) ($staff['full_name'] ?? '')) ?></strong><span><?= $isAdmin ? 'Administrator' : 'Operator' ?> · 2FA protected</span></div>
+          </div>
+          <form method="POST" action="/staff/logout" class="b-logout-form"><?= Csrf::field() ?><button type="submit" title="Sign out">Sign out</button></form>
+        </div>
+      </header>
 
-        <!-- Zero-Restart Cache & OPcache Refresh Button -->
-        <form method="POST" action="/staff/system/flush-cache" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-          <?= Csrf::field() ?>
-          <button type="submit" class="b-btn b-btn--primary b-btn--sm" title="Flushes file cache & invalidates PHP OPcache without needing a server restart">
-            <span>&#8635; Refresh Cache &amp; OPcache (Zero-Restart)</span>
-          </button>
-        </form>
-      </div>
-
-      <?php if ($flashSuccess !== null): ?>
-        <div class="b-alert b-alert--success"><?= View::e($flashSuccess) ?></div>
-      <?php endif; ?>
-      <?php if ($flashError !== null): ?>
-        <div class="b-alert b-alert--error"><?= View::e($flashError) ?></div>
-      <?php endif; ?>
-
-      <?= $content ?? '' ?>
+      <main class="b-staff-main">
+        <div class="b-page-heading">
+          <div><p class="b-page-eyebrow">Operations workspace</p><h1><?= View::e($pageTitle ?? 'Staff Operations Console') ?></h1></div>
+          <?php if ($isAdmin): ?><form method="POST" action="/staff/system/flush-cache" class="b-cache-form"><?= Csrf::field() ?><button type="submit" class="b-btn b-btn--outline b-btn--sm" title="Refresh application cache without restarting the server">↻ Refresh system cache</button></form><?php endif; ?>
+        </div>
+        <?php if ($flashSuccess !== null): ?><div class="b-alert b-alert--success b-staff-flash" role="status"><?= View::e($flashSuccess) ?></div><?php endif; ?>
+        <?php if ($flashError !== null): ?><div class="b-alert b-alert--error b-staff-flash" role="alert"><?= View::e($flashError) ?></div><?php endif; ?>
+        <div class="b-staff-content"><?= $content ?? '' ?></div>
+      </main>
     </div>
   </div>
   <script src="<?= View::asset('js/core/confirm-actions.js') ?>" defer></script>
+  <script src="<?= View::asset('js/staff-shell.js') ?>" defer></script>
 </body>
 </html>

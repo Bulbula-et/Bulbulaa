@@ -1,118 +1,49 @@
 <?php
 declare(strict_types=1);
 use Bulbula\Core\View;
-
-/**
- * Staff Console Overview & Readiness Gates Dashboard (C-19..C-29, D-31, D-39, D-40, D-45).
- */
-$summary  = $summary ?? [];
-$totals   = $summary['totals'] ?? [];
-$gates    = $gates ?? [];
-$branches = $branches ?? [];
+$summary=$summary??[];$totals=$summary['totals']??[];$gates=$gates??[];$branches=$branches??[];
 ?>
-<div class="b-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: var(--space-6);">
-  <div class="b-card" style="padding: var(--space-4);">
-    <span style="font-size: var(--text-xs); color: var(--neutral-600); font-weight: 700;">PUBLISHED BRANCHES</span>
-    <div class="b-tabular" style="font-size: var(--text-2xl); font-weight: 800; color: var(--blue-700);"><?= (int) ($totals['published_branches'] ?? 0) ?></div>
-    <span class="b-badge b-badge--verified"><?= (int) ($totals['verified_branches'] ?? 0) ?> Verified (C-12)</span>
-  </div>
-
-  <div class="b-card" style="padding: var(--space-4);">
-    <span style="font-size: var(--text-xs); color: var(--neutral-600); font-weight: 700;">MODERATION QUEUE (C-25)</span>
-    <div class="b-tabular" style="font-size: var(--text-2xl); font-weight: 800; color: var(--orange-600);"><?= (int) ($totals['pending_reviews'] ?? 0) ?></div>
-    <a href="/staff/moderation" style="font-size: var(--text-xs); font-weight: 600;">Review pending items &rarr;</a>
-  </div>
-
-  <div class="b-card" style="padding: var(--space-4);">
-    <span style="font-size: var(--text-xs); color: var(--neutral-600); font-weight: 700;">PUBLIC REPORTS (C-26)</span>
-    <div class="b-tabular" style="font-size: var(--text-2xl); font-weight: 800; color: var(--blue-600);"><?= (int) ($totals['open_reports'] ?? 0) ?></div>
-    <a href="/staff/reports" style="font-size: var(--text-xs); font-weight: 600;">Open triage queue &rarr;</a>
-  </div>
-
-  <div class="b-card" style="padding: var(--space-4);">
-    <span style="font-size: var(--text-xs); color: var(--neutral-600); font-weight: 700;">SERVER-SIDE PROFILE VIEWS (C-38)</span>
-    <div class="b-tabular" style="font-size: var(--text-2xl); font-weight: 800; color: var(--blue-700);"><?= (int) ($totals['total_profile_views'] ?? 0) ?></div>
-    <span style="font-size: var(--text-xs); color: var(--neutral-600);"><?= (int) ($totals['total_contact_actions'] ?? 0) ?> Contact Actions</span>
-  </div>
-</div>
-
-<!-- Readiness & Decision Gates Table (Page 14) -->
-<section style="margin-bottom: var(--space-6);">
-  <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-3);">V1 Readiness &amp; Decision Gates (Page 14)</h2>
-  <div class="b-table-wrap">
-    <table class="b-table">
-      <thead>
-        <tr>
-          <th>Decision Ref</th>
-          <th>Gate Key</th>
-          <th>Status &amp; Control</th>
-          <th>Configuration / Scope Note</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php foreach ($gates as $gate): ?>
-          <tr>
-            <td><span class="b-badge b-badge--blue"><?= View::e($gate['decision_ref']) ?></span></td>
-            <td style="font-family: var(--font-mono); font-size: var(--text-xs); font-weight: 600;"><?= View::e($gate['gate_key']) ?></td>
-            <td>
-              <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
-                <span class="b-badge <?= !empty($gate['is_enabled']) ? 'b-badge--verified' : 'b-badge--orange' ?>">
-                  <?= !empty($gate['is_enabled']) ? 'ENABLED' : 'GATED / PENDING' ?>
-                </span>
-                <form action="/staff/gates/toggle" method="POST" style="display: inline;">
-                  <?= View::csrfField() ?>
-                  <input type="hidden" name="gate_key" value="<?= View::e($gate['gate_key']) ?>">
-                  <input type="hidden" name="new_state" value="<?= !empty($gate['is_enabled']) ? '0' : '1' ?>">
-                  <button type="submit" class="b-btn b-btn--outline b-btn--sm" style="padding: 0.2rem 0.55rem; font-size: 0.7rem;">
-                    <?= !empty($gate['is_enabled']) ? 'Disable' : 'Enable' ?>
-                  </button>
-                </form>
-              </div>
-            </td>
-            <td style="font-size: var(--text-xs); color: var(--neutral-600);"><?= View::e($gate['config_json'] ?? '') ?></td>
-          </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
-  </div>
+<section class="b-admin-welcome">
+  <div><h2>Good to see you, <?= View::e(explode(' ', trim((string)($staff['full_name']??'Team')))[0]) ?>.</h2><p>Here is the current health of the Bulbula.et directory and its operational queues.</p></div>
+  <div class="b-admin-welcome__actions"><a class="b-btn b-btn--outline b-btn--sm" href="/staff/analytics">View analytics</a><a class="b-btn b-btn--primary b-btn--sm" href="/staff/listings">Manage listings</a></div>
 </section>
 
-<!-- Recent Directory Branches -->
-<section>
-  <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-3);">Directory Branches &amp; Publication Status</h2>
-  <div class="b-table-wrap">
-    <table class="b-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Branch &amp; Business</th>
-          <th>Category</th>
-          <th>Area</th>
-          <th>Status</th>
-          <th>Trust (C-12)</th>
-          <th>Rating (C-13)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php foreach ($branches as $br): ?>
-          <tr>
-            <td class="b-tabular">#<?= (int) $br['branch_id'] ?></td>
-            <td>
-              <a href="/b/<?= View::e($br['business_slug']) ?>/<?= View::e($br['branch_slug']) ?>" style="font-weight: 700; color: var(--blue-700);">
-                <?= View::e($br['branch_name_en']) ?>
-              </a>
-              <div style="font-size: var(--text-xs); color: var(--neutral-600);">Business: <?= View::e($br['business_name_en']) ?></div>
-            </td>
-            <td><?= View::e($br['primary_category_name_en']) ?></td>
-            <td><?= View::e($br['area_name_en']) ?></td>
-            <td><span class="b-badge b-badge--blue"><?= View::e($br['publication_status']) ?></span></td>
-            <td><?= View::component('trust-badge', ['isVerified' => !empty($br['is_verified'])]) ?></td>
-            <td class="b-tabular">
-              <?= $br['published_rating_avg'] !== null ? ('&#9733; ' . number_format((float) $br['published_rating_avg'], 2) . ' (' . (int) $br['published_review_count'] . ')') : '—' ?>
-            </td>
-          </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
-  </div>
+<div class="b-metric-grid" aria-label="Operational summary">
+  <article class="b-metric is-green"><div class="b-metric__top"><span>Published branches</span><span>Live</span></div><div class="b-metric__value b-tabular"><?= (int)($totals['published_branches']??0) ?></div><div class="b-metric__meta"><?= (int)($totals['verified_branches']??0) ?> verified directory locations</div></article>
+  <article class="b-metric is-orange"><div class="b-metric__top"><span>Moderation queue</span><span>Reviews</span></div><div class="b-metric__value b-tabular"><?= (int)($totals['pending_reviews']??0) ?></div><div class="b-metric__meta"><a href="/staff/moderation">Review pending items →</a></div></article>
+  <article class="b-metric"><div class="b-metric__top"><span>Open reports</span><span>Triage</span></div><div class="b-metric__value b-tabular"><?= (int)($totals['open_reports']??0) ?></div><div class="b-metric__meta"><a href="/staff/reports">Open reports workspace →</a></div></article>
+  <article class="b-metric"><div class="b-metric__top"><span>Profile views</span><span>All time</span></div><div class="b-metric__value b-tabular"><?= (int)($totals['total_profile_views']??0) ?></div><div class="b-metric__meta"><?= (int)($totals['total_contact_actions']??0) ?> tracked contact actions</div></article>
+</div>
+
+<div class="b-dashboard-grid">
+  <section class="b-panel">
+    <header class="b-panel__header"><div><h2>Platform readiness controls</h2><p>Administrator-managed launch and policy gates</p></div><span class="b-badge b-badge--blue"><?= count($gates) ?> controls</span></header>
+    <div class="b-panel__body">
+      <?php foreach($gates as $gate): ?>
+        <div class="b-gate-row">
+          <i class="b-gate-row__state <?= !empty($gate['is_enabled'])?'is-on':'' ?>"></i>
+          <div class="b-gate-row__info"><strong><?= View::e((string)$gate['decision_ref']) ?> · <?= View::e(str_replace('_',' ',(string)$gate['gate_key'])) ?></strong><span><?= View::e((string)($gate['config_json']??'No additional scope note')) ?></span></div>
+          <span class="b-badge <?= !empty($gate['is_enabled'])?'b-badge--verified':'b-badge--orange' ?>"><?= !empty($gate['is_enabled'])?'Enabled':'Pending' ?></span>
+          <form action="/staff/gates/toggle" method="POST"><?= View::csrfField() ?><input type="hidden" name="gate_key" value="<?= View::e($gate['gate_key']) ?>"><input type="hidden" name="new_state" value="<?= !empty($gate['is_enabled'])?'0':'1' ?>"><button type="submit" class="b-btn b-btn--outline b-btn--sm b-gate-toggle"><?= !empty($gate['is_enabled'])?'Disable':'Enable' ?></button></form>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  </section>
+  <aside class="b-panel">
+    <header class="b-panel__header"><div><h2>Priority workspaces</h2><p>Continue where attention is needed</p></div></header>
+    <div class="b-quick-list">
+      <a class="b-quick-link" href="/staff/verification"><span>Verification queue</span><b>→</b></a>
+      <a class="b-quick-link" href="/staff/moderation"><span>Review moderation</span><b><?= (int)($totals['pending_reviews']??0) ?></b></a>
+      <a class="b-quick-link" href="/staff/reports"><span>Public reports</span><b><?= (int)($totals['open_reports']??0) ?></b></a>
+      <a class="b-quick-link" href="/staff/campaigns"><span>Campaign approvals</span><b>→</b></a>
+      <a class="b-quick-link" href="/staff/audit-logs"><span>Security audit trail</span><b>→</b></a>
+    </div>
+  </aside>
+</div>
+
+<section class="b-panel">
+  <header class="b-panel__header"><div><h2>Directory portfolio</h2><p>Latest branch publication, trust, and customer rating status</p></div><a href="/staff/listings" class="b-btn b-btn--outline b-btn--sm">View all listings</a></header>
+  <div class="b-table-wrap" style="border:0;border-radius:0;box-shadow:none"><table class="b-table"><thead><tr><th>Branch</th><th>Category</th><th>Area</th><th>Publication</th><th>Trust</th><th>Rating</th></tr></thead><tbody>
+  <?php foreach($branches as $br): ?><tr><td><a href="/b/<?= View::e($br['business_slug']) ?>/<?= View::e($br['branch_slug']) ?>" style="font-weight:700"><?= View::e($br['branch_name_en']) ?></a><div style="font-size:10px;color:#9098a5;margin-top:3px"><?= View::e($br['business_name_en']) ?> · #<?= (int)$br['branch_id'] ?></div></td><td><?= View::e($br['primary_category_name_en']) ?></td><td><?= View::e($br['area_name_en']) ?></td><td><span class="b-badge b-badge--blue"><?= View::e($br['publication_status']) ?></span></td><td><?= View::component('trust-badge',['isVerified'=>!empty($br['is_verified'])]) ?></td><td class="b-tabular"><?= $br['published_rating_avg']!==null?'★ '.number_format((float)$br['published_rating_avg'],1).' · '.(int)$br['published_review_count']:'—' ?></td></tr><?php endforeach; ?>
+  </tbody></table></div>
 </section>
