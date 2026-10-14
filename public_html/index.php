@@ -29,6 +29,17 @@ use Bulbula\Core\Router;
 Autoloader::register(BULBULA_ROOT . '/src');
 Config::load(BULBULA_ROOT . '/config/env.json');
 
+// Fail closed when a production deployment still contains unsafe development configuration.
+$productionProblems = Config::productionProblems();
+if ($productionProblems !== []) {
+    error_log('Bulbula.et production configuration blocked: ' . implode(' ', $productionProblems));
+    http_response_code(503);
+    header('Content-Type: text/plain; charset=UTF-8');
+    header('Cache-Control: no-store');
+    echo 'Bulbula.et is temporarily unavailable while secure production configuration is completed.';
+    exit;
+}
+
 date_default_timezone_set((string) Config::get('app.timezone', 'Africa/Addis_Ababa'));
 
 // 1. Automatic runtime OPcache / stat-cache check (prevents frozen PHP files on shared hosting)

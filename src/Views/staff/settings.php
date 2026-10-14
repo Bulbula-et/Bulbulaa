@@ -14,6 +14,9 @@ $mail      = $env['mail'] ?? [];
     <span>Gate D-45 Security Boundary: System &amp; Auth Configuration is restricted to the ADMINISTRATOR role.</span>
   </div>
 <?php else: ?>
+  <div class="b-alert b-alert--success" style="margin-bottom: var(--space-4);">
+    Production secrets are never written to tracked <code>config/env.json</code>. This page writes an atomic, permission-restricted <code>config/env.local.json</code>; cPanel/server environment variables override it and are preferred.
+  </div>
   <form action="/staff/settings/save" method="POST" style="display: flex; flex-direction: column; gap: var(--space-5);">
     <?= Csrf::field() ?>
 

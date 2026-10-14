@@ -64,7 +64,14 @@ The front controller loads `vendor/autoload.php` before Bulbula.et's internal PS
 
 ## 3. Configure `config/env.json` (Hot-Reloaded on Every Request)
 
-Edit `config/env.json` with your production MySQL credentials:
+Never place production credentials in tracked `config/env.json`. Copy `config/env.local.example.json` to the ignored `config/env.local.json`, set file permissions to `0600`, and enter deployment-specific values there. On hosts that support environment variables, use the documented `BULBULA_*` variables instead; they take precedence over both JSON layers.
+
+```bash
+cp config/env.local.example.json config/env.local.json
+chmod 600 config/env.local.json
+```
+
+Example local overlay:
 
 ```json
 {
@@ -91,7 +98,9 @@ Edit `config/env.json` with your production MySQL credentials:
 }
 ```
 
-> **Zero-Restart Guarantee:** `Bulbula\Core\Config` checks `filemtime(config/env.json)` on every request and reloads automatically when edited.
+> **Zero-Restart Guarantee:** `Bulbula\Core\Config` reloads the tracked defaults, ignored local overlay, and server environment on each request. The Staff Settings page updates the local overlay using a locked temporary file plus atomic rename.
+
+Supported production environment variables include `BULBULA_APP_ENV`, `BULBULA_APP_DEBUG`, `BULBULA_APP_URL`, `BULBULA_APP_SECRET`, `BULBULA_DB_*`, `BULBULA_STAFF_LOGIN_REQUIRED`, `BULBULA_GOOGLE_CLIENT_*`, `BULBULA_TELEGRAM_BOT_*`, and `BULBULA_MAIL_*`. See `src/Core/Config.php` for the exact mapping.
 
 ---
 

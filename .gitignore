@@ -1,3 +1,7 @@
+# Private deployment configuration (never commit credentials)
+/config/env.local.json
+/config/env.local.json.tmp.*
+
 # Composer dependencies and local test-analysis caches
 /vendor/
 /.phpunit.cache/

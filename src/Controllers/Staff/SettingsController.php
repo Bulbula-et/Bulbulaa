@@ -26,9 +26,8 @@ final class SettingsController
 
     public function index(Request $request): Response
     {
-        $role = $this->staffAuth->currentRole();
-        $envPath = BULBULA_ROOT . '/config/env.json';
-        $rawEnv  = is_file($envPath) ? (json_decode((string) file_get_contents($envPath), true) ?: []) : [];
+        $role   = $this->staffAuth->currentRole();
+        $rawEnv = Config::all();
 
         $html = View::render('staff/settings', [
             'pageTitle' => 'System, Auth & SMTP Settings (Zero-Restart) — Staff Console',
@@ -53,8 +52,13 @@ final class SettingsController
             return Response::redirect('/staff/settings');
         }
 
-        $envPath = BULBULA_ROOT . '/config/env.json';
-        $data    = is_file($envPath) ? (json_decode((string) file_get_contents($envPath), true) ?: []) : [];
+        // Secrets and site-specific settings are written only to an ignored local overlay.
+        // Real server environment variables still take precedence after reload.
+        $basePath  = BULBULA_ROOT . '/config/env.json';
+        $localPath = BULBULA_ROOT . '/config/env.local.json';
+        $data      = is_file($localPath)
+            ? (json_decode((string) file_get_contents($localPath), true) ?: [])
+            : [];
 
         // 1. Security & Staff Login Mode
         $data['security']['require_staff_login']     = (string) $request->input('require_staff_login', '0') === '1';
@@ -86,8 +90,19 @@ final class SettingsController
         $data['mail']['from_email'] = trim((string) $request->input('mail_from_email', 'no-reply@bulbula.et'));
         $data['mail']['from_name']  = trim((string) $request->input('mail_from_name', 'Bulbula.et Verification'));
 
-        file_put_contents($envPath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
-        Config::load($envPath);
+        $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
+        $tmp  = $localPath . '.tmp.' . bin2hex(random_bytes(6));
+        if (file_put_contents($tmp, $json, LOCK_EX) === false) {
+            Session::flash('error', 'Could not write the protected local configuration file.');
+            return Response::redirect('/staff/settings');
+        }
+        @chmod($tmp, 0600);
+        if (!rename($tmp, $localPath)) {
+            @unlink($tmp);
+            Session::flash('error', 'Could not atomically activate the protected local configuration.');
+            return Response::redirect('/staff/settings');
+        }
+        Config::load($basePath);
         Cache::flushAll();
 
         $actor = $this->staffAuth->currentStaff();
@@ -106,7 +121,7 @@ final class SettingsController
             ]
         );
 
-        Session::flash('success', 'System, Google OAuth, and SMTP Mail settings saved to config/env.json and hot-reloaded without server restart.');
+        Session::flash('success', 'Settings saved atomically to protected config/env.local.json and hot-reloaded without a server restart. Server environment variables remain authoritative.');
         return Response::redirect('/staff/settings');
     }
 
