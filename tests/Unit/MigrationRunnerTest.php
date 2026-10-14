@@ -29,10 +29,16 @@ final class MigrationRunnerTest extends TestCase
     {
         $runner = new MigrationRunner($this->pdo, BULBULA_ROOT . '/database/migrations');
         self::assertSame('PENDING', $runner->status()[0]['status']);
-        self::assertSame(['20261014000000_baseline_v1_schema'], $runner->migrate());
+        self::assertSame([
+            '20261014000000_baseline_v1_schema',
+            '20261015010000_customer_password_profiles',
+        ], $runner->migrate());
         self::assertSame('APPLIED', $runner->status()[0]['status']);
         self::assertSame([], $runner->migrate());
-        self::assertSame(['20261014000000_baseline_v1_schema'], $runner->rollbackLastBatch());
+        self::assertSame([
+            '20261015010000_customer_password_profiles',
+            '20261014000000_baseline_v1_schema',
+        ], $runner->rollbackLastBatch());
         self::assertSame(1, (int) $this->pdo->query("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='branches'")->fetchColumn());
     }
 
