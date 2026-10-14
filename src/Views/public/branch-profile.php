@@ -68,10 +68,11 @@ if ((int) ($b['published_review_count'] ?? 0) > 0 && $b['published_rating_avg'] 
             <?= View::csrfField() ?>
             <input type="hidden" name="branch_id" value="<?= (int) ($b['branch_id'] ?? 0) ?>">
             <input type="hidden" name="return_to" value="<?= View::e($canonicalPath) ?>">
-            <button type="submit" class="b-card__bookmark" style="width: 38px; height: 38px; border-radius: 12px; cursor: pointer;" title="Save Branch">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="<?= $isSaved ? 'var(--orange-500)' : 'none' ?>" stroke="currentColor" stroke-width="2.2">
+            <button type="submit" class="b-card__bookmark b-profile-save<?= $isSaved ? ' is-saved' : '' ?>" style="width: 38px; height: 38px; border-radius: 12px; cursor: pointer;" title="<?= $isSaved ? 'Remove from Saved Places' : 'Save Branch' ?>" aria-label="<?= $isSaved ? 'Remove this branch from Saved Places' : 'Save this branch' ?>" aria-pressed="<?= $isSaved ? 'true' : 'false' ?>">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="<?= $isSaved ? 'currentColor' : 'none' ?>" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
               </svg>
+              <span class="b-sr-only"><?= $isSaved ? 'Saved' : 'Not saved' ?></span>
             </button>
           </form>
         <?php else: ?>

@@ -1133,6 +1133,34 @@
   border: 1px solid rgba(17, 19, 21, 0.06);
 }
 
+.b-profile-save {
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.b-profile-save:hover {
+  color: var(--orange-600);
+  border-color: var(--orange-300);
+  transform: translateY(-1px);
+}
+
+.b-profile-save.is-saved {
+  color: #fff;
+  background: var(--orange-500);
+  border-color: var(--orange-500);
+  box-shadow: 0 5px 14px rgba(234, 106, 21, 0.28);
+}
+
+.b-profile-save.is-saved:hover {
+  color: #fff;
+  background: var(--orange-600);
+  border-color: var(--orange-600);
+}
+
+.b-profile-save:focus-visible {
+  outline: 3px solid rgba(234, 106, 21, 0.28);
+  outline-offset: 3px;
+}
+
 .b-card__body {
   padding-inline: 0.15rem;
 }

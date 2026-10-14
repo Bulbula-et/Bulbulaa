@@ -84,6 +84,7 @@ final class BranchProfileController
             'request'              => $request,
             'customer'             => $customer,
             'branch'               => $br,
+            'isSaved'              => !empty($br['is_saved']),
             'reviews'              => $payload['reviews'],
             'customerActiveReview' => $payload['customer_active_review'],
         ]);
