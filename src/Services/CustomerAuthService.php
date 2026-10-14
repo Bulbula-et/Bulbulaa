@@ -184,6 +184,31 @@ final class CustomerAuthService
         return ['ok' => true, 'customer' => $customer];
     }
 
+    public function issueEmailVerification(array $customer, string $clientIpHash): array
+    {
+        if (!empty($customer['email_verified_at'])) return ['ok' => true, 'already_verified' => true];
+        return $this->issueEmailOtp((string) $customer['email'], $clientIpHash, 'VERIFY_EMAIL');
+    }
+
+    public function verifyCustomerEmail(array $customer, string $submittedCode): array
+    {
+        if (!empty($customer['email_verified_at'])) return ['ok' => true];
+        $email = mb_strtolower(trim((string) $customer['email']), 'UTF-8');
+        $code = preg_replace('/\D/', '', $submittedCode);
+        if (strlen((string) $code) !== 6) return ['ok' => false, 'error' => 'Enter the six-digit verification code.'];
+        $otpRow = $this->customerRepo->findLatestActiveOtp($email, 'VERIFY_EMAIL');
+        if ($otpRow === null) return ['ok' => false, 'error' => 'The verification code has expired. Request a new code.'];
+        $maxAttempts = (int) Config::get('security.otp_max_attempts', 5);
+        if ((int) $otpRow['attempt_count'] >= $maxAttempts) return ['ok' => false, 'error' => 'Maximum verification attempts exceeded. Request a new code.'];
+        $this->customerRepo->incrementOtpAttempts((int) $otpRow['id']);
+        $secret = (string) Config::get('app.secret_key', 'bulbula_secret');
+        $expected = hash_hmac('sha256', $email . ':' . $code, $secret);
+        if (!hash_equals((string) $otpRow['code_hmac_sha256'], $expected)) return ['ok' => false, 'error' => 'The verification code is incorrect.'];
+        $this->customerRepo->markOtpConsumed((int) $otpRow['id']);
+        $this->customerRepo->markEmailVerified((int) $customer['id']);
+        return ['ok' => true];
+    }
+
     public function issuePasswordResetOtp(string $rawEmail, string $clientIpHash): array
     {
         $email = mb_strtolower(trim($rawEmail), 'UTF-8');

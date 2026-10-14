@@ -89,6 +89,14 @@ final class CustomerRepository
         );
     }
 
+    public function markEmailVerified(int $customerId): void
+    {
+        Database::execute(
+            'UPDATE customers SET email_verified_at = COALESCE(email_verified_at, CURRENT_TIMESTAMP), updated_at = CURRENT_TIMESTAMP WHERE id = :id',
+            [':id' => $customerId]
+        );
+    }
+
     /** Store Email OTP strictly as HMAC-SHA256 hash. */
     public function storeOtpToken(string $email, string $codeHmacSha256, string $ipHash, int $ttlSeconds = 600, string $purpose = 'SIGN_IN'): int
     {

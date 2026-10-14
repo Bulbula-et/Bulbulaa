@@ -42,9 +42,39 @@ final class ProfileController
             'customer'     => $customer,
             'savedItems'   => $saved,
             'myReviews'    => $reviews,
+            'emailVerificationDevPreview' => Session::get('email_verification_dev_preview'),
         ]);
 
         return Response::html($html);
+    }
+
+    public function requestEmailVerification(Request $request): Response
+    {
+        $customer = $this->authService->currentCustomer();
+        if ($customer === null) return Response::redirect('/auth/login');
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security token expired.'); return Response::redirect('/account');
+        }
+        $result = $this->authService->issueEmailVerification($customer, $request->clientIpHash());
+        if (!$result['ok']) { Session::flash('error', (string) $result['error']); return Response::redirect('/account'); }
+        if (!empty($result['dev_preview_otp'])) Session::set('email_verification_dev_preview', $result['dev_preview_otp']);
+        Session::flash('success', !empty($result['already_verified']) ? 'Your email is already verified.' : 'A verification code was sent to your email.');
+        return Response::redirect('/account');
+    }
+
+    public function verifyEmail(Request $request): Response
+    {
+        $customer = $this->authService->currentCustomer();
+        if ($customer === null) return Response::redirect('/auth/login');
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security token expired.'); return Response::redirect('/account');
+        }
+        $result = $this->authService->verifyCustomerEmail($customer, (string) $request->input('otp_code', ''));
+        if (!$result['ok']) { Session::flash('error', (string) $result['error']); return Response::redirect('/account'); }
+        Session::forget('email_verification_dev_preview');
+        $this->auditService->logCustomerAction((int) $customer['id'], 'CUSTOMER_EMAIL_VERIFIED', 'customer', (int) $customer['id'], []);
+        Session::flash('success', 'Your email address is now verified.');
+        return Response::redirect('/account');
     }
 
     public function updateProfile(Request $request): Response

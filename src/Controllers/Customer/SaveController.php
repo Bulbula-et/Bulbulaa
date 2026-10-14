@@ -59,6 +59,10 @@ final class SaveController
             Session::flash('error', 'Security token expired.');
             return Response::redirect($returnTo);
         }
+        if (empty($customer['email_verified_at'])) {
+            Session::flash('error', 'Verify your email before saving places.');
+            return Response::redirect('/account');
+        }
 
         $businessId = (int) $request->input('business_id', 0);
         $branchId   = $request->input('branch_id') ? (int) $request->input('branch_id') : null;

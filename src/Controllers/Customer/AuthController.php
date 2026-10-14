@@ -75,10 +75,9 @@ final class AuthController
             Session::flash('error', (string) $result['error']);
             return Response::redirect('/auth/register');
         }
-        $otp = $this->authService->issueEmailOtp((string) $request->input('email', ''), $request->clientIpHash());
-        if (!empty($otp['ok'])) {
-            Session::set('otp_pending_email', $otp['email']);
-            if (!empty($otp['dev_preview_otp'])) Session::set('otp_dev_preview', $otp['dev_preview_otp']);
+        $otp = $this->authService->issueEmailVerification($result['customer'], $request->clientIpHash());
+        if (!empty($otp['ok']) && !empty($otp['dev_preview_otp'])) {
+            Session::set('email_verification_dev_preview', $otp['dev_preview_otp']);
         }
         Session::flash('success', 'Your account was created. Verify your email to complete setup.');
         return Response::redirect('/account');

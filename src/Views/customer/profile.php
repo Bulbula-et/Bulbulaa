@@ -21,6 +21,17 @@ $myReviews  = $myReviews ?? [];
     </form>
   </div>
 
+  <?php if (empty($customer['email_verified_at'])): ?>
+    <section class="b-card" style="margin-bottom:var(--space-5);border-color:var(--orange-200);background:var(--orange-50)">
+      <div><span class="b-badge b-badge--orange">Email verification required</span><h2 style="font-size:var(--text-lg);margin-top:var(--space-2)">Verify <?= View::e($customer['email'] ?? '') ?></h2><p style="font-size:var(--text-sm);color:var(--neutral-600)">Verification is required before saving places or publishing reviews.</p></div>
+      <?php if (!empty($emailVerificationDevPreview)): ?><div class="b-alert b-alert--info">Preview verification code: <strong><?= View::e($emailVerificationDevPreview) ?></strong></div><?php endif; ?>
+      <div style="display:flex;gap:var(--space-3);flex-wrap:wrap">
+        <form method="POST" action="/account/email/verification/request"><?= Csrf::field() ?><button class="b-btn b-btn--outline b-btn--sm" type="submit">Send verification code</button></form>
+        <form method="POST" action="/account/email/verification/verify" style="display:flex;gap:var(--space-2)"><?= Csrf::field() ?><input class="b-input" name="otp_code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="Six-digit code" required style="min-height:36px"><button class="b-btn b-btn--primary b-btn--sm" type="submit">Verify email</button></form>
+      </div>
+    </section>
+  <?php endif; ?>
+
   <div class="b-grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-bottom:var(--space-6)">
     <section class="b-card">
       <h2 style="font-size:var(--text-lg);margin-bottom:var(--space-3)">Personal profile</h2>

@@ -47,6 +47,8 @@ return [
     ['POST', '/auth/logout',                         ['Customer\AuthController', 'logout']],
     ['GET',  '/account',                             ['Customer\ProfileController', 'index']],
     ['POST', '/account/profile',                     ['Customer\ProfileController', 'updateProfile']],
+    ['POST', '/account/email/verification/request',  ['Customer\ProfileController', 'requestEmailVerification']],
+    ['POST', '/account/email/verification/verify',   ['Customer\ProfileController', 'verifyEmail']],
     ['POST', '/account/password',                    ['Customer\ProfileController', 'changePassword']],
     ['POST', '/account/privacy-request',             ['Customer\ProfileController', 'requestDeletion']],// C-36 Account deletion & privacy rights
     ['GET',  '/account/saved',                       ['Customer\SaveController', 'index']],             // C-34 Saved businesses list

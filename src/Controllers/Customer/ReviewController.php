@@ -67,6 +67,10 @@ final class ReviewController
             Session::flash('error', 'Security token expired.');
             return Response::redirect($returnTo);
         }
+        if (empty($customer['email_verified_at'])) {
+            Session::flash('error', 'Verify your email before submitting a review.');
+            return Response::redirect('/account');
+        }
 
         $branchId   = (int) $request->input('branch_id', 0);
         $customerId = (int) $customer['id'];
