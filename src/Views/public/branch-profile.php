@@ -120,12 +120,41 @@ $coverImg       = View::branchImage($b);
         </div>
       </div>
 
-      <!-- Description Section -->
+      <!-- Description, Multi-Branch Switcher (C-08) & Offerings (D-44) -->
       <div style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--color-border-subtle);">
+        <?php if (!empty($b['sibling_branches']) && count($b['sibling_branches']) > 1): ?>
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.65rem; padding: var(--space-3) var(--space-4); background: var(--orange-50); border: 1px solid var(--orange-200); border-radius: var(--radius-md); margin-bottom: var(--space-4);">
+            <span style="font-size: var(--text-xs); font-weight: 700; color: var(--orange-700);">
+              Switch Branch Location (<?= count($b['sibling_branches']) ?> Branches in Bole Bulbula):
+            </span>
+            <select class="b-select" data-branch-switcher aria-label="Switch branch location" style="max-width: 280px; min-height: 36px; font-size: var(--text-xs);">
+              <?php foreach ($b['sibling_branches'] as $sib): ?>
+                <?php $sibUrl = '/b/' . ($b['business_slug'] ?? '') . '/' . ($sib['branch_slug'] ?? ''); ?>
+                <option value="<?= View::e($sibUrl) ?>" <?= ($sib['branch_slug'] ?? '') === ($b['branch_slug'] ?? '') ? 'selected' : '' ?>>
+                  <?= View::e($sib['branch_name_en']) ?> — <?= View::e($sib['area_name_en'] ?? 'Bole Bulbula') ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        <?php endif; ?>
+
         <h2 style="font-size: var(--text-base); margin-bottom: 0.35rem;">Description</h2>
         <p style="font-size: var(--text-sm); color: var(--neutral-600); line-height: 1.6;">
           <?= View::e($b['brand_summary_en'] ?? '') ?>
         </p>
+
+        <?php if (!empty($b['services_list']) || !empty($b['secondary_categories'])): ?>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: var(--space-3);">
+            <?php foreach (($b['secondary_categories'] ?? []) as $secCat): ?>
+              <a href="/c/<?= View::e($secCat['slug']) ?>" class="b-badge b-badge--orange">
+                <?= View::e($secCat['name_en']) ?>
+              </a>
+            <?php endforeach; ?>
+            <?php foreach (($b['services_list'] ?? []) as $srv): ?>
+              <span class="b-subcat-pill"><?= View::e(is_scalar($srv) ? (string) $srv : '') ?></span>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
       </div>
 
       <!-- Direct Action Bar (C-10) -->
@@ -178,10 +207,13 @@ $coverImg       = View::branchImage($b);
       <div style="display: flex; flex-direction: column; gap: var(--space-5);">
         <div class="b-card" style="padding: var(--space-5);">
           <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-2);">Location &amp; Landmark</h2>
-          <p style="color: var(--neutral-800); font-size: var(--text-sm); font-weight: 500;"><?= View::e($b['address_text_en'] ?? '') ?></p>
-          <?php if (!empty($b['landmark_en'])): ?>
+          <p style="color: var(--neutral-800); font-size: var(--text-sm); font-weight: 500;">
+            <?= View::e($b['address_line_en'] ?? ($b['address_text_en'] ?? '')) ?>
+          </p>
+          <?php $landmarkText = $b['landmark_notes_en'] ?? ($b['landmark_en'] ?? ''); ?>
+          <?php if (!empty($landmarkText)): ?>
             <div style="margin-top: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--orange-50); border-radius: var(--radius-md); font-size: var(--text-xs); color: var(--neutral-800);">
-              <strong style="color: var(--orange-700);">Landmark:</strong> <?= View::e($b['landmark_en']) ?>
+              <strong style="color: var(--orange-700);">Landmark:</strong> <?= View::e((string) $landmarkText) ?>
             </div>
           <?php endif; ?>
 
@@ -207,42 +239,26 @@ $coverImg       = View::branchImage($b);
           </div>
 
           <p style="font-size: var(--text-xs); color: var(--neutral-600); margin-bottom: var(--space-3);">
-            <?= View::e($openNow['reason'] ?? '') ?>
+            <?= View::e($openNow['detail_label'] ?? ($openNow['reason'] ?? '')) ?>
           </p>
 
-          <?php if (empty($weeklySchedule)): ?>
+          <?php $weeklyHours = $b['weekly_hours'] ?? []; ?>
+          <?php if (empty($weeklyHours)): ?>
             <p style="font-size: var(--text-sm);">Hours have not yet been verified for this branch.</p>
           <?php else: ?>
             <table class="b-hours-table">
               <tbody>
                 <?php
-                  $eatNow = new DateTimeImmutable('now', new DateTimeZone('Africa/Addis_Ababa'));
-                  $todayDow = (int) $eatNow->format('w');
+                  $eatNow   = new DateTimeImmutable('now', new DateTimeZone('Africa/Addis_Ababa'));
+                  $todayKey = strtolower($eatNow->format('D'));
                 ?>
-                <?php for ($d = 0; $d <= 6; $d++): ?>
-                  <?php
-                    $slots = $weeklySchedule[$d] ?? [];
-                    $isToday = ($d === $todayDow);
-                  ?>
+                <?php foreach ($weeklyHours as $dayKey => $row): ?>
+                  <?php $isToday = ($dayKey === $todayKey); ?>
                   <tr class="<?= $isToday ? 'is-today' : '' ?>">
-                    <td><?= View::e($dayNames[$d]) ?><?= $isToday ? ' (Today)' : '' ?></td>
-                    <td style="text-align: right;" class="b-tabular">
-                      <?php if (empty($slots)): ?>
-                        <span style="color: var(--neutral-500);">Not Recorded</span>
-                      <?php else: ?>
-                        <?php foreach ($slots as $slot): ?>
-                          <?php if (!empty($slot['is_closed'])): ?>
-                            <span style="color: var(--color-danger);">Closed</span>
-                          <?php elseif (!empty($slot['is_24_hours'])): ?>
-                            <span style="color: var(--color-success); font-weight: 600;">Open 24 Hours</span>
-                          <?php else: ?>
-                            <span><?= View::e(substr((string) $slot['opens_at'], 0, 5)) ?> &ndash; <?= View::e(substr((string) $slot['closes_at'], 0, 5)) ?></span>
-                          <?php endif; ?>
-                        <?php endforeach; ?>
-                      <?php endif; ?>
-                    </td>
+                    <td><?= View::e($row['day'] ?? '') ?><?= $isToday ? ' (Today)' : '' ?></td>
+                    <td style="text-align: right;" class="b-tabular"><?= View::e($row['hours'] ?? 'Not recorded') ?></td>
                   </tr>
-                <?php endfor; ?>
+                <?php endforeach; ?>
               </tbody>
             </table>
           <?php endif; ?>
@@ -259,13 +275,15 @@ $coverImg       = View::branchImage($b);
               <?php foreach ($reviews as $rev): ?>
                 <div style="padding: var(--space-3); background: var(--orange-25); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md);">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-                    <strong style="font-size: var(--text-xs); color: var(--neutral-900);"><?= View::e($rev['author_name'] ?? 'Verified Customer') ?></strong>
+                    <strong style="font-size: var(--text-xs); color: var(--neutral-900);"><?= View::e($rev['customer_name'] ?? ($rev['author_name'] ?? 'Verified Customer')) ?></strong>
                     <span class="b-rating b-tabular">
                       <span class="b-rating__star">&#9733;</span> <?= (int) $rev['rating'] ?>/5
                     </span>
                   </div>
-                  <div style="font-weight: 600; font-size: var(--text-xs); color: var(--neutral-900);"><?= View::e($rev['title'] ?? '') ?></div>
-                  <p style="font-size: var(--text-xs); margin-top: 0.2rem;"><?= View::e($rev['body'] ?? '') ?></p>
+                  <?php if (!empty($rev['title'])): ?>
+                    <div style="font-weight: 600; font-size: var(--text-xs); color: var(--neutral-900);"><?= View::e($rev['title']) ?></div>
+                  <?php endif; ?>
+                  <p style="font-size: var(--text-xs); margin-top: 0.2rem;"><?= View::e($rev['review_text'] ?? ($rev['body'] ?? '')) ?></p>
                 </div>
               <?php endforeach; ?>
             </div>
