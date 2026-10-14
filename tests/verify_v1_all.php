@@ -49,6 +49,7 @@ $routes = [
     '/b/zemen-fresh-supermarket/bulbula-main-mart',
     '/b/zemen-fresh-supermarket/93-mazoria-express',
     '/auth/login',
+    '/staff/login',
     '/about',
     '/policies/editorial',
     '/policies/verification',
@@ -66,6 +67,8 @@ $routes = [
     '/staff/campaigns',
     '/staff/analytics',
     '/staff/audit-logs',
+    '/staff/users',
+    '/staff/settings',
 ];
 
 foreach ($routes as $path) {

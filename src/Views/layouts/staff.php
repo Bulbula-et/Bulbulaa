@@ -75,6 +75,14 @@ $flashError   = Session::flash('error');
             <span>Audit Logs (Admin)</span>
             <span style="font-size: 0.7rem; opacity: 0.8;">C-29</span>
           </a>
+          <a href="/staff/users" class="b-staff-nav__link <?= $activeNav === 'users' ? 'is-active' : '' ?>">
+            <span>Staff Accounts &amp; RBAC</span>
+            <span style="font-size: 0.7rem; opacity: 0.8;">D-45</span>
+          </a>
+          <a href="/staff/settings" class="b-staff-nav__link <?= $activeNav === 'settings' ? 'is-active' : '' ?>">
+            <span>Auth &amp; SMTP Settings</span>
+            <span style="font-size: 0.7rem; opacity: 0.8;">C-30/31</span>
+          </a>
         </nav>
       </div>
 

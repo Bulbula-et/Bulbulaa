@@ -72,4 +72,10 @@ return [
     ['POST', '/staff/campaigns/{id}/approve',        ['Staff\CampaignController', 'approve']],          // C-27 Admin approves (blocked by D-39 if off)
     ['GET',  '/staff/analytics',                     ['Staff\AnalyticsController', 'index']],           // C-28 Operational & zero-result analytics
     ['GET',  '/staff/audit-logs',                    ['Staff\AuditLogController', 'index']],            // C-29 Admin-only append-only audit trail
+    ['GET',  '/staff/users',                         ['Staff\StaffUserController', 'index']],           // D-45 Admin Staff/RBAC manager
+    ['POST', '/staff/users/create',                  ['Staff\StaffUserController', 'create']],          // D-45 Create staff account
+    ['POST', '/staff/users/{id}/toggle',             ['Staff\StaffUserController', 'toggleActive']],    // D-45 Suspend/activate staff
+    ['POST', '/staff/users/{id}/password',           ['Staff\StaffUserController', 'resetPassword']],   // D-45 Admin password reset
+    ['GET',  '/staff/settings',                      ['Staff\SettingsController', 'index']],            // Auth/SMTP/System settings
+    ['POST', '/staff/settings/save',                 ['Staff\SettingsController', 'save']],             // Zero-restart config hot reload
 ];

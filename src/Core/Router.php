@@ -38,6 +38,19 @@ final class Router
                 $request->setRouteParams($params);
 
                 [$controllerClass, $action] = $handler;
+
+                // Central Gate D-45 Auth Guard for all /staff/* routes (except /staff/login)
+                if (str_starts_with($path, '/staff') && $path !== '/staff/login') {
+                    if ($path === '/staff' && $request->query('switch_staff')) {
+                        // Allow role switcher in preview mode
+                    } else {
+                        $staffAuth = new \Bulbula\Services\StaffAuthService();
+                        if ($staffAuth->currentStaff() === null) {
+                            return Response::redirect('/staff/login?return_to=' . rawurlencode($path));
+                        }
+                    }
+                }
+
                 $fqcn = 'Bulbula\\Controllers\\' . $controllerClass;
 
                 if (!class_exists($fqcn)) {

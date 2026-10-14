@@ -53,6 +53,11 @@ final class Session
         unset($_SESSION[$key]);
     }
 
+    public static function remove(string $key): void
+    {
+        self::forget($key);
+    }
+
     public static function flash(string $key, ?string $message = null): ?string
     {
         if ($message !== null) {
