@@ -16,6 +16,11 @@ final class Database
 {
     private static ?PDO $pdo = null;
 
+    public static function pdo(): PDO
+    {
+        return self::connection();
+    }
+
     public static function connection(): PDO
     {
         if (self::$pdo !== null) {
