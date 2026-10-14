@@ -33,7 +33,7 @@ $devOtp       = $devOtp ?? null;
         <input type="hidden" name="return_to" value="<?= View::e($returnTo) ?>">
         <div>
           <label class="b-label" for="otp-email">Email Address</label>
-          <input id="otp-email" type="email" name="email" class="b-input" required value="abebe.kebede@example.com" placeholder="you@example.com">
+          <input id="otp-email" type="email" name="email" class="b-input" required autocomplete="email" placeholder="you@example.com">
         </div>
         <button type="submit" class="b-btn b-btn--primary">Send 6-Digit Code</button>
       </form>

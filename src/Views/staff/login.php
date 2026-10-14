@@ -25,7 +25,7 @@ $isDebug  = !empty($isDebug);
 
       <div>
         <label class="b-label" for="staff-email">Staff Email</label>
-        <input id="staff-email" type="email" name="email" class="b-input" required value="admin@bulbula.et" placeholder="admin@bulbula.et">
+        <input id="staff-email" type="email" name="email" class="b-input" required autocomplete="username" placeholder="name@yourcompany.com">
       </div>
 
       <div>
