@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Bulbula\Controllers\Customer;
 
+use Bulbula\Core\Config;
 use Bulbula\Core\Csrf;
 use Bulbula\Core\Request;
 use Bulbula\Core\Response;
@@ -17,7 +18,8 @@ use Bulbula\Services\GoogleIdentityService;
 final class AuthController
 {
     public function __construct(
-        private readonly CustomerAuthService $authService = new CustomerAuthService()
+        private readonly CustomerAuthService $authService = new CustomerAuthService(),
+        private readonly GoogleIdentityService $googleIdentity = new GoogleIdentityService()
     ) {}
 
     public function showLogin(Request $request): Response
@@ -37,8 +39,9 @@ final class AuthController
             'request'      => $request,
             'customer'     => null,
             'returnTo'     => $returnTo,
-            'pendingEmail' => $pendingEmail,
-            'devOtp'       => $devOtp,
+            'pendingEmail'  => $pendingEmail,
+            'devOtp'        => $devOtp,
+            'googleClientId' => (string) Config::get('auth.google_client_id', ''),
         ]);
 
         return Response::html($html);
@@ -128,6 +131,10 @@ final class AuthController
 
     public function logout(Request $request): Response
     {
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security session expired. Please try again.');
+            return Response::redirect('/account');
+        }
         $this->authService->logout();
         Session::flash('success', 'You have been signed out. You can continue browsing Bulbula.et as a guest.');
         return Response::redirect('/');

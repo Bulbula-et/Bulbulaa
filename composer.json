@@ -9,12 +9,23 @@
         "ext-json": "*",
         "ext-mbstring": "*",
         "ext-openssl": "*",
-        "phpmailer/phpmailer": "^6.10",
-        "google/apiclient": "^2.18"
+        "google/apiclient": "^2.18",
+        "phpmailer/phpmailer": "^6.10"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.5"
+    },
+    "scripts": {
+        "lint": "find src config public_html tests database -name '*.php' -print0 | xargs -0 -n1 php -l",
+        "analyse": "phpstan analyse --no-progress",
+        "unit": "phpunit",
+        "security": "composer audit --locked --no-interaction",
+        "quality": ["@lint", "@analyse", "@unit", "@security"]
     },
     "config": {
+        "allow-plugins": false,
         "optimize-autoloader": true,
-        "sort-packages": true,
-        "allow-plugins": false
+        "sort-packages": true
     }
 }

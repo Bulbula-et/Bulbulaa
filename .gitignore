@@ -1,5 +1,7 @@
-# Composer dependencies are reproducibly installed from composer.lock
+# Composer dependencies and local test-analysis caches
 /vendor/
+/.phpunit.cache/
+/.phpstan.cache/
 
 # Runtime ephemeral files (auto-created by Bulbula.et V1)
 storage/cache/*.cache

@@ -28,9 +28,12 @@ final class Session
             : (string) Config::get('security.customer_session_name', 'bulbula_cust_sid');
 
         session_name($cookieName);
+        $isHttps = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off')
+            || (string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
         session_set_cookie_params([
             'lifetime' => $isStaffRoute ? 28800 : 1209600, // 8h Staff vs 14d Customer
             'path'     => $isStaffRoute ? '/staff' : '/',
+            'secure'   => $isHttps,
             'httponly' => true,
             'samesite' => $isStaffRoute ? 'Strict' : 'Lax',
         ]);

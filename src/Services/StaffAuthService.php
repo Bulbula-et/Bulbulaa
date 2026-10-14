@@ -28,8 +28,9 @@ final class StaffAuthService
         }
 
         // If the staff user explicitly signed out or strict login is enabled, require /staff/login
-        $strictLogin = (bool) Config::get('security.require_staff_login', false);
-        $loggedOut   = (bool) Session::get('staff_logged_out', false);
+        $isProduction = (string) Config::get('app.env', 'development') === 'production';
+        $strictLogin  = $isProduction || (bool) Config::get('security.require_staff_login', false);
+        $loggedOut    = (bool) Session::get('staff_logged_out', false);
         if ($strictLogin || $loggedOut) {
             return null;
         }
@@ -65,8 +66,9 @@ final class StaffAuthService
         $hash = (string) ($user['password_hash'] ?? '');
         $valid = password_verify($password, $hash);
 
-        // Support pilot seed password ("BulbulaStaff2026!") and auto-upgrade hash to native Bcrypt
-        if (!$valid && $password === 'BulbulaStaff2026!') {
+        // Local pilot compatibility only; production can never use the known seed fallback.
+        $isProduction = (string) Config::get('app.env', 'development') === 'production';
+        if (!$isProduction && !$valid && $password === 'BulbulaStaff2026!') {
             $newHash = password_hash('BulbulaStaff2026!', PASSWORD_BCRYPT);
             $this->staffRepo->updatePasswordHash((int) $user['id'], $newHash);
             $valid = true;
@@ -122,6 +124,9 @@ final class StaffAuthService
 
     public function switchPreviewStaffProfile(int $staffId): ?array
     {
+        if ((string) Config::get('app.env', 'development') === 'production') {
+            return null;
+        }
         $staff = $this->staffRepo->findById($staffId);
         if ($staff !== null) {
             Session::remove('staff_logged_out');

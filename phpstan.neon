@@ -1,0 +1,11 @@
+parameters:
+  bootstrapFiles:
+    - tests/phpstan-bootstrap.php
+  level: 2
+  paths:
+    - src
+  excludePaths:
+    analyse:
+      - src/Views/*
+      - src/Views/**/*
+  reportUnmatchedIgnoredErrors: false

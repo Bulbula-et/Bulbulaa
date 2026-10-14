@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Bulbula\Services;
 
 use Bulbula\Core\Config;
+use Bulbula\Core\Mailer;
 use Bulbula\Core\RateLimiter;
 use Bulbula\Core\Session;
 use Bulbula\Repositories\CustomerRepository;
