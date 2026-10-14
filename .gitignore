@@ -1,3 +1,6 @@
+# Composer dependencies are reproducibly installed from composer.lock
+/vendor/
+
 # Runtime ephemeral files (auto-created by Bulbula.et V1)
 storage/cache/*.cache
 storage/cache/*.cache.json

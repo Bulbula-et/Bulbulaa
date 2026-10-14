@@ -11,6 +11,10 @@ define('BULBULA_START_TIME', microtime(true));
 define('BULBULA_ROOT', dirname(__DIR__));
 define('BULBULA_PUBLIC', __DIR__);
 
+$composerAutoload = BULBULA_ROOT . '/vendor/autoload.php';
+if (is_file($composerAutoload)) {
+    require_once $composerAutoload;
+}
 require_once BULBULA_ROOT . '/src/Core/Autoloader.php';
 
 use Bulbula\Core\Autoloader;

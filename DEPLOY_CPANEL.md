@@ -33,7 +33,27 @@ Place the application root one level above your public web root (or point your a
 
 ---
 
-## 2. Database Setup (MySQL / MariaDB via phpMyAdmin)
+## 2. Install Mature Authentication & Mail Dependencies
+
+Bulbula.et pins production dependencies in `composer.lock`:
+
+- `phpmailer/phpmailer` — mature SMTP and transactional email transport.
+- `google/apiclient` — official Google Identity ID-token verification.
+
+From cPanel Terminal (or locally before upload), run from the application root:
+
+```bash
+composer install --no-dev --prefer-dist --optimize-autoloader
+composer audit --no-dev
+```
+
+The generated `vendor/` directory must exist on the server but is intentionally not committed. If the hosting account does not provide Composer, run the command locally with the same PHP version and upload the resulting `vendor/` directory.
+
+The front controller loads `vendor/autoload.php` before Bulbula.et's internal PSR-4 loader. Do not enable Google login or production OTP email until `composer install` succeeds and `/staff/settings` reports successful SMTP delivery.
+
+---
+
+## 3. Database Setup (MySQL / MariaDB via phpMyAdmin)
 
 1. In **cPanel -> MySQL Databases**, create a database (e.g., `cpaneluser_bulbula`) and a database user with `ALL PRIVILEGES`.
 2. Open **phpMyAdmin**, select the new database, and import:
@@ -75,7 +95,7 @@ Edit `config/env.json` with your production MySQL credentials:
 
 ---
 
-## 4. Zero-Restart Cache & OPcache Refresh
+## 5. Zero-Restart Cache & OPcache Refresh
 
 - **Automatic Static Asset Cache-Busting:** `View::asset('css/components.css')` appends `?v=<filemtime>` automatically, so browsers and Telegram Mini App WebViews immediately fetch updated CSS/JS/images after any file edit.
 - **One-Click Staff Console Cache Flush:** Visit `/staff` and click **"Flush Cache & OPcache"** (`POST /staff/system/flush-cache`) to atomically increment the cache epoch in `storage/cache/_manifest.json`, remove stale `.cache.json` files, and invalidate PHP OPcache scripts without restarting Apache or PHP-FPM.

@@ -37,11 +37,11 @@ Before adopting a dependency, engineering must review:
 - Pin compatible dependency versions with `composer.lock` and run security auditing before deployment.
 - If no suitable mature package exists, document the evaluation and receive explicit approval before implementing custom security-sensitive protocol code.
 
-### Immediate remediation decision
+### Remediation record
 
-The initial custom SMTP socket implementation and direct Google token-info verification introduced in commit `ee2a25a` are provisional and must be replaced before production activation with mature packages:
+The initial custom SMTP socket implementation and direct Google token-info verification introduced in commit `ee2a25a` were explicitly provisional. They were subsequently replaced before production activation with mature packages:
 
 - **PHPMailer/PHPMailer** for SMTP and transactional email.
-- **google/apiclient** (official Google PHP client) for Google ID-token verification and Google Identity integration.
+- **google/apiclient** (official Google PHP client) for cryptographic Google ID-token verification and Google Identity integration.
 
-Until that replacement is completed and verified, SMTP and Google authentication must not be described as production-final.
+Versions are pinned through `composer.lock`; deployment must run `composer install --no-dev --prefer-dist --optimize-autoloader` and `composer audit --no-dev`.

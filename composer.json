@@ -1,0 +1,20 @@
+{
+    "name": "bulbula-et/platform",
+    "description": "Bulbula.et V1 local business discovery platform",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.2",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-openssl": "*",
+        "phpmailer/phpmailer": "^6.10",
+        "google/apiclient": "^2.18"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true,
+        "allow-plugins": false
+    }
+}
