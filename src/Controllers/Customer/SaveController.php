@@ -63,6 +63,15 @@ final class SaveController
         $businessId = (int) $request->input('business_id', 0);
         $branchId   = $request->input('branch_id') ? (int) $request->input('branch_id') : null;
 
+        if ($businessId <= 0 && $branchId !== null && $branchId > 0) {
+            $stmt = \Bulbula\Core\Database::pdo()->prepare('SELECT business_id FROM branches WHERE id = :id LIMIT 1');
+            $stmt->execute([':id' => $branchId]);
+            $row = $stmt->fetch();
+            if ($row) {
+                $businessId = (int) $row['business_id'];
+            }
+        }
+
         if ($businessId > 0) {
             $nowSaved = $this->customerRepo->toggleSavedBusiness((int) $customer['id'], $businessId, $branchId);
             Session::flash('success', $nowSaved ? 'Business saved to your Bulbula list.' : 'Business removed from your Saved list.');

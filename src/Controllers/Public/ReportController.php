@@ -48,20 +48,21 @@ final class ReportController
             return Response::redirect('/auth/login?return_to=' . rawurlencode($returnTo));
         }
 
-        $details = trim((string) $request->input('details_text', ''));
+        $details = trim((string) ($request->input('details_text') ?? $request->input('description', '')));
         if ($details === '') {
             Session::flash('error', 'Please describe the correction or issue so Bulbula Staff can verify it.');
             return Response::redirect($returnTo);
         }
 
+        $rawCat = strtoupper((string) ($request->input('issue_category') ?? $request->input('issue_type', 'WRONG_HOURS')));
         $this->reportRepo->create([
             'target_type'            => in_array($targetType, ['BRANCH_LISTING', 'BUSINESS_LISTING', 'REVIEW'], true) ? $targetType : 'BRANCH_LISTING',
             'branch_id'              => $request->input('branch_id') ? (int) $request->input('branch_id') : null,
             'business_id'            => $request->input('business_id') ? (int) $request->input('business_id') : null,
             'review_id'              => $request->input('review_id') ? (int) $request->input('review_id') : null,
             'reporter_customer_id'   => $customer ? (int) $customer['id'] : null,
-            'reporter_contact_email' => $request->input('reporter_contact_email'),
-            'issue_category'         => (string) $request->input('issue_category', 'WRONG_HOURS'),
+            'reporter_contact_email' => $request->input('reporter_contact_email') ?? $request->input('reporter_contact'),
+            'issue_category'         => $rawCat,
             'details_text'           => $details,
         ]);
 

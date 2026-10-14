@@ -70,8 +70,9 @@ final class ReviewController
 
         $branchId   = (int) $request->input('branch_id', 0);
         $customerId = (int) $customer['id'];
+        $rawText    = (string) ($request->input('review_text') ?? $request->input('body', ''));
 
-        $validation = ReviewPolicy::validateSubmission($request->input('rating'), (string) $request->input('review_text', ''));
+        $validation = ReviewPolicy::validateSubmission($request->input('rating'), $rawText);
         if (!$validation['valid']) {
             Session::flash('error', implode(' ', $validation['errors']));
             return Response::redirect($returnTo);
