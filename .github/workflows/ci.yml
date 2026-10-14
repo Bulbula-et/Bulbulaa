@@ -49,10 +49,13 @@ jobs:
         run: find src config public_html tests database -name '*.php' -print0 | xargs -0 -n1 php -l
 
       - name: PHPStan static analysis
-        run: vendor/bin/phpstan analyse --no-progress
+        run: php vendor/bin/phpstan analyse --no-progress
 
       - name: PHPUnit unit and security tests
-        run: vendor/bin/phpunit
+        run: php vendor/bin/phpunit
+
+      - name: Atomic rate-limiter concurrency test
+        run: tests/rate_limiter_concurrency.sh
 
       - name: Rebuild deterministic SQLite test database
         run: php database/init_sqlite.php
