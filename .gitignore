@@ -1,5 +1,7 @@
 # Runtime ephemeral files (auto-created by Bulbula.et V1)
 storage/cache/*.cache
+storage/cache/*.cache.json
+storage/cache/_*.json
 storage/logs/*.log
 storage/sessions/*
 storage/rate_limits/*
