@@ -134,7 +134,6 @@ final class CustomerAuthService
 
     public function logout(): void
     {
-        Session::forget('customer_id');
-        Session::regenerate();
+        Session::reset();
     }
 }

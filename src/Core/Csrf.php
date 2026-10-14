@@ -18,6 +18,13 @@ final class Csrf
         return $token;
     }
 
+    public static function rotate(): string
+    {
+        $token = bin2hex(random_bytes(32));
+        Session::set('_csrf_token', $token);
+        return $token;
+    }
+
     public static function field(): string
     {
         return '<input type="hidden" name="_csrf" value="' . View::e(self::token()) . '">';

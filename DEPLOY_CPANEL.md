@@ -77,6 +77,10 @@ php database/migrate.php migrate
 
 Migrations are ordered, checksummed, batch-tracked, locked against concurrent deployment, and idempotent. Never edit an applied migration; add a new timestamped file in `database/migrations/`.
 
+### Session security
+
+Production forces `Secure`, `HttpOnly`, and appropriate `SameSite` session cookies independently of proxy headers. Default server-side limits are a 30-minute idle / 8-hour absolute Staff session and a 7-day idle / 14-day absolute Customer session. Override only through `BULBULA_STAFF_SESSION_IDLE`, `BULBULA_STAFF_SESSION_ABSOLUTE`, `BULBULA_CUSTOMER_SESSION_IDLE`, and `BULBULA_CUSTOMER_SESSION_ABSOLUTE` environment values.
+
 ### Production logs
 
 Structured JSON logs rotate daily under `storage/logs/` and retain fourteen files. Ensure PHP can write this directory while it remains inaccessible from the web root. Every HTTP response includes an `X-Request-ID`; use that value to correlate a user-visible failure with its log record. Never expose or download logs publicly.

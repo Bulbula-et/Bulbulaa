@@ -149,9 +149,7 @@ final class StaffAuthService
     {
         $staff = $this->currentStaff();
         if ($staff !== null) $this->auditService->logStaffAction((int) $staff['id'], 'STAFF_LOGOUT', 'staff_user', (int) $staff['id']);
-        Session::remove('staff_id');
-        Session::remove('preview_staff_id');
-        $this->clearTwoFactorPending();
+        Session::reset();
         Session::set('staff_logged_out', true);
     }
 

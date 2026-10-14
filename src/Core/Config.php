@@ -29,6 +29,10 @@ final class Config
         'BULBULA_DB_USER'               => 'database.username',
         'BULBULA_DB_PASSWORD'           => 'database.password',
         'BULBULA_STAFF_LOGIN_REQUIRED'  => 'security.require_staff_login',
+        'BULBULA_STAFF_SESSION_IDLE'    => 'security.staff_session_idle_seconds',
+        'BULBULA_STAFF_SESSION_ABSOLUTE'=> 'security.staff_session_absolute_seconds',
+        'BULBULA_CUSTOMER_SESSION_IDLE' => 'security.customer_session_idle_seconds',
+        'BULBULA_CUSTOMER_SESSION_ABSOLUTE' => 'security.customer_session_absolute_seconds',
         'BULBULA_GOOGLE_CLIENT_ID'      => 'auth.google_client_id',
         'BULBULA_GOOGLE_CLIENT_SECRET'  => 'auth.google_client_secret',
         'BULBULA_TELEGRAM_BOT_USERNAME' => 'auth.telegram_bot_username',
@@ -77,7 +81,7 @@ final class Config
         if (in_array($key, ['app.debug', 'security.require_staff_login'], true)) {
             return filter_var($value, FILTER_VALIDATE_BOOL);
         }
-        if (in_array($key, ['database.port', 'mail.port'], true)) {
+        if (in_array($key, ['database.port', 'mail.port', 'security.staff_session_idle_seconds', 'security.staff_session_absolute_seconds', 'security.customer_session_idle_seconds', 'security.customer_session_absolute_seconds'], true)) {
             return (int) $value;
         }
         return $value;
