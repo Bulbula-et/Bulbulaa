@@ -77,6 +77,10 @@ php database/migrate.php migrate
 
 Migrations are ordered, checksummed, batch-tracked, locked against concurrent deployment, and idempotent. Never edit an applied migration; add a new timestamped file in `database/migrations/`.
 
+### Database compatibility gate
+
+CI validates both deterministic SQLite development behavior and the production SQL path against MariaDB 10.11 using native `pdo_mysql`. It imports `database/schema_v1_mysql.sql`, applies migrations twice for idempotency, and runs authenticated mutation workflows. Do not merge schema or repository SQL changes while either database job is failing.
+
 ### Browser security policy
 
 All responses receive a nonce-based Content Security Policy, restrictive Permissions Policy, `nosniff`, strict referrer handling, and cross-origin isolation controls. Production additionally emits one-year HSTS and upgrades insecure subresources. Framing is denied except for same-origin and Telegram Web origins required by the Mini App. Do not add inline scripts without `SecurityHeaders::nonce()` or external hosts without a reviewed CSP update.

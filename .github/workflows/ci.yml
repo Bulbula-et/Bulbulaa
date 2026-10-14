@@ -99,3 +99,72 @@ jobs:
       - name: Stop application server
         if: always()
         run: test ! -f /tmp/bulbula-server.pid || kill "$(cat /tmp/bulbula-server.pid)" || true
+
+  mariadb-parity:
+    name: MariaDB 10.11 schema, migrations and authenticated E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_DATABASE: bulbula_ci
+          MARIADB_USER: bulbula
+          MARIADB_PASSWORD: bulbula_ci_password
+          MARIADB_ROOT_PASSWORD: root_ci_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      BULBULA_APP_ENV: development
+      BULBULA_DB_DRIVER: mysql
+      BULBULA_DB_HOST: 127.0.0.1
+      BULBULA_DB_PORT: 3306
+      BULBULA_DB_NAME: bulbula_ci
+      BULBULA_DB_USER: bulbula
+      BULBULA_DB_PASSWORD: bulbula_ci_password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP with native MySQL PDO
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: curl, fileinfo, gd, json, mbstring, openssl, pdo_mysql, sodium
+          coverage: none
+          tools: composer:v2
+      - name: Install pinned dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+      - name: Install MariaDB client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq mariadb-client
+      - name: Import production schema and pilot fixture
+        run: |
+          mysql --protocol=TCP -h127.0.0.1 -P3306 -ubulbula -pbulbula_ci_password bulbula_ci < database/schema_v1_mysql.sql
+          mysql --protocol=TCP -h127.0.0.1 -P3306 -ubulbula -pbulbula_ci_password bulbula_ci < database/seeds/seed_v1_pilot.sql
+      - name: Apply and verify MySQL migrations
+        run: |
+          php database/migrate.php migrate
+          php database/migrate.php migrate | grep -q 'already current'
+          php database/migrate.php status | grep -q '^APPLIED'
+          test "$(php tests/db_test_tool.php scalar 'SELECT DATABASE()')" = 'bulbula_ci'
+      - name: Start MySQL-backed application
+        run: |
+          php -d opcache.enable_cli=0 -S 127.0.0.1:8080 -t public_html public_html/router.php > storage/logs/ci-mariadb-server.log 2>&1 &
+          echo $! > /tmp/bulbula-mariadb-server.pid
+          for i in {1..30}; do curl -fsS http://127.0.0.1:8080/ >/dev/null && exit 0; sleep 0.5; done
+          cat storage/logs/ci-mariadb-server.log
+          exit 1
+      - name: MySQL repository, route and authenticated mutation parity
+        run: |
+          php tests/verify_v1_all.php
+          tests/security_headers.sh
+          tests/e2e_flows.sh
+      - name: Show MariaDB server log on failure
+        if: failure()
+        run: cat storage/logs/ci-mariadb-server.log || true
+      - name: Stop MySQL-backed application
+        if: always()
+        run: test ! -f /tmp/bulbula-mariadb-server.pid || kill "$(cat /tmp/bulbula-mariadb-server.pid)" || true
