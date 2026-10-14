@@ -63,9 +63,33 @@ final class CustomerRepository
         return (array) $this->findById($newId);
     }
 
-    /**
-     * C-31 Store Email OTP strictly as HMAC-SHA256 hash.
-     */
+    public function createWithPassword(string $email, string $displayName, string $passwordHash, string $surface = 'WEB'): array
+    {
+        $id = Database::insert(
+            "INSERT INTO customers (email, display_name, password_hash, account_status, last_active_surface, password_changed_at)
+             VALUES (:email, :name, :hash, 'ACTIVE', :surface, CURRENT_TIMESTAMP)",
+            [':email' => mb_strtolower(trim($email), 'UTF-8'), ':name' => $displayName, ':hash' => $passwordHash, ':surface' => $surface]
+        );
+        return (array) $this->findById($id);
+    }
+
+    public function updateProfile(int $customerId, string $displayName, ?string $phoneNumber, string $language): void
+    {
+        Database::execute(
+            'UPDATE customers SET display_name = :name, phone_number = :phone, preferred_language = :lang, updated_at = CURRENT_TIMESTAMP WHERE id = :id',
+            [':name' => $displayName, ':phone' => $phoneNumber, ':lang' => $language, ':id' => $customerId]
+        );
+    }
+
+    public function updatePassword(int $customerId, string $passwordHash): void
+    {
+        Database::execute(
+            'UPDATE customers SET password_hash = :hash, password_changed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :id',
+            [':hash' => $passwordHash, ':id' => $customerId]
+        );
+    }
+
+    /** Store Email OTP strictly as HMAC-SHA256 hash. */
     public function storeOtpToken(string $email, string $codeHmacSha256, string $ipHash, int $ttlSeconds = 600): int
     {
         $normEmail = mb_strtolower(trim($email), 'UTF-8');

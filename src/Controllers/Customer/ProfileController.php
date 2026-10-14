@@ -47,6 +47,43 @@ final class ProfileController
         return Response::html($html);
     }
 
+    public function updateProfile(Request $request): Response
+    {
+        $customer = $this->authService->currentCustomer();
+        if ($customer === null) return Response::redirect('/auth/login');
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security token expired.'); return Response::redirect('/account');
+        }
+        $name = trim((string) $request->input('display_name', ''));
+        $phone = trim((string) $request->input('phone_number', ''));
+        $language = (string) $request->input('preferred_language', 'en');
+        if (mb_strlen($name) < 2 || mb_strlen($name) > 100 || ($phone !== '' && !preg_match('/^\+?[0-9 ()-]{7,32}$/', $phone)) || !in_array($language, ['en', 'am'], true)) {
+            Session::flash('error', 'Please provide a valid name, phone number, and language.'); return Response::redirect('/account');
+        }
+        $this->customerRepo->updateProfile((int) $customer['id'], $name, $phone !== '' ? $phone : null, $language);
+        $this->auditService->logCustomerAction((int) $customer['id'], 'CUSTOMER_PROFILE_UPDATED', 'customer', (int) $customer['id'], ['preferred_language' => $language]);
+        Session::flash('success', 'Your personal profile has been updated.');
+        return Response::redirect('/account');
+    }
+
+    public function changePassword(Request $request): Response
+    {
+        $customer = $this->authService->currentCustomer();
+        if ($customer === null) return Response::redirect('/auth/login');
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security token expired.'); return Response::redirect('/account');
+        }
+        $new = (string) $request->input('new_password', '');
+        if (!hash_equals($new, (string) $request->input('new_password_confirmation', ''))) {
+            Session::flash('error', 'New password confirmation does not match.'); return Response::redirect('/account');
+        }
+        $result = $this->authService->changePassword($customer, (string) $request->input('current_password', ''), $new);
+        if (!$result['ok']) { Session::flash('error', (string) $result['error']); return Response::redirect('/account'); }
+        $this->auditService->logCustomerAction((int) $customer['id'], 'CUSTOMER_PASSWORD_CHANGED', 'customer', (int) $customer['id'], []);
+        Session::flash('success', 'Your password has been changed securely.');
+        return Response::redirect('/account');
+    }
+
     public function requestDeletion(Request $request): Response
     {
         $customer = $this->authService->currentCustomer();

@@ -11,7 +11,7 @@ $devOtp       = $devOtp ?? null;
 <div class="b-container" style="padding: var(--space-12) var(--space-5); max-width: 28rem;">
   <section class="b-card" style="padding: var(--space-8);">
     <div>
-      <span class="b-badge b-badge--orange">Password-Free Access</span>
+      <span class="b-badge b-badge--orange">Secure customer access</span>
       <h1 style="font-size: var(--text-2xl); margin-top: var(--space-3);">Sign In to Bulbula.et</h1>
       <p style="font-size: var(--text-sm); color: var(--neutral-600); margin-top: 0.35rem;">
         Sign in to save places or write and manage reviews across Web and Telegram.
@@ -28,15 +28,23 @@ $devOtp       = $devOtp ?? null;
     <?php endif; ?>
 
     <?php if (empty($pendingEmail)): ?>
-      <form method="POST" action="/auth/otp/request" style="display: flex; flex-direction: column; gap: var(--space-3);">
+      <form method="POST" action="/auth/password/login" style="display:flex;flex-direction:column;gap:var(--space-3)">
+        <?= Csrf::field() ?><input type="hidden" name="return_to" value="<?= View::e($returnTo) ?>">
+        <div><label class="b-label" for="login-email">Email address</label><input id="login-email" type="email" name="email" class="b-input" autocomplete="email" placeholder="you@example.com" required></div>
+        <div><label class="b-label" for="login-password">Password</label><input id="login-password" type="password" name="password" class="b-input" autocomplete="current-password" required></div>
+        <button type="submit" class="b-btn b-btn--primary">Sign in</button>
+      </form>
+      <p style="font-size:var(--text-xs);text-align:center;margin:var(--space-3) 0">New to Bulbula.et? <a href="/auth/register">Create an account</a></p>
+      <details style="border-top:1px solid var(--color-border-subtle);padding-top:var(--space-3)"><summary style="cursor:pointer;font-size:var(--text-xs);font-weight:700">Sign in with a one-time email code</summary>
+      <form method="POST" action="/auth/otp/request" style="display:flex;flex-direction:column;gap:var(--space-3);margin-top:var(--space-3)">
         <?= Csrf::field() ?>
         <input type="hidden" name="return_to" value="<?= View::e($returnTo) ?>">
         <div>
           <label class="b-label" for="otp-email">Email Address</label>
           <input id="otp-email" type="email" name="email" class="b-input" required autocomplete="email" placeholder="you@example.com">
         </div>
-        <button type="submit" class="b-btn b-btn--primary">Send 6-Digit Code</button>
-      </form>
+        <button type="submit" class="b-btn b-btn--outline">Send one-time code</button>
+      </form></details>
     <?php else: ?>
       <form method="POST" action="/auth/otp/verify" style="display: flex; flex-direction: column; gap: var(--space-3);">
         <?= Csrf::field() ?>

@@ -33,10 +33,69 @@ final class CustomerAuthService
         return $this->customerRepo->findById((int) $id);
     }
 
-    /**
-     * C-31 Generates a 6-digit Email OTP, stores its HMAC-SHA256 hash, and returns status.
-     * In development/preview mode, returns `dev_preview_otp` so the tester can sign in without external SMTP.
-     */
+    public function registerWithPassword(string $rawEmail, string $displayName, string $password, string $surface = 'WEB'): array
+    {
+        $email = mb_strtolower(trim($rawEmail), 'UTF-8');
+        $name = trim($displayName);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return ['ok' => false, 'error' => 'Please enter a valid email address.'];
+        if (mb_strlen($name) < 2 || mb_strlen($name) > 100) return ['ok' => false, 'error' => 'Your name must be between 2 and 100 characters.'];
+        $passwordError = $this->passwordValidationError($password);
+        if ($passwordError !== null) return ['ok' => false, 'error' => $passwordError];
+        if ($this->customerRepo->findByEmail($email) !== null) return ['ok' => false, 'error' => 'An account already exists for this email. Sign in or reset your password.'];
+
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+        if (!is_string($hash)) return ['ok' => false, 'error' => 'Your account could not be secured. Please try again.'];
+        $customer = $this->customerRepo->createWithPassword($email, $name, $hash, $surface);
+        Session::regenerate();
+        Session::set('customer_id', (int) $customer['id']);
+        return ['ok' => true, 'customer' => $customer];
+    }
+
+    public function signInWithPassword(string $rawEmail, string $password, string $clientIpHash): array
+    {
+        $email = mb_strtolower(trim($rawEmail), 'UTF-8');
+        if (!RateLimiter::allow('customer_login:' . md5($email . ':' . $clientIpHash), 8, 900)) {
+            return ['ok' => false, 'error' => 'Too many sign-in attempts. Please wait before trying again.'];
+        }
+        $customer = $this->customerRepo->findByEmail($email);
+        $valid = $customer !== null && is_string($customer['password_hash'] ?? null)
+            && password_verify($password, (string) $customer['password_hash']);
+        if (!$valid || ($customer['account_status'] ?? '') !== 'ACTIVE') {
+            return ['ok' => false, 'error' => 'The email or password is incorrect.'];
+        }
+        if (password_needs_rehash((string) $customer['password_hash'], PASSWORD_DEFAULT)) {
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            if (is_string($hash)) $this->customerRepo->updatePassword((int) $customer['id'], $hash);
+        }
+        Session::regenerate();
+        Session::set('customer_id', (int) $customer['id']);
+        return ['ok' => true, 'customer' => $this->customerRepo->findById((int) $customer['id'])];
+    }
+
+    public function changePassword(array $customer, string $currentPassword, string $newPassword): array
+    {
+        $existingHash = (string) ($customer['password_hash'] ?? '');
+        if ($existingHash !== '' && !password_verify($currentPassword, $existingHash)) return ['ok' => false, 'error' => 'Your current password is incorrect.'];
+        $error = $this->passwordValidationError($newPassword);
+        if ($error !== null) return ['ok' => false, 'error' => $error];
+        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+        if (!is_string($hash)) return ['ok' => false, 'error' => 'The new password could not be secured.'];
+        $this->customerRepo->updatePassword((int) $customer['id'], $hash);
+        Session::regenerate();
+        Session::set('customer_id', (int) $customer['id']);
+        return ['ok' => true];
+    }
+
+    private function passwordValidationError(string $password): ?string
+    {
+        if (strlen($password) < 12 || strlen($password) > 128) return 'Use a password between 12 and 128 characters.';
+        if (!preg_match('/[a-z]/', $password) || !preg_match('/[A-Z]/', $password) || !preg_match('/\d/', $password)) {
+            return 'Include an uppercase letter, a lowercase letter, and a number.';
+        }
+        return null;
+    }
+
+    /** Generates and stores a short-lived email verification code. */
     public function issueEmailOtp(string $rawEmail, string $clientIpHash): array
     {
         $email = mb_strtolower(trim($rawEmail), 'UTF-8');

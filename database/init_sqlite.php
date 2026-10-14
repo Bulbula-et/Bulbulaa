@@ -193,9 +193,13 @@ CREATE TABLE customers (
     id                      INTEGER PRIMARY KEY AUTOINCREMENT,
     email                   TEXT NOT NULL UNIQUE,
     display_name            TEXT NOT NULL,
+    phone_number            TEXT NULL,
+    preferred_language      TEXT NOT NULL DEFAULT 'en',
     google_sub_id           TEXT NULL UNIQUE,
+    password_hash           TEXT NULL,
     account_status          TEXT NOT NULL DEFAULT 'ACTIVE',
     email_verified_at       DATETIME NULL,
+    password_changed_at     DATETIME NULL,
     last_active_surface     TEXT NOT NULL DEFAULT 'WEB',
     created_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP

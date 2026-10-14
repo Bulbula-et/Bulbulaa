@@ -34,7 +34,7 @@ final class AuthController
         $devOtp       = Session::get('otp_dev_preview');
 
         $html = View::render('customer/login', [
-            'pageTitle'    => 'Sign In to Bulbula.et — Password-Free Access',
+            'pageTitle'    => 'Sign In to Bulbula.et',
             'canonicalUrl' => '/auth/login',
             'request'      => $request,
             'customer'     => null,
@@ -45,6 +45,62 @@ final class AuthController
         ]);
 
         return Response::html($html);
+    }
+
+    public function showRegister(Request $request): Response
+    {
+        if ($this->authService->currentCustomer() !== null) return Response::redirect('/account');
+        return Response::html(View::render('customer/register', [
+            'pageTitle' => 'Create Your Bulbula.et Account', 'canonicalUrl' => '/auth/register',
+            'request' => $request, 'customer' => null,
+        ]));
+    }
+
+    public function register(Request $request): Response
+    {
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security session expired. Please try again.');
+            return Response::redirect('/auth/register');
+        }
+        $password = (string) $request->input('password', '');
+        if (!hash_equals($password, (string) $request->input('password_confirmation', ''))) {
+            Session::flash('error', 'Password confirmation does not match.');
+            return Response::redirect('/auth/register');
+        }
+        $result = $this->authService->registerWithPassword(
+            (string) $request->input('email', ''), (string) $request->input('display_name', ''),
+            $password, $request->surface()
+        );
+        if (!$result['ok']) {
+            Session::flash('error', (string) $result['error']);
+            return Response::redirect('/auth/register');
+        }
+        $otp = $this->authService->issueEmailOtp((string) $request->input('email', ''), $request->clientIpHash());
+        if (!empty($otp['ok'])) {
+            Session::set('otp_pending_email', $otp['email']);
+            if (!empty($otp['dev_preview_otp'])) Session::set('otp_dev_preview', $otp['dev_preview_otp']);
+        }
+        Session::flash('success', 'Your account was created. Verify your email to complete setup.');
+        return Response::redirect('/account');
+    }
+
+    public function passwordLogin(Request $request): Response
+    {
+        $returnTo = (string) $request->input('return_to', '/account');
+        if (!str_starts_with($returnTo, '/')) $returnTo = '/account';
+        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
+            Session::flash('error', 'Security session expired. Please try again.');
+            return Response::redirect('/auth/login');
+        }
+        $result = $this->authService->signInWithPassword(
+            (string) $request->input('email', ''), (string) $request->input('password', ''), $request->clientIpHash()
+        );
+        if (!$result['ok']) {
+            Session::flash('error', (string) $result['error']);
+            return Response::redirect('/auth/login?return_to=' . rawurlencode($returnTo));
+        }
+        Session::flash('success', 'Welcome back, ' . $result['customer']['display_name'] . '.');
+        return Response::redirect($returnTo);
     }
 
     public function requestEmailOtp(Request $request): Response

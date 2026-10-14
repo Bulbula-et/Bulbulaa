@@ -32,12 +32,17 @@ return [
     // 2. CUSTOMER ACCOUNT ROUTES (C-13, C-14, C-30 to C-36)
     // Password-free access: Google Auth + Email OTP
     // =========================================================================
-    ['GET',  '/auth/login',                          ['Customer\AuthController', 'showLogin']],         // C-30, C-31
+    ['GET',  '/auth/login',                          ['Customer\AuthController', 'showLogin']],
+    ['POST', '/auth/password/login',                 ['Customer\AuthController', 'passwordLogin']],
+    ['GET',  '/auth/register',                       ['Customer\AuthController', 'showRegister']],
+    ['POST', '/auth/register',                       ['Customer\AuthController', 'register']],
     ['POST', '/auth/otp/request',                    ['Customer\AuthController', 'requestEmailOtp']],   // C-31 Request Email OTP
     ['POST', '/auth/otp/verify',                     ['Customer\AuthController', 'verifyEmailOtp']],    // C-31 Verify Email OTP
     ['POST', '/auth/google/callback',                ['Customer\AuthController', 'googleCallback']],    // C-30 Verify Google ID Token
     ['POST', '/auth/logout',                         ['Customer\AuthController', 'logout']],
-    ['GET',  '/account',                             ['Customer\ProfileController', 'index']],          // C-33 Customer minimal profile
+    ['GET',  '/account',                             ['Customer\ProfileController', 'index']],
+    ['POST', '/account/profile',                     ['Customer\ProfileController', 'updateProfile']],
+    ['POST', '/account/password',                    ['Customer\ProfileController', 'changePassword']],
     ['POST', '/account/privacy-request',             ['Customer\ProfileController', 'requestDeletion']],// C-36 Account deletion & privacy rights
     ['GET',  '/account/saved',                       ['Customer\SaveController', 'index']],             // C-34 Saved businesses list
     ['POST', '/account/saved/toggle',                ['Customer\SaveController', 'toggle']],            // C-14, C-34 Save / unsave business
