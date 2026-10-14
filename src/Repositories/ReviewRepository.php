@@ -45,6 +45,12 @@ final class ReviewRepository
         );
     }
 
+    public function branchExists(int $branchId): bool
+    {
+        if ($branchId <= 0) return false;
+        return Database::fetchOne('SELECT id FROM branches WHERE id = :id LIMIT 1', [':id' => $branchId]) !== null;
+    }
+
     public function findById(int $reviewId): ?array
     {
         return Database::fetchOne('SELECT * FROM reviews WHERE id = :id LIMIT 1', [':id' => $reviewId]);

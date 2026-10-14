@@ -66,7 +66,7 @@ if ((int) ($b['published_review_count'] ?? 0) > 0 && $b['published_rating_avg'] 
         <?php if (!empty($customer)): ?>
           <form action="/account/saved/toggle" method="POST" style="display: inline;">
             <?= View::csrfField() ?>
-            <input type="hidden" name="branch_id" value="<?= (int) ($b['id'] ?? 0) ?>">
+            <input type="hidden" name="branch_id" value="<?= (int) ($b['branch_id'] ?? 0) ?>">
             <input type="hidden" name="return_to" value="<?= View::e($canonicalPath) ?>">
             <button type="submit" class="b-card__bookmark" style="width: 38px; height: 38px; border-radius: 12px; cursor: pointer;" title="Save Branch">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="<?= $isSaved ? 'var(--orange-500)' : 'none' ?>" stroke="currentColor" stroke-width="2.2">
@@ -328,7 +328,7 @@ if ((int) ($b['published_review_count'] ?? 0) > 0 && $b['published_rating_avg'] 
             <?php if (!empty($customer)): ?>
               <form action="/account/reviews/submit" method="POST" style="display: flex; flex-direction: column; gap: var(--space-3);">
                 <?= View::csrfField() ?>
-                <input type="hidden" name="branch_id" value="<?= (int) ($b['id'] ?? 0) ?>">
+                <input type="hidden" name="branch_id" value="<?= (int) ($b['branch_id'] ?? 0) ?>">
                 <input type="hidden" name="return_to" value="<?= View::e($canonicalPath) ?>">
                 <div>
                   <label class="b-label" for="rev-rating">Rating</label>
@@ -368,7 +368,7 @@ if ((int) ($b['published_review_count'] ?? 0) > 0 && $b['published_rating_avg'] 
 
           <form action="/reports/submit" method="POST" style="display: flex; flex-direction: column; gap: var(--space-3);">
             <?= View::csrfField() ?>
-            <input type="hidden" name="branch_id" value="<?= (int) ($b['id'] ?? 0) ?>">
+            <input type="hidden" name="branch_id" value="<?= (int) ($b['branch_id'] ?? 0) ?>">
             <input type="hidden" name="return_to" value="<?= View::e($canonicalPath) ?>">
             <div>
               <label class="b-label" for="rep-type">What needs updating?</label>

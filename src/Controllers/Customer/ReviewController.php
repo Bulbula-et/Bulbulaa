@@ -72,6 +72,11 @@ final class ReviewController
         $customerId = (int) $customer['id'];
         $rawText    = (string) ($request->input('review_text') ?? $request->input('body', ''));
 
+        if (!$this->reviewRepo->branchExists($branchId)) {
+            Session::flash('error', 'The selected branch is unavailable. Please reopen the listing and try again.');
+            return Response::redirect($returnTo);
+        }
+
         $validation = ReviewPolicy::validateSubmission($request->input('rating'), $rawText);
         if (!$validation['valid']) {
             Session::flash('error', implode(' ', $validation['errors']));
