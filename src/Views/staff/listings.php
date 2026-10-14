@@ -7,9 +7,9 @@ $branches   = $branches ?? [];
 $categories = $categories ?? [];
 $areas      = $areas ?? [];
 ?>
-<div class="b-card" style="margin-bottom: var(--space-5); padding: var(--space-4);">
-  <h2 style="font-size: var(--text-base); margin-bottom: var(--space-3);">Onboard New Business, Permission &amp; Branch (C-19 Hard Gate)</h2>
-  <form action="/staff/listings/create" method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: var(--space-3); align-items: end;">
+<section class="b-card b-listing-onboard">
+  <header class="b-listing-onboard__header"><div><h2>Onboard a business and branch</h2><p>Capture permission, location, category, and contact details before verification.</p></div><span class="b-listing-onboard__step">Permission gate C-19</span></header>
+  <form action="/staff/listings/create" method="POST" class="b-listing-form">
     <?= Csrf::field() ?>
     <div>
       <label class="b-label" for="lst-name-en">Business Name (EN)</label>
@@ -59,7 +59,7 @@ $areas      = $areas ?? [];
         <option value="VERIFIED_EMAIL">Verified Email Confirmation</option>
       </select>
     </div>
-    <div style="grid-column: 1 / -1; display: flex; gap: var(--space-3); align-items: end; flex-wrap: wrap;">
+    <div class="b-listing-form__wide">
       <div style="flex: 1; min-width: 240px;">
         <label class="b-label" for="lst-sum">Short Description</label>
         <input id="lst-sum" type="text" name="brand_summary_en" class="b-input" placeholder="Short description of services and neighborhood specialty...">
@@ -67,10 +67,11 @@ $areas      = $areas ?? [];
       <button type="submit" class="b-btn b-btn--primary b-btn--sm">Record Permission &amp; Queue for QC</button>
     </div>
   </form>
-</div>
+</section>
 
+<div class="b-listing-summary"><strong><?= count($branches) ?> branches</strong><span>·</span><span>Operational directory portfolio and quick actions</span></div>
 <div class="b-table-wrap">
-  <table class="b-table">
+  <table class="b-table b-listings-table">
     <thead>
       <tr>
         <th>ID</th>
@@ -87,7 +88,7 @@ $areas      = $areas ?? [];
       <?php foreach ($branches as $br): ?>
         <tr>
           <td class="b-tabular">#<?= (int) $br['branch_id'] ?></td>
-          <td>
+          <td class="b-listing-name">
             <strong><?= View::e($br['branch_name_en']) ?></strong>
             <?php if (!empty($br['branch_name_am'])): ?>
               <div class="b-lang-am" lang="am" style="font-size: var(--text-xs); color: var(--orange-600);"><?= View::e($br['branch_name_am']) ?></div>
@@ -96,10 +97,10 @@ $areas      = $areas ?? [];
           <td><?= View::e($br['business_name_en']) ?></td>
           <td><?= View::e($br['primary_category_name_en']) ?></td>
           <td><?= View::e($br['area_name_en']) ?> (<?= View::e($br['sub_city_en']) ?>)</td>
-          <td><span class="b-badge b-badge--blue"><?= View::e($br['opening_hours_status']) ?></span></td>
+          <td><span class="b-status-dot"><?= View::e(str_replace('_', ' ', $br['opening_hours_status'])) ?></span></td>
           <td><span class="b-badge b-badge--verified"><?= View::e($br['publication_status']) ?></span></td>
-          <td>
-            <form action="/staff/listings/<?= (int) $br['branch_id'] ?>/update" method="POST" style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+          <td class="b-listing-actions">
+            <form action="/staff/listings/<?= (int) $br['branch_id'] ?>/update" method="POST" class="b-listing-actions__edit">
               <?= Csrf::field() ?>
               <input type="hidden" name="address_line_en" value="<?= View::e((string) ($br['address_line_en'] ?? '')) ?>">
               <input type="text" name="phone_primary" value="<?= View::e((string) ($br['phone_primary'] ?? '')) ?>" class="b-input" style="width: 125px; min-height: 30px; padding: 0.2rem 0.45rem; font-size: 0.72rem;" placeholder="+251...">
@@ -110,7 +111,7 @@ $areas      = $areas ?? [];
               </select>
               <button type="submit" class="b-btn b-btn--outline b-btn--sm" style="padding: 0.2rem 0.55rem; font-size: 0.7rem;">Save</button>
             </form>
-            <form action="/staff/listings/<?= (int) $br['branch_id'] ?>/media" method="POST" enctype="multipart/form-data" style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;margin-top:.45rem;">
+            <form action="/staff/listings/<?= (int) $br['branch_id'] ?>/media" method="POST" enctype="multipart/form-data" class="b-listing-actions__media">
               <?= Csrf::field() ?>
               <input type="hidden" name="MAX_FILE_SIZE" value="8388608">
               <input type="file" name="branch_image" accept="image/jpeg,image/png,image/webp" required class="b-input" style="width:170px;min-height:30px;padding:.2rem;font-size:.68rem;">

@@ -1,5 +1,8 @@
 -- ============================================================================
 -- BULBULA.ET V1 — BOLE BULBULA OPERATIONAL PILOT SEED DATA (D-31)
+-- Always pin the client connection charset: schema and seed may be imported in separate sessions.
+SET NAMES utf8mb4;
+
 -- Grounded in real Bole Bulbula, Addis Ababa local context (English + Amharic)
 -- Every PUBLISHED branch has a linked GRANTED Permission (C-19) & PASSED QC (C-21).
 -- ============================================================================
