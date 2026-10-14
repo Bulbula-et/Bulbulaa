@@ -19,6 +19,7 @@ final class Config
     private const ENV_MAP = [
         'BULBULA_APP_ENV'               => 'app.env',
         'BULBULA_APP_DEBUG'             => 'app.debug',
+        'BULBULA_PREVIEW_FEATURES'       => 'app.preview_features',
         'BULBULA_APP_URL'               => 'app.url',
         'BULBULA_APP_SECRET'            => 'app.secret_key',
         'BULBULA_CACHE_REFRESH_TOKEN'   => 'app.cache_refresh_token',
@@ -78,7 +79,7 @@ final class Config
 
     private static function castEnvironmentValue(string $key, string $value): mixed
     {
-        if (in_array($key, ['app.debug', 'security.require_staff_login'], true)) {
+        if (in_array($key, ['app.debug', 'app.preview_features', 'security.require_staff_login'], true)) {
             return filter_var($value, FILTER_VALIDATE_BOOL);
         }
         if (in_array($key, ['database.port', 'mail.port', 'security.staff_session_idle_seconds', 'security.staff_session_absolute_seconds', 'security.customer_session_idle_seconds', 'security.customer_session_absolute_seconds'], true)) {
@@ -114,6 +115,12 @@ final class Config
         $current = $value;
     }
 
+    public static function previewFeaturesEnabled(): bool
+    {
+        return (string) self::get('app.env', 'development') !== 'production'
+            && (bool) self::get('app.preview_features', false);
+    }
+
     /** @return string[] */
     public static function productionProblems(): array
     {
@@ -128,6 +135,12 @@ final class Config
         }
         if ((bool) self::get('app.debug', false)) {
             $problems[] = 'Production debug mode must be disabled.';
+        }
+        if ((bool) self::get('app.preview_features', false)) {
+            $problems[] = 'Production preview features must be disabled.';
+        }
+        if ((string) self::get('database.driver', '') !== 'mysql') {
+            $problems[] = 'Production requires the MySQL database driver; pilot SQLite data is forbidden.';
         }
         return $problems;
     }

@@ -23,8 +23,7 @@ final class StaffAuthService
         $staffId = Session::get('staff_id');
         if (is_int($staffId) || is_numeric($staffId)) return $this->staffRepo->findById((int) $staffId);
 
-        $isProduction = (string) Config::get('app.env', 'development') === 'production';
-        $strictLogin  = $isProduction || (bool) Config::get('security.require_staff_login', false);
+        $strictLogin  = !Config::previewFeaturesEnabled() || (bool) Config::get('security.require_staff_login', false);
         $loggedOut    = (bool) Session::get('staff_logged_out', false);
         if ($strictLogin || $loggedOut) return null;
 
@@ -49,8 +48,7 @@ final class StaffAuthService
         if ($user === null) return ['ok' => false, 'error' => 'Invalid staff email or password.'];
 
         $valid = password_verify($password, (string) ($user['password_hash'] ?? ''));
-        $isProduction = (string) Config::get('app.env', 'development') === 'production';
-        if (!$isProduction && !$valid && $password === 'BulbulaStaff2026!') {
+        if (Config::previewFeaturesEnabled() && !$valid && $password === 'BulbulaStaff2026!') {
             $this->staffRepo->updatePasswordHash((int) $user['id'], password_hash($password, PASSWORD_BCRYPT));
             $valid = true;
         }
@@ -155,7 +153,7 @@ final class StaffAuthService
 
     public function switchPreviewStaffProfile(int $staffId): ?array
     {
-        if ((string) Config::get('app.env', 'development') === 'production') return null;
+        if (!Config::previewFeaturesEnabled()) return null;
         $staff = $this->staffRepo->findById($staffId);
         if ($staff !== null) {
             Session::remove('staff_logged_out');

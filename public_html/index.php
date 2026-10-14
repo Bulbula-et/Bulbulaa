@@ -23,6 +23,7 @@ use Bulbula\Core\LiveReload;
 use Bulbula\Core\Cache;
 use Bulbula\Core\Logger;
 use Bulbula\Core\ErrorHandler;
+use Bulbula\Core\ProductionGuard;
 use Bulbula\Core\Session;
 use Bulbula\Core\Request;
 use Bulbula\Core\Response;
@@ -36,6 +37,7 @@ header('X-Request-ID: ' . Logger::requestId());
 
 // Fail closed when a production deployment still contains unsafe development configuration.
 $productionProblems = Config::productionProblems();
+if ($productionProblems === []) $productionProblems = ProductionGuard::problems();
 if ($productionProblems !== []) {
     Logger::error('Production configuration blocked', ['problems' => $productionProblems]);
     http_response_code(503);

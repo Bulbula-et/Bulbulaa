@@ -53,7 +53,7 @@ final class CustomerAuthService
         $hmac   = hash_hmac('sha256', $email . ':' . $code, $secret);
         $ttl    = (int) Config::get('security.otp_expiry_seconds', 600);
 
-        $isDev = (string) Config::get('app.env', 'development') !== 'production';
+        $isDev = Config::previewFeaturesEnabled();
         $minutes = max(1, (int) ceil($ttl / 60));
         $safeCode = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:28px;color:#1f2937">'

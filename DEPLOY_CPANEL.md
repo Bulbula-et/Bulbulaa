@@ -77,6 +77,10 @@ php database/migrate.php migrate
 
 Migrations are ordered, checksummed, batch-tracked, locked against concurrent deployment, and idempotent. Never edit an applied migration; add a new timestamped file in `database/migrations/`.
 
+### Mandatory production preflight
+
+Set `app.preview_features=false` (or `BULBULA_PREVIEW_FEATURES=0`). Production starts only with debug and preview disabled, strict Staff login, MySQL, a unique application secret, at least one active Administrator, no known pilot password (`password` or `BulbulaStaff2026!`), and encrypted TOTP enrollment for every active Staff account. Never import `database/seeds/seed_v1_pilot.sql` into production; if pilot data was imported, replace all Staff credentials and complete TOTP before serving web traffic.
+
 ### Staff authorization policy
 
 Every `/staff` route must declare an explicit `guest`, `authenticated`, or `administrator` access policy in `config/routes.php`. The router fails during construction if a Staff route omits policy metadata, and checks authorization before constructing its controller. Never add a Staff route without selecting the least-privileged policy.

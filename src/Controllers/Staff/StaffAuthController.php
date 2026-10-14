@@ -32,7 +32,7 @@ final class StaffAuthController
             'canonicalUrl' => '/staff/login',
             'request'      => $request,
             'returnTo'     => $returnTo,
-            'isDebug'      => (bool) Config::get('app.debug', true),
+            'isDebug'      => Config::previewFeaturesEnabled(),
         ]);
 
         return Response::html($html);

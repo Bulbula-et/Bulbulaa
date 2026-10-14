@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use Bulbula\Core\Config;
+use Bulbula\Core\ProductionGuard;
 use PHPUnit\Framework\TestCase;
 
 final class ConfigSecurityTest extends TestCase
@@ -42,20 +43,30 @@ final class ConfigSecurityTest extends TestCase
     public function testUnsafeProductionConfigurationFailsPreflight(): void
     {
         file_put_contents($this->dir . '/env.json', json_encode([
-            'app' => ['env' => 'production', 'debug' => true, 'secret_key' => 'development-secret'],
+            'app' => ['env' => 'production', 'debug' => true, 'preview_features' => true, 'secret_key' => 'development-secret'],
             'security' => ['require_staff_login' => false],
+            'database' => ['driver' => 'sqlite'],
         ]));
         Config::load($this->dir . '/env.json');
-        self::assertCount(3, Config::productionProblems());
+        self::assertCount(5, Config::productionProblems());
+    }
+
+    public function testKnownPilotPasswordsAreRejected(): void
+    {
+        self::assertTrue(ProductionGuard::isKnownPilotPassword(password_hash('password', PASSWORD_BCRYPT)));
+        self::assertTrue(ProductionGuard::isKnownPilotPassword(password_hash('BulbulaStaff2026!', PASSWORD_BCRYPT)));
+        self::assertFalse(ProductionGuard::isKnownPilotPassword(password_hash('unique-production-value-49!xQ', PASSWORD_BCRYPT)));
     }
 
     public function testSafeProductionConfigurationPassesPreflight(): void
     {
         file_put_contents($this->dir . '/env.json', json_encode([
-            'app' => ['env' => 'production', 'debug' => false, 'secret_key' => str_repeat('a', 48)],
+            'app' => ['env' => 'production', 'debug' => false, 'preview_features' => false, 'secret_key' => str_repeat('a', 48)],
             'security' => ['require_staff_login' => true],
+            'database' => ['driver' => 'mysql'],
         ]));
         Config::load($this->dir . '/env.json');
         self::assertSame([], Config::productionProblems());
+        self::assertFalse(Config::previewFeaturesEnabled());
     }
 }
