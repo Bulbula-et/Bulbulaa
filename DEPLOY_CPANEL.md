@@ -67,7 +67,15 @@ The front controller loads `vendor/autoload.php` before Bulbula.et's internal PS
 1. In **cPanel -> MySQL Databases**, create a database (e.g., `cpaneluser_bulbula`) and a database user with `ALL PRIVILEGES`.
 2. Open **phpMyAdmin**, select the new database, and import:
    - First: `database/schema_v1_mysql.sql`
-   - Second: `database/seeds/seed_v1_pilot.sql`
+   - Second: `database/seeds/seed_v1_pilot.sql` (pilot/staging only; do not import known staff credentials in production).
+3. Run the framework-free migration runner from cPanel Terminal:
+
+```bash
+php database/migrate.php status
+php database/migrate.php migrate
+```
+
+Migrations are ordered, checksummed, batch-tracked, locked against concurrent deployment, and idempotent. Never edit an applied migration; add a new timestamped file in `database/migrations/`.
 
 ---
 

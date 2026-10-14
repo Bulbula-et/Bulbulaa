@@ -25,6 +25,8 @@
         "analyse": "php vendor/bin/phpstan analyse --no-progress",
         "unit": "php vendor/bin/phpunit",
         "security": "composer audit --locked --no-interaction",
+        "db:status": "php database/migrate.php status",
+        "db:migrate": "php database/migrate.php migrate",
         "quality": ["@lint", "@analyse", "@unit", "@security"]
     },
     "config": {
