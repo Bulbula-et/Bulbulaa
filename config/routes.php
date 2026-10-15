@@ -48,6 +48,11 @@ return [
     ['POST', '/auth/otp/request',                    ['Customer\AuthController', 'requestEmailOtp']],   // C-31 Request Email OTP
     ['POST', '/auth/otp/verify',                     ['Customer\AuthController', 'verifyEmailOtp']],    // C-31 Verify Email OTP
     ['POST', '/auth/google/callback',                ['Customer\AuthController', 'googleCallback']],    // C-30 Verify Google ID Token
+    ['POST', '/auth/google/bridge/start',            ['Customer\AuthController', 'startGoogleBridge']],
+    ['GET',  '/auth/google/bridge/wait',             ['Customer\AuthController', 'showGoogleBridgeWait']],
+    ['POST', '/auth/google/bridge/complete',         ['Customer\AuthController', 'completeGoogleBridge']],
+    ['GET',  '/auth/google/bridge/continue',         ['Customer\AuthController', 'showGoogleBridgeBrowser']],
+    ['POST', '/auth/google/bridge/verify',           ['Customer\AuthController', 'verifyGoogleBridgeBrowser']],
     ['POST', '/auth/logout',                         ['Customer\AuthController', 'logout']],
     ['GET',  '/account',                             ['Customer\ProfileController', 'index']],
     ['POST', '/account/profile',                     ['Customer\ProfileController', 'updateProfile']],

@@ -368,15 +368,30 @@ final class CustomerAuthService
         return ['ok' => true, 'customer' => $this->customerRepo->findById($customerId)];
     }
 
-    /** Server-side Google Sign-In callback handler. */
+    /** Resolve a cryptographically verified Google identity without authenticating this browser. */
+    public function resolveVerifiedGoogleIdentity(string $email, string $displayName, string $googleSubId, string $surface = 'WEB'): array
+    {
+        return $this->customerRepo->findOrCreateByEmail($email, $displayName, $googleSubId, $surface);
+    }
+
+    /** Existing Web callback: verifies identity, then signs in the same browser. */
     public function signInWithVerifiedGoogleIdentity(string $email, string $displayName, string $googleSubId, string $surface = 'WEB'): array
     {
-        $customer = $this->customerRepo->findOrCreateByEmail($email, $displayName, $googleSubId, $surface);
+        $customer = $this->resolveVerifiedGoogleIdentity($email, $displayName, $googleSubId, $surface);
+        return $this->signInExistingGoogleCustomer((int) $customer['id']);
+    }
+
+    /** Only invoke after a verified Google callback or a session-bound consumed handoff. */
+    public function signInExistingGoogleCustomer(int $customerId): array
+    {
+        $customer = $this->customerRepo->findById($customerId);
+        if ($customer === null) return ['account_status' => 'DELETED'];
         if (($customer['account_status'] ?? '') === 'PENDING_DELETION') {
             $effective=strtotime((string)($customer['deletion_effective_at']??''))?:0;
             if($effective>time()){Session::regenerate();Session::set('restore_customer_id',(int)$customer['id']);Session::set('restore_verified_at',time());$customer['_restore_required']=true;return $customer;}
-            $this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);(new CustomerLifecycleMailer())->deleted((string)$customer['email']);return $customer;
+            $this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);(new CustomerLifecycleMailer())->deleted((string)$customer['email']);$customer['account_status']='DELETED';return $customer;
         }
+        if (($customer['account_status'] ?? '') !== 'ACTIVE') return $customer;
         Session::regenerate();
         Session::set('customer_id', (int) $customer['id']);
         (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);

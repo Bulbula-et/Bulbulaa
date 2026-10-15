@@ -80,7 +80,7 @@ jobs:
 
       - name: Start application test server
         run: |
-          php -d opcache.enable_cli=0 -S 127.0.0.1:8080 -t public_html public_html/router.php > storage/logs/ci-server.log 2>&1 &
+          BULBULA_GOOGLE_CLIENT_ID=123456-ci.apps.googleusercontent.com php -d opcache.enable_cli=0 -S 127.0.0.1:8080 -t public_html public_html/router.php > storage/logs/ci-server.log 2>&1 &
           echo $! > /tmp/bulbula-server.pid
           for i in {1..20}; do
             curl -fsS http://127.0.0.1:8080/ >/dev/null && exit 0
@@ -103,6 +103,9 @@ jobs:
 
       - name: Authenticated CSRF, staff RBAC and customer OTP E2E flows
         run: tests/e2e_flows.sh
+
+      - name: Browser-to-Mini-App Google handoff isolation E2E
+        run: bash tests/google_bridge_flow.sh
 
       - name: Show server log on failure
         if: failure()
@@ -169,7 +172,7 @@ jobs:
         run: bash tests/mariadb_restore_rehearsal.sh
       - name: Start MySQL-backed application
         run: |
-          php -d opcache.enable_cli=0 -S 127.0.0.1:8080 -t public_html public_html/router.php > storage/logs/ci-mariadb-server.log 2>&1 &
+          BULBULA_GOOGLE_CLIENT_ID=123456-ci.apps.googleusercontent.com php -d opcache.enable_cli=0 -S 127.0.0.1:8080 -t public_html public_html/router.php > storage/logs/ci-mariadb-server.log 2>&1 &
           echo $! > /tmp/bulbula-mariadb-server.pid
           for i in {1..30}; do curl -fsS http://127.0.0.1:8080/ >/dev/null && exit 0; sleep 0.5; done
           cat storage/logs/ci-mariadb-server.log
@@ -179,6 +182,7 @@ jobs:
           php tests/verify_v1_all.php
           tests/security_headers.sh
           tests/e2e_flows.sh
+          bash tests/google_bridge_flow.sh
       - name: Show MariaDB server log on failure
         if: failure()
         run: cat storage/logs/ci-mariadb-server.log || true
