@@ -34,6 +34,12 @@ final class ProfileController
 
         $saved   = $this->customerRepo->listSavedBusinesses((int) $customer['id']);
         $reviews = $this->reviewRepo->listByCustomer((int) $customer['id']);
+        if ((int) Session::get('sensitive_action_requested_at', 0) < time() - 600) {
+            foreach (['sensitive_action_type','sensitive_action_requested_at','sensitive_action_confirmed_at','sensitive_action_dev_preview'] as $key) Session::forget($key);
+        }
+        if ((int) Session::get('email_change_requested_at', 0) < time() - 600) {
+            foreach (['email_change_new_email','email_change_stage','email_change_requested_at','email_change_dev_preview'] as $key) Session::forget($key);
+        }
 
         $html = View::render('customer/profile', [
             'pageTitle'    => 'My Bulbula Identity & Controls — Bulbula.et',
@@ -139,10 +145,19 @@ final class ProfileController
         return Response::redirect('/account');
     }
 
+    public function cancelSecurityFlow(Request $request): Response
+    {
+        $customer=$this->authService->currentCustomer();if($customer===null)return Response::redirect('/auth/login');
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/account');}
+        foreach(['sensitive_action_type','sensitive_action_requested_at','sensitive_action_confirmed_at','sensitive_action_dev_preview','email_change_new_email','email_change_stage','email_change_requested_at','email_change_dev_preview'] as $key)Session::forget($key);
+        Session::flash('success','The pending account-security action was cancelled. No account change was made.');return Response::redirect('/account');
+    }
+
     public function beginEmailChange(Request $request): Response
     {
         $customer=$this->authService->currentCustomer();if($customer===null)return Response::redirect('/auth/login');
         if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/account');}
+        if(Session::get('sensitive_action_type')!==null){Session::flash('error','Cancel the current security action before changing your email.');return Response::redirect('/account');}
         $result=$this->authService->beginEmailChange($customer,(string)$request->input('new_email',''),(string)$request->input('current_password',''),$request->clientIpHash());
         if(!$result['ok'])Session::flash('error',(string)$result['error']);else {if(!empty($result['dev_preview_otp']))Session::set('email_change_dev_preview',$result['dev_preview_otp']);Session::flash('success','Confirm the code sent to your current email.');}
         return Response::redirect('/account');
@@ -172,6 +187,7 @@ final class ProfileController
     {
         $customer=$this->authService->currentCustomer(); if($customer===null)return Response::redirect('/auth/login');
         if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/account');}
+        if(Session::get('email_change_stage')!==null){Session::flash('error','Cancel the email change before starting another security action.');return Response::redirect('/account');}
         $type=(string)$request->input('request_type','DATA_ACCESS');
         $result=$this->authService->issueSensitiveActionOtp($customer,$request->clientIpHash(),$type);
         if(!$result['ok'])Session::flash('error',(string)$result['error']);else { if(!empty($result['dev_preview_otp']))Session::set('sensitive_action_dev_preview',$result['dev_preview_otp']); Session::flash('success','A confirmation code was sent to your email.'); }

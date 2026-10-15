@@ -32,6 +32,8 @@ $myReviews  = $myReviews ?? [];
     </section>
   <?php endif; ?>
 
+  <?php if(!empty($pendingSensitiveAction)||!empty($emailChangeStage)): ?><section class="b-alert b-alert--info" style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);margin-bottom:var(--space-5)"><span>A verified account-security action is in progress. You can cancel it without changing your account.</span><form method="POST" action="/account/security-flow/cancel"><?= Csrf::field() ?><button class="b-btn b-btn--outline b-btn--sm" type="submit">Cancel pending action</button></form></section><?php endif; ?>
+
   <div class="b-grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-bottom:var(--space-6)">
     <section class="b-card">
       <h2 style="font-size:var(--text-lg);margin-bottom:var(--space-3)">Personal profile</h2>

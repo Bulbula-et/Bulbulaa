@@ -50,6 +50,7 @@ return [
     ['POST', '/auth/logout',                         ['Customer\AuthController', 'logout']],
     ['GET',  '/account',                             ['Customer\ProfileController', 'index']],
     ['POST', '/account/profile',                     ['Customer\ProfileController', 'updateProfile']],
+    ['POST', '/account/security-flow/cancel',        ['Customer\ProfileController', 'cancelSecurityFlow']],
     ['POST', '/account/email/change',                ['Customer\ProfileController', 'beginEmailChange']],
     ['POST', '/account/email/change/current',        ['Customer\ProfileController', 'verifyCurrentEmailChange']],
     ['POST', '/account/email/change/complete',       ['Customer\ProfileController', 'completeEmailChange']],
