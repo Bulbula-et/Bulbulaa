@@ -140,6 +140,7 @@ final class ProfileController
         $result = $this->authService->changePassword($customer, (string) $request->input('current_password', ''), $new);
         if (!$result['ok']) { Session::flash('error', (string) $result['error']); return Response::redirect('/account'); }
         (new \Bulbula\Services\AccountSessionService())->revokeOthers('CUSTOMER', (int) $customer['id']);
+        (new \Bulbula\Services\CustomerSecurityMailer())->passwordChanged((string)$customer['email']);
         $this->auditService->logCustomerAction((int) $customer['id'], 'CUSTOMER_PASSWORD_CHANGED', 'customer', (int) $customer['id'], ['other_sessions_revoked' => true]);
         Session::flash('success', 'Your password was changed and all other devices were signed out.');
         return Response::redirect('/account');
@@ -179,6 +180,7 @@ final class ProfileController
         $old=(string)$customer['email'];$result=$this->authService->completeEmailChange($customer,(string)$request->input('otp_code',''));
         if(!$result['ok']){Session::flash('error',(string)$result['error']);return Response::redirect('/account');}
         Session::forget('email_change_dev_preview');(new \Bulbula\Services\AccountSessionService())->revokeOthers('CUSTOMER',(int)$customer['id']);
+        (new \Bulbula\Services\CustomerSecurityMailer())->emailChanged($old,(string)$result['email']);
         $this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_EMAIL_CHANGED','customer',(int)$customer['id'],['old_email'=>$old,'new_email'=>$result['email']]);
         Session::flash('success','Your sign-in email was changed and other devices were signed out.');return Response::redirect('/account');
     }

@@ -363,6 +363,7 @@ final class CustomerAuthService
         Session::set('customer_id', $customerId);
         (new AccountSessionService())->begin('CUSTOMER', $customerId);
         (new AccountSessionService())->revokeOthers('CUSTOMER',$customerId);
+        $resetCustomer=$this->customerRepo->findById($customerId);if($resetCustomer!==null)(new CustomerSecurityMailer())->passwordChanged((string)$resetCustomer['email'],'reset');
         $this->auditService->logCustomerAction($customerId,'CUSTOMER_PASSWORD_RESET','customer',$customerId,['other_sessions_revoked'=>true]);
         return ['ok' => true, 'customer' => $this->customerRepo->findById($customerId)];
     }
