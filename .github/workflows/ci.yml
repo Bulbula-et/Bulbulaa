@@ -95,6 +95,9 @@ jobs:
       - name: Automated launch assurance baseline
         run: php tests/launch_assurance.php
 
+      - name: Web and Telegram surface adapter smoke checks
+        run: node tests/surface_adapter_smoke.js
+
       - name: Browser security headers and CSP nonce verification
         run: tests/security_headers.sh
 

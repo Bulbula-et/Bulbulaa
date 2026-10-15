@@ -6,7 +6,13 @@
   'use strict';
 
   const candidate = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-  const tg = candidate && typeof candidate.initData === 'string' && candidate.initData.length > 0 ? candidate : null;
+  // The bridge also exists on ordinary Web pages. A Telegram-provided platform
+  // indicates Mini App capability even when a keyboard/inline launch has empty
+  // initData; launch data is never used as Customer authentication here.
+  const platform = candidate && typeof candidate.platform === 'string' ? candidate.platform.toLowerCase() : '';
+  const hasLaunchContext = (platform !== '' && platform !== 'unknown') ||
+    (candidate && typeof candidate.initData === 'string' && candidate.initData.length > 0);
+  const tg = candidate && hasLaunchContext ? candidate : null;
 
   const SurfaceAdapter = {
     isTelegramNative: Boolean(tg),
