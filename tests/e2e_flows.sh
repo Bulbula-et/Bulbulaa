@@ -39,12 +39,14 @@ STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" -c "$T
   -F "_csrf=$CSRF" -F 'alt_text_en=CI verified branch image' -F "branch_image=@$TMP/upload.png;type=image/png")"
 [[ "$STATUS" == "302" ]] || fail "Secure media upload expected 302, got $STATUS"
 MEDIA_PATH="$(db_scalar "SELECT file_path FROM media_assets WHERE branch_id=1 AND alt_text_en='CI verified branch image' ORDER BY id DESC LIMIT 1")"
+MEDIA_ID="$(db_scalar "SELECT id FROM media_assets WHERE file_path = ?" "$MEDIA_PATH")"
 [[ "$MEDIA_PATH" =~ ^/media/branches/1/[a-f0-9]{32}\.jpg$ ]] || fail "Secure media record/path missing"
 [[ -f "public_html$MEDIA_PATH" ]] || fail "Processed media file missing"
 MIME="$(file -b --mime-type "public_html$MEDIA_PATH")"; [[ "$MIME" == "image/jpeg" ]] || fail "Processed media is not JPEG"
-db_exec 'DELETE FROM media_assets WHERE file_path = ?' "$MEDIA_PATH"
-rm -f "public_html$MEDIA_PATH"
-pass "Multipart media byte validation + decode/re-encode + randomized storage flow"
+STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" -X POST "$BASE/staff/listings/1/media/$MEDIA_ID/remove" --data-urlencode "_csrf=$CSRF" --data-urlencode 'reason=Automated lifecycle removal test')"
+MEDIA_ACTIVE="$(db_scalar 'SELECT is_active FROM media_assets WHERE id = ?' "$MEDIA_ID")"
+[[ "$STATUS" == "302" && "$MEDIA_ACTIVE" == "0" && ! -f "public_html$MEDIA_PATH" ]] || fail "Audited media removal did not deactivate record and purge file"
+pass "Multipart validation, randomized re-encoding, and recoverable media removal flow"
 
 # Central authorization policy: Operator may use operational routes but cannot reach Administrator routes or mutations.
 curl -fsS -b "$TMP/staff.cookies" -c "$TMP/staff.cookies" "$BASE/staff?switch_staff=2" -o /dev/null
@@ -134,6 +136,15 @@ QC_AFTER_ADMIN="$(db_scalar "SELECT COUNT(*) FROM verification_reviews WHERE bra
 PUBLISHED_STATUS="$(db_scalar "SELECT publication_status FROM branches WHERE id=$CREATED_BRANCH_ID")"
 [[ "$QC_AFTER_ADMIN" == "$((QC_BEFORE + 1))" && "$PUBLISHED_STATUS" == "PUBLISHED" ]] || fail "Independent QC review did not publish the listing atomically"
 pass "C-21 independent reviewer separation, explicit checklist, and atomic publication are enforced"
+
+# C-22 permission withdrawal must atomically unpublish every affected Branch and detach granted permission.
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/listings" -o "$TMP/admin-listings.html"; CSRF="$(csrf_from "$TMP/admin-listings.html")"
+STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" -X POST "$BASE/staff/listings/$CREATED_BRANCH_ID/permission/revoke" --data-urlencode "_csrf=$CSRF" --data-urlencode 'reason=Business representative withdrew publication permission')"
+REVOKED_STATUS="$(db_scalar "SELECT status FROM business_permissions WHERE id=(SELECT permission_id FROM verification_reviews WHERE branch_id=$CREATED_BRANCH_ID ORDER BY id DESC LIMIT 1)")"
+UNPUBLISHED_STATUS="$(db_scalar "SELECT publication_status FROM branches WHERE id=$CREATED_BRANCH_ID")"
+ACTIVE_PERMISSION="$(db_scalar "SELECT COALESCE(active_permission_id,0) FROM branches WHERE id=$CREATED_BRANCH_ID")"
+[[ "$STATUS" == "302" && "$REVOKED_STATUS" == "REVOKED" && "$UNPUBLISHED_STATUS" == "UNPUBLISHED" && "$ACTIVE_PERMISSION" == "0" ]] || fail "Permission withdrawal did not close publication and permission gates atomically"
+pass "C-22 permission withdrawal atomically unpublishes listings and removes permission linkage"
 
 # Customer OTP: request, HMAC-backed code preview in development, verification, account session.
 TEST_EMAIL="ci-otp-$(date +%s)-$$@example.com"

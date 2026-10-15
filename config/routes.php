@@ -91,7 +91,9 @@ return [
     ['POST', '/staff/listings/create',               ['Staff\ListingController', 'create'], ['access' => 'authenticated']],            // C-19 Create prospect/draft + Permission
     ['POST', '/staff/listings/{branch_id}/update',   ['Staff\ListingController', 'update'], ['access' => 'authenticated']],            // C-20 Edit Business/Branch attributes
     ['POST', '/staff/listings/{branch_id}/lifecycle',['Staff\ListingController', 'lifecycle'], ['access' => 'authenticated']],         // C-20 Audited close/unpublish/reopen workflow
-    ['POST', '/staff/listings/{branch_id}/media',    ['Staff\ListingController', 'uploadMedia'], ['access' => 'authenticated']],       // C-22 Permitted media management
+    ['POST', '/staff/listings/{branch_id}/media',    ['Staff\ListingController', 'uploadMedia'], ['access' => 'authenticated']],       // C-22 Replace permitted Branch cover
+    ['POST', '/staff/listings/{branch_id}/media/{media_id}/remove', ['Staff\ListingController', 'removeMedia'], ['access' => 'authenticated']], // C-22 Audited media removal
+    ['POST', '/staff/listings/{branch_id}/permission/revoke', ['Staff\ListingController', 'revokePermission'], ['access' => 'authenticated']], // C-22 Permission withdrawal cleanup
     ['GET',  '/staff/verification',                  ['Staff\VerificationController', 'index'], ['access' => 'authenticated']],        // C-21 Verification & QC queue
     ['POST', '/staff/verification/{branch_id}/qc',   ['Staff\VerificationController', 'recordQc'], ['access' => 'authenticated']],     // C-21 Pass/Fail QC + Publish gate
     ['GET',  '/staff/taxonomy',                      ['Staff\TaxonomyController', 'index'], ['access' => 'authenticated']],            // C-23 2-level Category & Alias manager

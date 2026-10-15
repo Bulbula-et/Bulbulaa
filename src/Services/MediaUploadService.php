@@ -101,12 +101,42 @@ final class MediaUploadService
         ];
     }
 
-    public function deleteProcessed(string $publicPath): void
+    public function deleteProcessed(string $publicPath): bool
     {
-        if (!preg_match('#^/media/branches/[0-9]+/[a-f0-9]{32}\.jpg$#', $publicPath)) return;
-        $root = defined('BULBULA_PUBLIC') ? BULBULA_PUBLIC : dirname(__DIR__, 2) . '/public_html';
-        $absolute = $root . $publicPath;
-        if (is_file($absolute)) @unlink($absolute);
+        $absolute=$this->absolutePath($publicPath);
+        if ($absolute===null || !is_file($absolute)) return $absolute!==null;
+        return @unlink($absolute);
+    }
+
+    /** Move public media outside the webroot before its database record is disabled. */
+    public function quarantine(string $publicPath): ?array
+    {
+        $original=$this->absolutePath($publicPath);
+        if ($original===null || !is_file($original)) return null;
+        $dir=dirname(__DIR__,2).'/storage/media_quarantine';
+        if (!is_dir($dir) && !@mkdir($dir,0700,true) && !is_dir($dir)) return null;
+        $quarantined=$dir.'/'.bin2hex(random_bytes(20)).'.jpg';
+        if (!@rename($original,$quarantined)) return null;
+        return ['original'=>$original,'quarantined'=>$quarantined];
+    }
+
+    public function restoreQuarantine(array $token): bool
+    {
+        $from=(string)($token['quarantined']??'');$to=(string)($token['original']??'');
+        return $from!=='' && $to!=='' && is_file($from) && @rename($from,$to);
+    }
+
+    public function purgeQuarantine(array $token): bool
+    {
+        $path=(string)($token['quarantined']??'');
+        return $path!=='' && (!is_file($path) || @unlink($path));
+    }
+
+    private function absolutePath(string $publicPath): ?string
+    {
+        if (!preg_match('#^/media/branches/[0-9]+/[a-f0-9]{32}\.jpg$#',$publicPath)) return null;
+        $root=defined('BULBULA_PUBLIC')?BULBULA_PUBLIC:dirname(__DIR__,2).'/public_html';
+        return $root.$publicPath;
     }
 
     private function uploadError(int $error): string

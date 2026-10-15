@@ -29,7 +29,13 @@ final class MediaUploadServiceTest extends TestCase
         self::assertMatchesRegularExpression('#^/media/branches/999999/[a-f0-9]{32}\.jpg$#', (string) $result['file_path']);
         $absolute = BULBULA_PUBLIC . $result['file_path'];
         self::assertSame('image/jpeg', (new finfo(FILEINFO_MIME_TYPE))->file($absolute));
-        (new MediaUploadService(false))->deleteProcessed((string) $result['file_path']);
+        $lifecycle=new MediaUploadService(false);
+        $token=$lifecycle->quarantine((string)$result['file_path']);
+        self::assertNotNull($token);
+        self::assertFileDoesNotExist($absolute);
+        self::assertTrue($lifecycle->restoreQuarantine($token));
+        self::assertFileExists($absolute);
+        self::assertTrue($lifecycle->deleteProcessed((string)$result['file_path']));
         @rmdir(BULBULA_PUBLIC . '/media/branches/999999');
     }
 

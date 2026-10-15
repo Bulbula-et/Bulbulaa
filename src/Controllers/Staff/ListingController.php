@@ -3,18 +3,16 @@ declare(strict_types=1);
 
 namespace Bulbula\Controllers\Staff;
 
-use Bulbula\Core\Cache;
 use Bulbula\Core\Csrf;
-use Bulbula\Core\Database;
 use Bulbula\Core\Request;
 use Bulbula\Core\Response;
 use Bulbula\Core\Session;
 use Bulbula\Core\View;
 use Bulbula\Repositories\AreaRepository;
 use Bulbula\Repositories\BranchRepository;
+use Bulbula\Repositories\MediaRepository;
 use Bulbula\Repositories\TaxonomyRepository;
-use Bulbula\Services\AuditService;
-use Bulbula\Services\MediaUploadService;
+use Bulbula\Services\MediaLifecycleService;
 use Bulbula\Services\ListingLifecycleService;
 use Bulbula\Services\StaffAuthService;
 
@@ -26,20 +24,23 @@ final class ListingController
     public function __construct(
         private readonly StaffAuthService $staffAuth = new StaffAuthService(),
         private readonly BranchRepository $branchRepo = new BranchRepository(),
+        private readonly MediaRepository $mediaRepo = new MediaRepository(),
         private readonly TaxonomyRepository $taxonomyRepo = new TaxonomyRepository(),
         private readonly AreaRepository $areaRepo = new AreaRepository(),
-        private readonly AuditService $auditService = new AuditService(),
-        private readonly MediaUploadService $mediaUpload = new MediaUploadService(),
+        private readonly MediaLifecycleService $mediaLifecycle = new MediaLifecycleService(),
         private readonly ListingLifecycleService $lifecycle = new ListingLifecycleService()
     ) {}
 
     public function index(Request $request): Response
     {
+        $branches=$this->branchRepo->listAllForStaffConsole(50);
+        foreach($branches as &$branch)$branch['active_media']=$this->mediaRepo->listActiveForBranch((int)$branch['branch_id']);
+        unset($branch);
         $html = View::render('staff/listings', [
             'pageTitle'  => 'Listings & Permission Registry — Staff Console',
             'activeNav'  => 'listings',
             'staff'      => $this->staffAuth->currentStaff(),
-            'branches'   => $this->branchRepo->listAllForStaffConsole(50),
+            'branches'   => $branches,
             'categories' => $this->taxonomyRepo->getFullTree(false),
             'areas'      => $this->areaRepo->listAll(false),
         ], 'staff');
@@ -94,70 +95,35 @@ final class ListingController
 
     public function uploadMedia(Request $request): Response
     {
-        if (!Csrf::verify((string) $request->input('_csrf', ''))) {
-            Session::flash('error', 'Security token expired.');
-            return Response::redirect('/staff/listings');
-        }
-
-        $branchId = (int) $request->param('branch_id', 0);
-        $branch   = $this->branchRepo->findByIdForStaff($branchId);
-        if ($branch === null) {
-            Session::flash('error', 'Branch not found.');
-            return Response::redirect('/staff/listings');
-        }
-
-        $permId = (int) ($branch['active_permission_id'] ?? 0);
-        if ($permId <= 0) {
-            Session::flash('error', 'Media upload blocked: an active business permission record is required.');
-            return Response::redirect('/staff/listings');
-        }
-
-        $altText = mb_substr(trim((string) $request->input('alt_text_en', (string) ($branch['branch_name_en'] ?? 'Branch Photo'))), 0, 180, 'UTF-8');
-        if ($altText === '') $altText = (string) ($branch['branch_name_en'] ?? 'Branch Photo');
-        $processed = $this->mediaUpload->process($request->file('branch_image') ?? [], $branchId);
-        if (!$processed['ok']) {
-            Session::flash('error', 'Media rejected: ' . (string) ($processed['error'] ?? 'Invalid image.'));
-            return Response::redirect('/staff/listings');
-        }
-        $filePath = (string) $processed['file_path'];
-        $staff    = $this->staffAuth->currentStaff();
-        $staffId  = (int) ($staff['id'] ?? 1);
-
-        try {
-            $stmt = Database::pdo()->prepare(
-                'INSERT INTO media_assets (business_id, branch_id, permission_id, media_type, file_path, width_px, height_px, file_size_bytes, alt_text_en, display_order, is_active, uploaded_by_staff_id)
-                 VALUES (:biz_id, :br_id, :perm_id, :mtype, :fpath, :width, :height, :bytes, :alt, 1, 1, :staff_id)'
-            );
-            $stmt->execute([
-                ':biz_id'   => (int) $branch['business_id'],
-                ':br_id'    => $branchId,
-                ':perm_id'  => $permId,
-                ':mtype'    => 'COVER',
-                ':fpath'    => $filePath,
-                ':width'    => (int) $processed['width'],
-                ':height'   => (int) $processed['height'],
-                ':bytes'    => (int) $processed['size'],
-                ':alt'      => $altText,
-                ':staff_id' => $staffId,
-            ]);
-            $mediaId = (int) Database::pdo()->lastInsertId();
-        } catch (\Throwable $e) {
-            $this->mediaUpload->deleteProcessed($filePath);
-            Session::flash('error', 'Image was processed but its media record could not be saved.');
-            return Response::redirect('/staff/listings');
-        }
-
-        $this->auditService->logStaffAction(
-            $staffId,
-            'PERMITTED_MEDIA_ATTACHED',
-            'media_asset',
-            $mediaId,
-            null,
-            ['branch_id' => $branchId, 'file_path' => $filePath]
+        if (!Csrf::verify((string)$request->input('_csrf',''))) { Session::flash('error','Security token expired.'); return Response::redirect('/staff/listings'); }
+        $staff=$this->staffAuth->currentStaff();
+        $result=$this->mediaLifecycle->replaceCover(
+            (int)$request->param('branch_id',0),
+            $request->file('branch_image')??[],
+            (string)$request->input('alt_text_en',''),
+            (int)($staff['id']??0)
         );
-        Cache::flushAll();
-
-        Session::flash('success', 'Permitted media asset (#' . $mediaId . ') attached to Branch #' . $branchId . '.');
+        if(!$result['ok'])Session::flash('error','Media rejected: '.(string)($result['error']??'Operation failed.'));
+        else Session::flash('success','Branch cover replaced through the active permission record.');
         return Response::redirect('/staff/listings');
     }
+
+    public function removeMedia(Request $request): Response
+    {
+        if (!Csrf::verify((string)$request->input('_csrf',''))) { Session::flash('error','Security token expired.'); return Response::redirect('/staff/listings'); }
+        $staff=$this->staffAuth->currentStaff();
+        $result=$this->mediaLifecycle->remove((int)$request->param('branch_id',0),(int)$request->param('media_id',0),(string)$request->input('reason',''),(int)($staff['id']??0));
+        Session::flash($result['ok']?'success':'error',$result['ok']?'Media removed safely.':(string)$result['error']);
+        return Response::redirect('/staff/listings');
+    }
+
+    public function revokePermission(Request $request): Response
+    {
+        if (!Csrf::verify((string)$request->input('_csrf',''))) { Session::flash('error','Security token expired.'); return Response::redirect('/staff/listings'); }
+        $staff=$this->staffAuth->currentStaff();
+        $result=$this->mediaLifecycle->revokePermission((int)$request->param('branch_id',0),(string)$request->input('reason',''),(int)($staff['id']??0));
+        Session::flash($result['ok']?'success':'error',$result['ok']?'Permission withdrawn; affected listings and media were removed from public use.':(string)$result['error']);
+        return Response::redirect('/staff/listings');
+    }
+
 }

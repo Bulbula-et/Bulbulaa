@@ -147,8 +147,10 @@ $lifecycleTransitions = [
               <input type="hidden" name="MAX_FILE_SIZE" value="8388608">
               <input type="file" name="branch_image" accept="image/jpeg,image/png,image/webp" required class="b-input" style="width:170px;min-height:30px;padding:.2rem;font-size:.68rem;">
               <input type="text" name="alt_text_en" value="<?= View::e((string) $br['branch_name_en']) ?>" required maxlength="180" class="b-input" style="width:125px;min-height:30px;padding:.2rem .4rem;font-size:.68rem;" aria-label="Image alternative text">
-              <button type="submit" class="b-btn b-btn--outline b-btn--sm" style="padding:.2rem .5rem;font-size:.7rem;">Upload Photo</button>
+              <button type="submit" class="b-btn b-btn--outline b-btn--sm" style="padding:.2rem .5rem;font-size:.7rem;"><?= empty($br['active_media'])?'Add':'Replace' ?> Cover</button>
             </form>
+            <?php foreach($br['active_media']??[] as $media): ?><form action="/staff/listings/<?= (int)$br['branch_id'] ?>/media/<?= (int)$media['id'] ?>/remove" method="POST" class="b-listing-actions__media"><?= Csrf::field() ?><input name="reason" class="b-input" minlength="10" maxlength="500" required placeholder="Media removal reason"><button class="b-btn b-btn--outline b-btn--sm">Remove <?= View::e(str_replace('_',' ',(string)$media['media_type'])) ?></button></form><?php endforeach; ?>
+            <?php if(!empty($br['active_permission_id'])): ?><details class="b-listing-control"><summary>Withdraw business permission</summary><form action="/staff/listings/<?= (int)$br['branch_id'] ?>/permission/revoke" method="POST" class="b-listing-actions__lifecycle"><?= Csrf::field() ?><label><span>Withdrawal reason</span><textarea name="reason" class="b-input" minlength="10" maxlength="500" required></textarea></label><p>This immediately unpublishes every Branch for the Business and securely removes media collected under this permission.</p><button class="b-btn b-btn--outline b-btn--sm">Withdraw permission</button></form></details><?php endif; ?>
           </td>
         </tr>
       <?php endforeach; ?>
