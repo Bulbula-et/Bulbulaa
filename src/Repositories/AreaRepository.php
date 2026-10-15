@@ -55,6 +55,11 @@ final class AreaRepository
         return Database::fetchOne('SELECT * FROM areas WHERE id = :id LIMIT 1', [':id' => $id]);
     }
 
+    public function aliasesFor(int $id): array
+    {
+        return Database::fetchAll('SELECT alias_term,language_code FROM area_aliases WHERE area_id=:id ORDER BY language_code,alias_term',[':id'=>$id]);
+    }
+
     public function saveArea(array $data): int
     {
         if (!empty($data['id'])) {
@@ -99,7 +104,6 @@ final class AreaRepository
             );
         }
 
-        Cache::invalidateTags(['areas', 'branches']);
         return $id;
     }
 }

@@ -103,6 +103,11 @@ final class TaxonomyRepository
         return Database::fetchOne('SELECT * FROM categories WHERE id = :id LIMIT 1', [':id' => $id]);
     }
 
+    public function aliasesFor(int $id): array
+    {
+        return Database::fetchAll('SELECT alias_term,language_code FROM category_aliases WHERE category_id=:id ORDER BY language_code,alias_term',[':id'=>$id]);
+    }
+
     /**
      * Creates or updates a Category or Subcategory, strictly enforcing depth_level IN (1, 2) (C-23).
      */
@@ -161,7 +166,6 @@ final class TaxonomyRepository
             );
         }
 
-        Cache::invalidateTags(['categories', 'branches']);
         return $id;
     }
 }

@@ -4,6 +4,7 @@ use Bulbula\Core\Csrf;
 use Bulbula\Core\View;
 
 $areas = $areas ?? [];
+$aliasText=static fn(array $rows):string=>implode("\n",array_map(static fn(array $a):string=>(($a['language_code']??'en')==='en'?'':$a['language_code'].':').$a['alias_term'],$rows));
 $launchAreas = 0;
 $publishedBranches = 0;
 foreach ($areas as $area) {
@@ -27,6 +28,7 @@ foreach ($areas as $area) {
     <div><label class="b-label" for="area-slug">URL slug</label><input id="area-slug" type="text" name="slug" class="b-input" placeholder="e.g. bulbula-mikael" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required></div>
     <div><label class="b-label" for="area-lat">Center latitude</label><input id="area-lat" type="number" step="0.0000001" min="-90" max="90" name="center_latitude" class="b-input" placeholder="8.9510"></div>
     <div><label class="b-label" for="area-lng">Center longitude</label><input id="area-lng" type="number" step="0.0000001" min="-180" max="180" name="center_longitude" class="b-input" placeholder="38.7860"></div>
+    <div><label class="b-label">Sub-city</label><input name="sub_city_en" class="b-input" value="Bole" required></div><div><label class="b-label">Search aliases</label><textarea name="aliases" class="b-input" rows="2" placeholder="One per line; optional am: or translit: prefix"></textarea></div><input type="hidden" name="is_active" value="1"><input type="hidden" name="is_launch_area" value="1">
     <div><button type="submit" class="b-btn b-btn--primary b-btn--sm">Save area</button></div>
   </form>
 </section>
@@ -39,7 +41,7 @@ foreach ($areas as $area) {
     <div class="b-table-wrap" style="border:0;border-radius:0;box-shadow:none"><table class="b-table b-location-table"><thead><tr><th>Area</th><th>URL slug</th><th>Sub-city</th><th>Map center</th><th>Launch status</th><th>Published branches</th></tr></thead><tbody>
       <?php foreach ($areas as $area): ?>
         <tr>
-          <td class="b-location-area"><strong><?= View::e($area['name_en']) ?></strong><span class="b-lang-am" lang="am"><?= View::e($area['name_am'] ?? '—') ?></span></td>
+          <td class="b-location-area"><strong><?= View::e($area['name_en']) ?></strong><span class="b-lang-am" lang="am"><?= View::e($area['name_am'] ?? '—') ?></span><span><?= !empty($area['is_active'])?'Active':'Inactive' ?> · <?= count($area['aliases']??[]) ?> aliases</span><details><summary>Edit area</summary><form action="/staff/locations/save" method="POST" class="b-location-form"><?= Csrf::field() ?><input type="hidden" name="id" value="<?= (int)$area['id'] ?>"><input class="b-input" name="name_en" value="<?= View::e($area['name_en']) ?>" required><input class="b-input" name="name_am" value="<?= View::e($area['name_am']??'') ?>"><input class="b-input" name="slug" value="<?= View::e($area['slug']) ?>" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required><input class="b-input" name="sub_city_en" value="<?= View::e($area['sub_city_en']) ?>" required><input class="b-input" name="sub_city_am" value="<?= View::e($area['sub_city_am']??'') ?>"><input class="b-input" type="number" step=".0000001" min="-90" max="90" name="center_latitude" value="<?= View::e($area['center_latitude']??'') ?>"><input class="b-input" type="number" step=".0000001" min="-180" max="180" name="center_longitude" value="<?= View::e($area['center_longitude']??'') ?>"><textarea class="b-input" name="aliases" rows="2"><?= View::e($aliasText($area['aliases']??[])) ?></textarea><input type="number" class="b-input" name="display_order" value="<?= (int)$area['display_order'] ?>"><label><input type="checkbox" name="is_launch_area" value="1" <?= !empty($area['is_launch_area'])?'checked':'' ?>> Launch area</label><label><input type="checkbox" name="is_active" value="1" <?= !empty($area['is_active'])?'checked':'' ?>> Active</label><button class="b-btn b-btn--outline b-btn--sm">Save</button></form></details></td>
           <td><span class="b-location-slug"><?= View::e($area['slug']) ?></span></td>
           <td><?= View::e($area['sub_city_en']) ?></td>
           <td><span class="b-location-coordinates"><span><?= View::e((string) ($area['center_latitude'] ?? 'Not set')) ?></span><span><?= View::e((string) ($area['center_longitude'] ?? 'Not set')) ?></span></span></td>

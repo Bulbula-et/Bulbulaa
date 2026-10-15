@@ -146,6 +146,22 @@ ACTIVE_PERMISSION="$(db_scalar "SELECT COALESCE(active_permission_id,0) FROM bra
 [[ "$STATUS" == "302" && "$REVOKED_STATUS" == "REVOKED" && "$UNPUBLISHED_STATUS" == "UNPUBLISHED" && "$ACTIVE_PERMISSION" == "0" ]] || fail "Permission withdrawal did not close publication and permission gates atomically"
 pass "C-22 permission withdrawal atomically unpublishes listings and removes permission linkage"
 
+# C-23/C-24 governed reference data: duplicate-safe aliases and assignment-protected deactivation.
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/taxonomy" -o "$TMP/admin-taxonomy.html"; CSRF="$(csrf_from "$TMP/admin-taxonomy.html")"
+curl -sS -o /dev/null -b "$TMP/staff.cookies" -X POST "$BASE/staff/taxonomy/save" --data-urlencode "_csrf=$CSRF" --data-urlencode 'name_en=CI Reference Category' --data-urlencode 'slug=ci-reference-category' --data-urlencode 'aliases=translit:ci ref' --data-urlencode 'is_active=1'
+REF_CAT_ID="$(db_scalar "SELECT id FROM categories WHERE slug='ci-reference-category'")"; [[ -n "$REF_CAT_ID" ]] || fail "Reference category was not created"
+CAT_COUNT_BEFORE="$(db_scalar "SELECT COUNT(*) FROM categories WHERE slug='ci-reference-category'")"
+curl -sS -o /dev/null -b "$TMP/staff.cookies" -X POST "$BASE/staff/taxonomy/save" --data-urlencode "_csrf=$CSRF" --data-urlencode 'name_en=Duplicate CI Reference' --data-urlencode 'slug=ci-reference-category' --data-urlencode 'is_active=1'
+CAT_COUNT_AFTER="$(db_scalar "SELECT COUNT(*) FROM categories WHERE slug='ci-reference-category'")"; [[ "$CAT_COUNT_BEFORE" == "$CAT_COUNT_AFTER" ]] || fail "Duplicate controlled category was accepted"
+ASSIGNED_ACTIVE_BEFORE="$(db_scalar 'SELECT is_active FROM categories WHERE id=1')"
+curl -sS -o /dev/null -b "$TMP/staff.cookies" -X POST "$BASE/staff/taxonomy/save" --data-urlencode "_csrf=$CSRF" --data-urlencode 'id=1' --data-urlencode "name_en=$(db_scalar 'SELECT name_en FROM categories WHERE id=1')" --data-urlencode "slug=$(db_scalar 'SELECT slug FROM categories WHERE id=1')"
+ASSIGNED_ACTIVE_AFTER="$(db_scalar 'SELECT is_active FROM categories WHERE id=1')"; [[ "$ASSIGNED_ACTIVE_BEFORE" == "1" && "$ASSIGNED_ACTIVE_AFTER" == "1" ]] || fail "Assigned category deactivation was not blocked"
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/locations" -o "$TMP/admin-locations.html"; CSRF="$(csrf_from "$TMP/admin-locations.html")"
+curl -sS -o /dev/null -b "$TMP/staff.cookies" -X POST "$BASE/staff/locations/save" --data-urlencode "_csrf=$CSRF" --data-urlencode 'name_en=CI Controlled Area' --data-urlencode 'slug=ci-controlled-area' --data-urlencode 'sub_city_en=Bole' --data-urlencode 'aliases=translit:ci area' --data-urlencode 'center_latitude=8.95' --data-urlencode 'center_longitude=38.78' --data-urlencode 'is_active=1'
+REF_AREA_ID="$(db_scalar "SELECT id FROM areas WHERE slug='ci-controlled-area'")"; AREA_ALIAS="$(db_scalar "SELECT alias_term FROM area_aliases WHERE area_id=$REF_AREA_ID")"
+[[ -n "$REF_AREA_ID" && "$AREA_ALIAS" == "ci area" ]] || fail "Controlled area alias was not persisted transactionally"
+pass "C-23/C-24 duplicate-safe aliases and assignment-protected reference lifecycles are enforced"
+
 # Customer OTP: request, HMAC-backed code preview in development, verification, account session.
 TEST_EMAIL="ci-otp-$(date +%s)-$$@example.com"
 curl -fsS -c "$TMP/customer.cookies" "$BASE/auth/login" -o "$TMP/customer-login.html"
