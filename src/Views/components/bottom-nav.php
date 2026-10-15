@@ -62,14 +62,15 @@ $isAccount    = (str_starts_with($currentPath, '/account') || str_starts_with($c
       <span class="b-bottom-nav__label">Nearby</span>
     </a>
 
-    <!-- 5. Saved / Account -->
+    <!-- 5. Account (Saved places remain inside Account settings) -->
     <a href="<?= !empty($customer) ? '/account' : '/auth/login' ?>" class="b-bottom-nav__item <?= $isAccount ? 'is-active' : '' ?>" aria-current="<?= $isAccount ? 'page' : 'false' ?>">
       <span class="b-bottom-nav__icon" aria-hidden="true">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="8" r="3.2"/>
+          <path d="M5.5 20v-1.5a6.5 6.5 0 0 1 13 0V20"/>
         </svg>
       </span>
-      <span class="b-bottom-nav__label"><?= !empty($customer) ? 'Saved' : 'Account' ?></span>
+      <span class="b-bottom-nav__label">Account</span>
     </a>
   </div>
 </nav>

@@ -74,18 +74,27 @@ final class TelegramAuthController
             $this->auth->logout();
             return Response::json(['state'=>'unlinked_signed_out']);
         }
-        if ($operation !== 'status' && $operation !== 'switch') return Response::json(['state'=>'invalid_operation'], 400);
+        if (!in_array($operation, ['status', 'switch', 'resume'], true)) return Response::json(['state'=>'invalid_operation'], 400);
+        if ($operation === 'status' && $currentId === null && Session::get('telegram_auto_signin_paused', false) === true) {
+            $pausedTarget = $linkedId === null ? null : $this->customers->findById($linkedId);
+            return Response::json(['state'=>'paused', 'can_resume'=>($pausedTarget['account_status'] ?? '') === 'ACTIVE']);
+        }
         if ($linkedId === null) return Response::json(['state'=>'unlinked', 'can_link'=>$currentId !== null && !empty($current['google_sub_id']), 'already_linked'=>$currentId !== null && $this->links->isLinked($currentId)]);
         $target = $this->customers->findById($linkedId);
         if ($target === null || ($target['account_status'] ?? '') !== 'ACTIVE') return Response::json(['state'=>'unavailable'], 403);
         if ($currentId === $linkedId) return Response::json(['state'=>'current']);
         if ($current !== null && $currentId === null) return Response::json(['state'=>'unavailable'], 403);
+        // Explicit logout must persist in this browser session. A signed Telegram launch
+        // remains valid, but it cannot silently undo the Customer's sign-out decision.
+        if ($operation === 'status' && Session::get('telegram_auto_signin_paused', false) === true) return Response::json(['state'=>'paused']);
+        if ($operation === 'resume' && ($currentId !== null || (string)$request->input('confirm', '') !== 'yes')) return Response::json(['state'=>'confirmation_required'], 403);
         if ($currentId !== null && ($operation !== 'switch' || (string)$request->input('confirm', '') !== 'yes')) {
             return Response::json(['state'=>'switch_confirmation', 'target_name'=>(string)$target['display_name'], 'target_email'=>(string)$target['email']]);
         }
         if ($currentId === null && $operation === 'switch') return Response::json(['state'=>'confirmation_required'], 403);
         if ($currentId !== null) $this->auth->logout();
         if (!$this->auth->signInExistingTelegramCustomer($linkedId, $id)) return Response::json(['state'=>'unavailable'], 403);
+        Session::forget('telegram_auto_signin_paused');
         return Response::json(['state'=>'signed_in']);
     }
 }

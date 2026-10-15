@@ -53,6 +53,21 @@ GUEST_CSRF=$(csrf "$TMP/guest.html")
 [[ $(request "$TMP/guest.cookie" "$GUEST_CSRF" "$RAW") == *'"state":"signed_in"'* ]] || fail 'Other device did not auto sign in to linked Customer'
 curl -fsS -b "$TMP/guest.cookie" "$BASE/account" -o "$TMP/guest.html"
 grep -q "$PREFIX-primary@example.test" "$TMP/guest.html" || fail 'Other device opened wrong account'
+grep -q 'Sign out this device' "$TMP/guest.html" || fail 'Current-device logout missing from Account settings'
+grep -q 'b-bottom-nav__label">Account</span>' "$TMP/guest.html" || fail 'Account bottom navigation mislabeled'
+SIGNED_IN_CSRF=$(csrf "$TMP/guest.html")
+STATUS=$(curl -sS -b "$TMP/guest.cookie" -c "$TMP/guest.cookie" -o /dev/null -w '%{http_code}' -X POST "$BASE/auth/logout" --data-urlencode "_csrf=$SIGNED_IN_CSRF")
+[[ "$STATUS" == 302 ]] || fail 'Current-device logout failed'
+STATUS=$(curl -sS -b "$TMP/guest.cookie" -o /dev/null -w '%{http_code} %{redirect_url}' "$BASE/account")
+[[ "$STATUS" == *'302 '*'/auth/login'* ]] || fail 'Logged-out device retained account access'
+curl -fsS -b "$TMP/guest.cookie" -c "$TMP/guest.cookie" "$BASE/auth/login" -o "$TMP/guest.html"
+grep -q 'telegram-resume-panel' "$TMP/guest.html" || fail 'Explicit Telegram resume option missing'
+GUEST_CSRF=$(csrf "$TMP/guest.html")
+[[ $(request "$TMP/guest.cookie" "$GUEST_CSRF" "$RAW") == *'"state":"paused"'* ]] || fail 'Telegram immediately undid explicit logout'
+[[ $(request "$TMP/guest.cookie" "$GUEST_CSRF" "$RAW" resume) == *'"state":"confirmation_required"'* ]] || fail 'Telegram resume without confirmation succeeded'
+[[ $(request "$TMP/guest.cookie" "$GUEST_CSRF" "$RAW" resume yes) == *'"state":"signed_in"'* ]] || fail 'Explicit Telegram resume failed'
+curl -fsS -b "$TMP/guest.cookie" "$BASE/account" -o "$TMP/guest.html"
+grep -q "$PREFIX-primary@example.test" "$TMP/guest.html" || fail 'Resumed device opened wrong account'
 [[ $(request "$TMP/desktop.cookie" "$DESKTOP_CSRF" "$RAW" switch yes) == *'"state":"signed_in"'* ]] || fail 'Explicit desktop switch failed'
 curl -fsS -b "$TMP/desktop.cookie" "$BASE/account" -o "$TMP/desktop.html"
 grep -q "$PREFIX-primary@example.test" "$TMP/desktop.html" || fail 'Desktop did not switch to primary'

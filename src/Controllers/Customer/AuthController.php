@@ -371,7 +371,11 @@ final class AuthController
             return Response::redirect('/account');
         }
         $this->authService->logout();
-        Session::flash('success', 'You have been signed out. You can continue browsing Bulbula.et as a guest.');
+        // A linked Telegram identity would otherwise sign this newly reset PHP session
+        // straight back in on the next page. Keep automatic sign-in paused on this device
+        // until the Customer explicitly chooses to continue with Telegram again.
+        Session::set('telegram_auto_signin_paused', true);
+        Session::flash('success', 'Signed out on this device. Your account and Telegram link are unchanged.');
         return Response::redirect('/');
     }
 }

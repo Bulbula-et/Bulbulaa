@@ -18,6 +18,11 @@ $devOtp       = $devOtp ?? null;
       </p>
     </div>
 
+    <div id="telegram-resume-panel" class="b-alert b-alert--info" hidden role="status" style="margin:var(--space-4) 0;display:none;flex-direction:column;gap:var(--space-3)">
+      <span>You signed out on this device. Stay signed out to use Google or email, or explicitly continue with your linked Telegram account.</span>
+      <button type="button" id="telegram-resume-button" class="b-btn b-btn--outline">Continue with linked Telegram account</button>
+    </div>
+
     <?php if (!empty($devOtp)): ?>
       <div style="background: var(--orange-50); border: 1px solid var(--orange-200); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); font-size: var(--text-xs);">
         <strong style="color: var(--orange-700);">Preview One-Time Code:</strong>

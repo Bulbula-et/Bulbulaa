@@ -44,6 +44,24 @@
     const result = await submit();
     if (!result) return;
     if (result.state === 'signed_in') { window.location.reload(); return; }
+    if (result.state === 'paused') {
+      const resume = document.getElementById('telegram-resume-panel');
+      const button = document.getElementById('telegram-resume-button');
+      if (result.can_resume && resume && button) {
+        resume.hidden = false;
+        resume.style.display = 'flex';
+        button.addEventListener('click', async () => {
+          button.disabled = true;
+          const response = await submit('resume', 'yes');
+          if (response && response.state === 'signed_in') window.location.assign('/account');
+          else {
+            button.disabled = false;
+            resume.querySelector('span').textContent = 'Could not continue with Telegram. Close and reopen the Mini App, or sign in with Google or email.';
+          }
+        });
+      }
+      return;
+    }
     if (result.state === 'switch_confirmation') {
       message(`This Telegram account is linked to ${result.target_name} (${result.target_email}), not the Bulbula account currently signed in here. Switching will not merge saved places or reviews.`, 'Switch to linked account', async () => {
         if (!window.confirm('Switch to the linked Bulbula account? Your other Google account and its data will remain separate.')) return;
