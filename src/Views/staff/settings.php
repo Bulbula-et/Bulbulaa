@@ -70,7 +70,7 @@ $mailConfigured = !empty($mail['host']) && !empty($mail['from_email']);
   </div>
 
   <section class="b-card b-settings-card" style="margin-top:16px">
-    <header class="b-settings-card__head"><div class="b-settings-card__title"><span class="b-settings-card__index">4</span><div><h2>Email delivery test</h2><p>Send a real message through the currently active transport.</p></div></div></header>
+    <header class="b-settings-card__head"><div class="b-settings-card__title"><span class="b-settings-card__index">4</span><div><h2>Email transport test</h2><p>Send only to an approved test mailbox. Transport acceptance does not prove inbox delivery; confirm receipt and authentication headers with the mailbox owner. Limited to three attempts per hour.</p></div></div></header>
     <form action="/staff/settings/test-email" method="POST" class="b-settings-test"><?= Csrf::field() ?><div><label class="b-label" for="cfg-test-email">Test recipient</label><input id="cfg-test-email" type="email" name="test_email" class="b-input" placeholder="recipient@example.com" autocomplete="off" required></div><button type="submit" class="b-btn b-btn--outline">Send delivery test</button></form>
   </section>
 <?php endif; ?>

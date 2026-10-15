@@ -32,6 +32,30 @@ curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/users" -o "$TMP/staff-users.html"
 grep -q 'Staff access register' "$TMP/staff-users.html" || fail "Authenticated staff access page inaccessible"
 pass "Staff CSRF + password + RFC 6238 TOTP + session + Administrator RBAC flow"
 
+# Mail acceptance test: reject malformed recipients, rate-limit Administrator sends,
+# and audit attempted handoffs. CI has no SMTP password and must never send mail.
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/settings" -o "$TMP/staff-settings.html"
+MAIL_CSRF="$(csrf_from "$TMP/staff-settings.html")"
+[[ -n "$MAIL_CSRF" ]] || fail "Administrator settings CSRF missing"
+MAIL_AUDIT_BEFORE="$(db_scalar "SELECT COUNT(*) FROM audit_logs WHERE action_code='SYSTEM_MAIL_TEST_ATTEMPTED' AND actor_staff_id=1")"
+STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" -X POST "$BASE/staff/settings/test-email" --data-urlencode "_csrf=$MAIL_CSRF" --data-urlencode 'test_email=invalid-address')"
+MAIL_AUDIT_AFTER="$(db_scalar "SELECT COUNT(*) FROM audit_logs WHERE action_code='SYSTEM_MAIL_TEST_ATTEMPTED' AND actor_staff_id=1")"
+[[ "$STATUS" == 302 && "$MAIL_AUDIT_AFTER" == "$MAIL_AUDIT_BEFORE" ]] || fail "Invalid recipient should be rejected before mail/audit"
+MAIL_PASSWORD_SET="$(php -r 'define("BULBULA_ROOT",getcwd()); require "src/Core/Autoloader.php"; Bulbula\Core\Autoloader::register(BULBULA_ROOT."/src"); Bulbula\Core\Config::load(BULBULA_ROOT."/config/env.json"); echo Bulbula\Core\Config::get("mail.driver", "smtp")==="smtp" && Bulbula\Core\Config::get("mail.password", "")==="" && Bulbula\Core\Config::get("app.env", "development")!=="production" ? "safe":"live";')"
+if [[ "$MAIL_PASSWORD_SET" == safe ]]; then
+  for i in 1 2 3 4; do
+    STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" -X POST "$BASE/staff/settings/test-email" --data-urlencode "_csrf=$MAIL_CSRF" --data-urlencode 'test_email=ci-non-delivery@example.invalid')"
+    [[ "$STATUS" == 302 ]] || fail "Mail test expected redirect on attempt $i"
+  done
+  MAIL_AUDIT_AFTER="$(db_scalar "SELECT COUNT(*) FROM audit_logs WHERE action_code='SYSTEM_MAIL_TEST_ATTEMPTED' AND actor_staff_id=1")"
+  [[ "$MAIL_AUDIT_AFTER" == "$((MAIL_AUDIT_BEFORE + 3))" ]] || fail "Mail test should audit only 3 rate-limited attempts"
+  curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/settings" -o "$TMP/mail-rate-limit.html"
+  grep -q 'Email test limit reached' "$TMP/mail-rate-limit.html" || fail "Mail test rate-limit feedback missing"
+  pass "Administrator-only mail test validates addresses, audits handoffs and limits attempts without sending CI mail"
+else
+  pass "Mail test transport checks skipped because live credentials are configured"
+fi
+
 # Real multipart media pipeline: byte MIME validation, GD decode/re-encode, random filename, measured metadata.
 CSRF="$(csrf_from "$TMP/staff-users.html")"
 php -r '$im=imagecreatetruecolor(420,300); $c=imagecolorallocate($im,234,106,21); imagefill($im,0,0,$c); imagepng($im,$argv[1]); imagedestroy($im);' "$TMP/upload.png"
