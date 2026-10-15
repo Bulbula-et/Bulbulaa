@@ -156,6 +156,14 @@ final class StaffAuthService
         return $record !== null && password_verify($password, (string) ($record['password_hash'] ?? ''));
     }
 
+    public function verifyCurrentAuthenticator(array $staff, string $code): bool
+    {
+        $record = $this->staffRepo->findByEmailForAuth((string) $staff['email']);
+        if ($record === null || empty($record['totp_enabled']) || empty($record['totp_secret_enc'])) return false;
+        try { return $this->twoFactor->verify($this->twoFactor->decryptSecret((string)$record['totp_secret_enc']), $code); }
+        catch (\Throwable) { return false; }
+    }
+
     public function beginAuthenticatorReplacement(array $staff, string $password, string $currentCode): array
     {
         $record = $this->staffRepo->findByEmailForAuth((string) $staff['email']);

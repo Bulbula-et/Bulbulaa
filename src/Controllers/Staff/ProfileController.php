@@ -86,11 +86,16 @@ final class ProfileController
         if (!$this->auth->verifyCurrentPassword($staff, (string) $request->input('current_password', ''))) {
             Session::flash('error', 'Confirm your current password to update your profile.'); return Response::redirect('/staff/profile');
         }
+        $emailChanged = !hash_equals(mb_strtolower((string)$staff['email'], 'UTF-8'), $email);
+        if ($emailChanged && !$this->auth->verifyCurrentAuthenticator($staff, (string)$request->input('current_totp', ''))) {
+            Session::flash('error', 'A valid authenticator code is required to change your sign-in email.'); return Response::redirect('/staff/profile');
+        }
         try {
             $before = ['full_name' => $staff['full_name'], 'email' => $staff['email']];
             $this->staffRepo->updateProfile((int) $staff['id'], $name, $email);
-            $this->audit->logStaffAction((int) $staff['id'], 'STAFF_PROFILE_UPDATED', 'staff_user', (int) $staff['id'], $before, ['full_name' => $name, 'email' => $email]);
-            Session::flash('success', 'Your profile was updated.');
+            if ($emailChanged) (new \Bulbula\Services\AccountSessionService())->revokeOthers('STAFF', (int)$staff['id']);
+            $this->audit->logStaffAction((int) $staff['id'], $emailChanged ? 'STAFF_EMAIL_CHANGED' : 'STAFF_PROFILE_UPDATED', 'staff_user', (int) $staff['id'], $before, ['full_name' => $name, 'email' => $email, 'other_sessions_revoked' => $emailChanged]);
+            Session::flash('success', $emailChanged ? 'Your sign-in email was changed and all other devices were signed out.' : 'Your profile was updated.');
         } catch (\Throwable) { Session::flash('error', 'That email is already in use or the profile could not be updated.'); }
         return Response::redirect('/staff/profile');
     }
