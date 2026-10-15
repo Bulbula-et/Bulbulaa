@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 namespace Bulbula\Services;
+use Bulbula\Core\Config;
 use Bulbula\Core\Session;
 use Bulbula\Repositories\AccountSessionRepository;
 final class AccountSessionService {
@@ -15,7 +16,7 @@ final class AccountSessionService {
   $this->repo->touch($hash);return true;
  }
  public function currentHash(): string { $token=(string)Session::get('_account_session_token','');return $token===''?'':hash('sha256',$token); }
- public function list(string $type,int $actorId): array { $current=$this->currentHash();return array_map(static function(array $row)use($current){$row['is_current']=hash_equals($current,(string)$row['token_hash']);unset($row['token_hash']);return $row;},$this->repo->listActive($type,$actorId)); }
+ public function list(string $type,int $actorId): array { $seconds=$type==='STAFF'?(int)Config::get('security.staff_session_absolute_seconds',28800):(int)Config::get('security.customer_session_absolute_seconds',1209600);$cutoff=date('Y-m-d H:i:s',time()-max(600,$seconds));$this->repo->revokeExpired($type,$actorId,$cutoff);$current=$this->currentHash();return array_map(static function(array $row)use($current){$row['is_current']=hash_equals($current,(string)$row['token_hash']);unset($row['token_hash']);return $row;},$this->repo->listActive($type,$actorId,$cutoff)); }
  public function revoke(int $id,string $type,int $actorId): void {$this->repo->revoke($id,$type,$actorId,$this->currentHash());}
  public function revokeOthers(string $type,int $actorId): void {$this->repo->revokeOthers($type,$actorId,$this->currentHash());}
  public function revokeCurrent(): void {$hash=$this->currentHash();if($hash!=='')$this->repo->revokeHash($hash);}

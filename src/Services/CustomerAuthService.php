@@ -357,6 +357,10 @@ final class CustomerAuthService
 
     public function logout(): void
     {
+        $customer = $this->currentCustomer();
+        if ($customer !== null) $this->auditService->logCustomerAction((int) $customer['id'], 'CUSTOMER_LOGOUT', 'customer', (int) $customer['id']);
+        (new AccountSessionService())->revokeCurrent();
         Session::reset();
+        Session::forget('_account_session_token');
     }
 }

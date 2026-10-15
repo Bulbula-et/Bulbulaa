@@ -219,7 +219,9 @@ final class StaffAuthService
     {
         $staff = $this->currentStaff();
         if ($staff !== null) $this->auditService->logStaffAction((int) $staff['id'], 'STAFF_LOGOUT', 'staff_user', (int) $staff['id']);
+        (new AccountSessionService())->revokeCurrent();
         Session::reset();
+        Session::forget('_account_session_token');
         Session::set('staff_logged_out', true);
     }
 
