@@ -7,6 +7,7 @@ declare(strict_types=1);
  * database, verifies integrity and table row-count parity, then removes it.
  */
 $root = dirname(__DIR__);
+define('BULBULA_ROOT', $root);
 require $root . '/vendor/autoload.php';
 require $root . '/src/Core/Autoloader.php';
 \Bulbula\Core\Autoloader::register($root . '/src');
