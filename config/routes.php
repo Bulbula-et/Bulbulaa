@@ -52,7 +52,8 @@ return [
     ['POST', '/account/email/verification/request',  ['Customer\ProfileController', 'requestEmailVerification']],
     ['POST', '/account/email/verification/verify',   ['Customer\ProfileController', 'verifyEmail']],
     ['POST', '/account/password',                    ['Customer\ProfileController', 'changePassword']],
-    ['POST', '/account/privacy-request',             ['Customer\ProfileController', 'requestDeletion']],// C-36 Account deletion & privacy rights
+    ['POST', '/account/privacy-request',             ['Customer\ProfileController', 'beginPrivacyConfirmation']],// C-36 Email-confirmed privacy rights
+    ['POST', '/account/privacy-request/verify',      ['Customer\ProfileController', 'verifyPrivacyConfirmation']],
     ['GET',  '/account/saved',                       ['Customer\SaveController', 'index']],             // C-34 Saved businesses list
     ['POST', '/account/saved/toggle',                ['Customer\SaveController', 'toggle']],            // C-14, C-34 Save / unsave business
     ['GET',  '/account/reviews',                     ['Customer\ReviewController', 'index']],           // C-35 Customer review management

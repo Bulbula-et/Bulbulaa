@@ -105,7 +105,7 @@ final class CustomerAuthService
     public function issueEmailOtp(string $rawEmail, string $clientIpHash, string $purpose = 'SIGN_IN'): array
     {
         $email = mb_strtolower(trim($rawEmail), 'UTF-8');
-        if (!in_array($purpose, ['SIGN_IN', 'VERIFY_EMAIL', 'PASSWORD_RESET'], true)) {
+        if (!in_array($purpose, ['SIGN_IN', 'VERIFY_EMAIL', 'PASSWORD_RESET', 'SENSITIVE_ACTION'], true)) {
             return ['ok' => false, 'error' => 'Unsupported verification request.'];
         }
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -124,7 +124,7 @@ final class CustomerAuthService
         $isDev = Config::previewFeaturesEnabled();
         $minutes = max(1, (int) ceil($ttl / 60));
         $safeCode = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        $action = match ($purpose) { 'PASSWORD_RESET' => 'reset your password', 'VERIFY_EMAIL' => 'verify your email', default => 'sign in' };
+        $action = match ($purpose) { 'PASSWORD_RESET' => 'reset your password', 'VERIFY_EMAIL' => 'verify your email', 'SENSITIVE_ACTION' => 'confirm a sensitive account action', default => 'sign in' };
         $html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:28px;color:#1f2937">'
               . '<div style="color:#EA6A15;font-weight:800;font-size:20px">Bulbula.et</div>'
               . '<h1 style="font-size:24px;margin:20px 0 8px">Your verification code</h1>'
@@ -214,6 +214,38 @@ final class CustomerAuthService
         $this->customerRepo->markOtpConsumed((int) $otpRow['id']);
         $this->customerRepo->markEmailVerified((int) $customer['id']);
         return ['ok' => true];
+    }
+
+    public function issueSensitiveActionOtp(array $customer, string $clientIpHash, string $action): array
+    {
+        if (!in_array($action, ['DATA_ACCESS', 'ACCOUNT_DELETION'], true)) return ['ok' => false, 'error' => 'Unsupported account action.'];
+        $result = $this->issueEmailOtp((string) $customer['email'], $clientIpHash, 'SENSITIVE_ACTION');
+        if (!empty($result['ok'])) {
+            Session::set('sensitive_action_type', $action);
+            Session::set('sensitive_action_requested_at', time());
+        }
+        return $result;
+    }
+
+    public function verifySensitiveActionOtp(array $customer, string $submittedCode): array
+    {
+        $email = mb_strtolower(trim((string) $customer['email']), 'UTF-8');
+        $code = preg_replace('/\D/', '', $submittedCode);
+        $requestedAt = (int) Session::get('sensitive_action_requested_at', 0);
+        if ($requestedAt < time() - 600) return ['ok' => false, 'error' => 'The confirmation request expired. Start again.'];
+        if (strlen((string) $code) !== 6) return ['ok' => false, 'error' => 'Enter the six-digit confirmation code.'];
+        $otpRow = $this->customerRepo->findLatestActiveOtp($email, 'SENSITIVE_ACTION');
+        if ($otpRow === null) return ['ok' => false, 'error' => 'The confirmation code expired. Start again.'];
+        $maxAttempts = (int) Config::get('security.otp_max_attempts', 5);
+        if ((int) $otpRow['attempt_count'] >= $maxAttempts) return ['ok' => false, 'error' => 'Maximum confirmation attempts exceeded.'];
+        $this->customerRepo->incrementOtpAttempts((int) $otpRow['id']);
+        $secret = (string) Config::get('app.secret_key', 'bulbula_secret');
+        $expected = hash_hmac('sha256', $email . ':' . $code, $secret);
+        if (!hash_equals((string) $otpRow['code_hmac_sha256'], $expected)) return ['ok' => false, 'error' => 'The confirmation code is incorrect.'];
+        $this->customerRepo->markOtpConsumed((int) $otpRow['id']);
+        Session::set('sensitive_action_confirmed_at', time());
+        Session::regenerate();
+        return ['ok' => true, 'action' => Session::get('sensitive_action_type')];
     }
 
     public function issuePasswordResetOtp(string $rawEmail, string $clientIpHash): array

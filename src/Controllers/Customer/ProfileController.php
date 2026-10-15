@@ -46,6 +46,8 @@ final class ProfileController
             'sessionMetadata' => Session::metadata(),
             'securityEvents' => $this->auditService->listCustomerSecurityEvents((int) $customer['id']),
             'activeSessions' => (new \Bulbula\Services\AccountSessionService())->list('CUSTOMER', (int) $customer['id']),
+            'pendingSensitiveAction' => Session::get('sensitive_action_type'),
+            'sensitiveActionDevPreview' => Session::get('sensitive_action_dev_preview'),
         ]);
 
         return Response::html($html);
@@ -133,6 +135,25 @@ final class ProfileController
         return Response::redirect('/account');
     }
 
+    public function beginPrivacyConfirmation(Request $request): Response
+    {
+        $customer=$this->authService->currentCustomer(); if($customer===null)return Response::redirect('/auth/login');
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/account');}
+        $type=(string)$request->input('request_type','DATA_ACCESS');
+        $result=$this->authService->issueSensitiveActionOtp($customer,$request->clientIpHash(),$type);
+        if(!$result['ok'])Session::flash('error',(string)$result['error']);else { if(!empty($result['dev_preview_otp']))Session::set('sensitive_action_dev_preview',$result['dev_preview_otp']); Session::flash('success','A confirmation code was sent to your email.'); }
+        return Response::redirect('/account');
+    }
+
+    public function verifyPrivacyConfirmation(Request $request): Response
+    {
+        $customer=$this->authService->currentCustomer(); if($customer===null)return Response::redirect('/auth/login');
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/account');}
+        $result=$this->authService->verifySensitiveActionOtp($customer,(string)$request->input('otp_code',''));
+        if(!$result['ok']){Session::flash('error',(string)$result['error']);return Response::redirect('/account');}
+        return $this->requestDeletion($request);
+    }
+
     public function requestDeletion(Request $request): Response
     {
         $customer = $this->authService->currentCustomer();
@@ -145,8 +166,13 @@ final class ProfileController
             return Response::redirect('/account');
         }
 
-        $requestType = (string) $request->input('request_type', 'ACCOUNT_DELETION');
-        $notes       = trim((string) $request->input('notes', ''));
+        $confirmedAt = (int) Session::get('sensitive_action_confirmed_at', 0);
+        $requestType = (string) Session::get('sensitive_action_type', '');
+        if ($confirmedAt < time() - 300 || !in_array($requestType, ['ACCOUNT_DELETION', 'DATA_ACCESS'], true)) {
+            Session::flash('error', 'Email confirmation is required for this account action.');
+            return Response::redirect('/account');
+        }
+        $notes = trim((string) $request->input('notes', ''));
 
         $reqId = $this->customerRepo->createPrivacyRequest(
             (int) $customer['id'],
@@ -163,6 +189,7 @@ final class ProfileController
             ['request_type' => $requestType]
         );
 
+        Session::forget('sensitive_action_type'); Session::forget('sensitive_action_requested_at'); Session::forget('sensitive_action_confirmed_at'); Session::forget('sensitive_action_dev_preview');
         Session::flash('success', 'Your privacy / account deletion request (#' . $reqId . ') has been recorded and routed for audited processing.');
         return Response::redirect('/account');
     }

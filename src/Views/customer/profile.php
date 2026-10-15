@@ -86,14 +86,9 @@ $myReviews  = $myReviews ?? [];
           Request a copy of your account data or request account deletion.
         </p>
       </div>
-      <form method="POST" action="/account/privacy-request" style="display: flex; flex-direction: column; gap: 0.5rem;">
-        <?= Csrf::field() ?>
-        <select name="request_type" class="b-select" style="min-height: 38px; font-size: var(--text-xs);">
-          <option value="DATA_ACCESS">Request Account Data Summary</option>
-          <option value="ACCOUNT_DELETION">Request Account Deletion</option>
-        </select>
-        <button type="submit" class="b-btn b-btn--outline b-btn--sm">Submit Request</button>
-      </form>
+      <?php if(!empty($pendingSensitiveAction)): ?>
+      <form method="POST" action="/account/privacy-request/verify" style="display:flex;flex-direction:column;gap:.5rem"><?= Csrf::field() ?><?php if(!empty($sensitiveActionDevPreview)): ?><div class="b-alert b-alert--info">Preview code: <strong><?= View::e($sensitiveActionDevPreview) ?></strong></div><?php endif; ?><label class="b-label" for="privacy-code">Confirmation code for <?= View::e(ucwords(strtolower(str_replace('_',' ',$pendingSensitiveAction)))) ?></label><input id="privacy-code" class="b-input" name="otp_code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required><button type="submit" class="b-btn b-btn--primary b-btn--sm">Confirm and submit request</button></form>
+      <?php else: ?><form method="POST" action="/account/privacy-request" style="display:flex;flex-direction:column;gap:.5rem"><?= Csrf::field() ?><select name="request_type" class="b-select" style="min-height:38px;font-size:var(--text-xs)"><option value="DATA_ACCESS">Request Account Data Summary</option><option value="ACCOUNT_DELETION">Request Account Deletion</option></select><button type="submit" class="b-btn b-btn--outline b-btn--sm">Email confirmation code</button></form><?php endif; ?>
     </section>
 
     <section class="b-card" style="align-items:flex-start">
