@@ -1,96 +1,89 @@
 /**
- * ============================================================================
- * BULBULA.ET V1 — UNIFIED WEB & TELEGRAM MINI APP SURFACE ADAPTER (C-17)
- * 1 Single Frontend for Mobile Web, Telegram Mini App (Mobile & Desktop),
- * Tablet, and Desktop Web.
- * ============================================================================
+ * Bulbula.et unified Web / Telegram Mini App surface adapter (C-17, C-32).
+ * Telegram launch data is capability context only and is never Customer identity.
  */
 (function () {
   'use strict';
 
-  const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+  const candidate = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+  const tg = candidate && typeof candidate.initData === 'string' && candidate.initData.length > 0 ? candidate : null;
 
   const SurfaceAdapter = {
-    isTelegramNative: Boolean(tg && tg.initData),
+    isTelegramNative: Boolean(tg),
 
     init() {
-      // Automatically adapt when opened inside Telegram Mini App (Mobile or Desktop)
-      if (tg) {
+      if (this.isTelegramNative) {
+        document.documentElement.dataset.surface = 'telegram-mini-app';
+        document.documentElement.dataset.telegramPlatform = String(tg.platform || 'unknown');
         try {
-          tg.ready();
-          tg.expand();
-          if (typeof tg.setHeaderColor === 'function') {
-            tg.setHeaderColor('#FFFAF5');
-          }
-          if (typeof tg.setBackgroundColor === 'function') {
-            tg.setBackgroundColor('#FFFAF5');
-          }
+          if (typeof tg.ready === 'function') tg.ready();
+          if (typeof tg.expand === 'function') tg.expand();
+          if (typeof tg.setHeaderColor === 'function') tg.setHeaderColor('#FFFAF5');
+          if (typeof tg.setBackgroundColor === 'function') tg.setBackgroundColor('#FFFAF5');
         } catch (_) {}
+      } else {
+        document.documentElement.dataset.surface = 'web';
       }
 
-      // Subtle tactile haptic feedback on bottom nav dock & primary actions in Telegram
       document.querySelectorAll('.b-bottom-nav__item, .b-btn, .b-chip').forEach((el) => {
-        el.addEventListener('click', () => {
-          if (tg && tg.HapticFeedback && typeof tg.HapticFeedback.impactOccurred === 'function') {
-            try {
-              tg.HapticFeedback.impactOccurred('light');
-            } catch (_) {}
-          }
-        });
+        el.addEventListener('click', () => this.hapticImpact('light'));
       });
 
-      // Bind C-17 Canonical URL Share buttons across the page
       document.querySelectorAll('[data-bulbula-share], [data-share-btn]').forEach((btn) => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
+        btn.addEventListener('click', (event) => {
+          event.preventDefault();
           const title = btn.getAttribute('data-share-title') || document.title;
-          const relUrl = btn.getAttribute('data-share-url') || window.location.pathname;
-          const canonicalUrl = new URL(relUrl, window.location.origin).toString();
+          const relativeUrl = btn.getAttribute('data-share-url') || window.location.pathname;
+          const canonicalUrl = new URL(relativeUrl, window.location.origin).toString();
           this.shareCanonical(title, canonicalUrl, btn);
         });
       });
 
-      // Bind C-11 / C-38 server-side contact/share action telemetry pings
       document.querySelectorAll('[data-branch-action]').forEach((el) => {
         el.addEventListener('click', () => {
           const endpoint = el.getAttribute('data-action-endpoint');
           const actionType = el.getAttribute('data-branch-action');
           const campaignId = el.getAttribute('data-campaign-id') || '';
           if (!endpoint || !actionType) return;
-
           const body = new URLSearchParams({ action_type: actionType, campaign_id: campaignId });
-          if (navigator.sendBeacon) {
-            navigator.sendBeacon(endpoint, body);
-          } else {
-            fetch(endpoint, { method: 'POST', body, keepalive: true }).catch(() => {});
-          }
+          if (navigator.sendBeacon) navigator.sendBeacon(endpoint, body);
+          else fetch(endpoint, { method: 'POST', body, keepalive: true }).catch(() => {});
         });
       });
+
+      document.dispatchEvent(new CustomEvent('bulbula:surface-ready', { detail: { surface: this.isTelegramNative ? 'TELEGRAM_MINI_APP' : 'WEB' } }));
+    },
+
+    hapticImpact(style) {
+      if (!this.isTelegramNative || !tg.HapticFeedback || typeof tg.HapticFeedback.impactOccurred !== 'function') return;
+      try { tg.HapticFeedback.impactOccurred(style); } catch (_) {}
     },
 
     async shareCanonical(title, canonicalUrl, triggerBtn) {
-      // 1. Inside Telegram Mini App: use Telegram share URL handoff
-      if (this.isTelegramNative && tg && typeof tg.openTelegramLink === 'function') {
-        const tgShare = 'https://t.me/share/url?url=' + encodeURIComponent(canonicalUrl) + '&text=' + encodeURIComponent(title);
-        tg.openTelegramLink(tgShare);
-        return;
-      }
-
-      // 2. Web Share API where supported on mobile browsers
-      if (navigator.share) {
+      if (this.isTelegramNative && typeof tg.openTelegramLink === 'function') {
+        const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(canonicalUrl) + '&text=' + encodeURIComponent(title);
         try {
-          await navigator.share({ title, url: canonicalUrl });
+          tg.openTelegramLink(shareUrl);
+          this.hapticImpact('light');
           return;
         } catch (_) {}
       }
 
-      // 3. Copy-link fallback (C-17 requirement)
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, url: canonicalUrl });
+          return;
+        } catch (error) {
+          if (error && error.name === 'AbortError') return;
+        }
+      }
+
       try {
         await navigator.clipboard.writeText(canonicalUrl);
         if (triggerBtn) {
-          const orig = triggerBtn.innerHTML;
+          const original = triggerBtn.innerHTML;
           triggerBtn.textContent = 'Link Copied!';
-          setTimeout(() => { triggerBtn.innerHTML = orig; }, 2000);
+          setTimeout(() => { triggerBtn.innerHTML = original; }, 2000);
         }
       } catch (_) {
         window.prompt('Copy canonical Bulbula.et link:', canonicalUrl);

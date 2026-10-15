@@ -14,6 +14,8 @@ $flashError   = Session::flash('error');
   <meta name="theme-color" content="#FFFAF5">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <!-- Official Telegram Mini App bridge; capability use remains runtime-guarded and initData is never authentication. -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <title><?= View::e($pageTitle ?? 'Bulbula.et — Bole Bulbula Local Business Directory') ?></title>
   <meta name="description" content="<?= View::e($metaDescription ?? 'Verified local business directory for Bole Bulbula, Addis Ababa.') ?>">
   <?php if (!empty($canonicalUrl)): ?>

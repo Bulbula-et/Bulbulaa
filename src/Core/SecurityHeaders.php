@@ -17,7 +17,7 @@ final class SecurityHeaders
             "object-src 'none'",
             "form-action 'self'",
             "frame-ancestors 'self' https://web.telegram.org https://*.telegram.org",
-            "script-src 'self' 'nonce-" . self::$nonce . "' https://accounts.google.com",
+            "script-src 'self' 'nonce-" . self::$nonce . "' https://accounts.google.com https://telegram.org",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: https:",
             "font-src 'self' data:",
