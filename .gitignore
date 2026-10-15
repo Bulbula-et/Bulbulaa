@@ -28,3 +28,6 @@ storage/config-update.lock
 !storage/logs/.gitkeep
 !storage/sessions/.gitkeep
 !storage/rate_limits/.gitkeep
+
+# Build-only browser asset dependencies (compiled static JS is committed)
+/node_modules/

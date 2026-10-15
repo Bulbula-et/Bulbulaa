@@ -73,6 +73,17 @@ final class CustomerRepository
         return (array) $this->findById($id);
     }
 
+    /** Called only after the session-bound registration code was verified. */
+    public function createVerifiedWithPassword(string $email, string $displayName, string $hash, string $surface): array
+    {
+        $id = Database::insert(
+            "INSERT INTO customers (email, display_name, password_hash, account_status, last_active_surface, password_changed_at, email_verified_at)
+             VALUES (:email, :name, :hash, 'ACTIVE', :surface, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+            [':email'=>$email, ':name'=>$displayName, ':hash'=>$hash, ':surface'=>$surface]
+        );
+        return (array)$this->findById($id);
+    }
+
     public function updateProfile(int $customerId, string $displayName, ?string $phoneNumber, string $language): void
     {
         Database::execute(

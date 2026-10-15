@@ -51,27 +51,6 @@ final class CustomerAuthService
         return $customer;
     }
 
-    public function registerWithPassword(string $rawEmail, string $displayName, string $password, string $surface = 'WEB'): array
-    {
-        $email = mb_strtolower(trim($rawEmail), 'UTF-8');
-        $name = trim($displayName);
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return ['ok' => false, 'error' => 'Please enter a valid email address.'];
-        if (mb_strlen($name) < 2 || mb_strlen($name) > 100) return ['ok' => false, 'error' => 'Your name must be between 2 and 100 characters.'];
-        $passwordError = $this->passwordValidationError($password);
-        if ($passwordError !== null) return ['ok' => false, 'error' => $passwordError];
-        if ($this->customerRepo->findByEmail($email) !== null) return ['ok' => false, 'error' => 'An account already exists for this email. Sign in or reset your password.'];
-
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-        if (!is_string($hash)) return ['ok' => false, 'error' => 'Your account could not be secured. Please try again.'];
-        $customer = $this->customerRepo->createWithPassword($email, $name, $hash, $surface);
-        Session::regenerate();
-        Session::forget('_telegram_user_id');
-        Session::set('customer_id', (int) $customer['id']);
-        (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);
-        $this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_REGISTERED','customer',(int)$customer['id'],['method'=>'PASSWORD']);
-        return ['ok' => true, 'customer' => $customer];
-    }
-
     public function signInWithPassword(string $rawEmail, string $password, string $clientIpHash): array
     {
         $email = mb_strtolower(trim($rawEmail), 'UTF-8');
@@ -96,8 +75,8 @@ final class CustomerAuthService
             return ['ok'=>false,'error'=>'The email or password is incorrect.'];
         }
         if (($customer['account_status'] ?? '') !== 'ACTIVE') return ['ok' => false, 'error' => 'The email or password is incorrect.'];
-        if (password_needs_rehash((string) $customer['password_hash'], PASSWORD_DEFAULT)) {
-            $hash = password_hash($password, PASSWORD_DEFAULT);
+        if ((new CustomerPasswordPolicy())->needsRehash((string) $customer['password_hash'])) {
+            $hash = (new CustomerPasswordPolicy())->hash($password);
             if (is_string($hash)) $this->customerRepo->updatePassword((int) $customer['id'], $hash);
         }
         Session::regenerate();
@@ -114,7 +93,7 @@ final class CustomerAuthService
         if ($existingHash !== '' && !password_verify($currentPassword, $existingHash)) return ['ok' => false, 'error' => 'Your current password is incorrect.'];
         $error = $this->passwordValidationError($newPassword);
         if ($error !== null) return ['ok' => false, 'error' => $error];
-        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $hash = (new CustomerPasswordPolicy())->hash($newPassword);
         if (!is_string($hash)) return ['ok' => false, 'error' => 'The new password could not be secured.'];
         $this->customerRepo->updatePassword((int) $customer['id'], $hash);
         Session::regenerate();
@@ -125,11 +104,7 @@ final class CustomerAuthService
 
     private function passwordValidationError(string $password): ?string
     {
-        if (strlen($password) < 12 || strlen($password) > 128) return 'Use a password between 12 and 128 characters.';
-        if (!preg_match('/[a-z]/', $password) || !preg_match('/[A-Z]/', $password) || !preg_match('/\d/', $password)) {
-            return 'Include an uppercase letter, a lowercase letter, and a number.';
-        }
-        return null;
+        return (new CustomerPasswordPolicy())->error($password);
     }
 
     /** Generates and stores a short-lived email verification code. */
@@ -372,7 +347,7 @@ final class CustomerAuthService
         if ($customerId <= 0 || $verifiedAt < time() - 900) return ['ok' => false, 'error' => 'Your password recovery session has expired.'];
         $error = $this->passwordValidationError($newPassword);
         if ($error !== null) return ['ok' => false, 'error' => $error];
-        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $hash = (new CustomerPasswordPolicy())->hash($newPassword);
         if (!is_string($hash)) return ['ok' => false, 'error' => 'The new password could not be secured.'];
         $this->customerRepo->updatePassword($customerId, $hash);
         Session::forget('password_reset_customer_id');

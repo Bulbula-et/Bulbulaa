@@ -12,7 +12,12 @@ use PHPMailer\PHPMailer\PHPMailer;
  */
 final class Mailer
 {
-    public static function send(string $to, string $subject, string $html, string $text = ''): array
+    public static function sendText(string $to, string $subject, string $text): array
+    {
+        return self::send($to, $subject, '', $text, true);
+    }
+
+    public static function send(string $to, string $subject, string $html, string $text = '', bool $plainOnly = false): array
     {
         if (!class_exists(PHPMailer::class)) {
             return ['ok' => false, 'error' => 'PHPMailer is not installed. Run composer install.'];
@@ -63,9 +68,9 @@ final class Mailer
             $mail->CharSet = PHPMailer::CHARSET_UTF8;
             $mail->setFrom($fromEmail, $fromName);
             $mail->addAddress($to);
-            $mail->isHTML(true);
+            $mail->isHTML(!$plainOnly);
             $mail->Subject = $subject;
-            $mail->Body    = $html;
+            $mail->Body    = $plainOnly ? $text : $html;
             $mail->AltBody = $text !== '' ? $text : trim(strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $html)));
             $mail->send();
 

@@ -32,6 +32,7 @@ $flashError   = Session::flash('error');
   <link rel="stylesheet" href="<?= View::asset('css/components.css') ?>">
   <?php if (($canonicalUrl ?? '') === '/account'): ?><link rel="stylesheet" href="<?= View::asset('css/account-settings.css') ?>"><?php endif; ?>
   <link rel="stylesheet" href="<?= View::asset('css/futuristic.css') ?>">
+  <?php if (in_array(($canonicalUrl ?? ''), ['/auth/register','/auth/reset-password','/account'], true)): ?><link rel="stylesheet" href="<?= View::asset('css/password-feedback.css') ?>"><?php endif; ?>
 </head>
 <body class="b-app-shell" data-telegram-auth-csrf="<?= View::e(\Bulbula\Core\Csrf::token()) ?>" data-telegram-account="<?= !empty($customer) ? 'yes' : 'no' ?>">
   <?= View::component('header', [
@@ -70,6 +71,10 @@ $flashError   = Session::flash('error');
   ]) ?>
 
   <script src="<?= View::asset('js/modules/telegram-customer-auth.js') ?>" defer></script>
+  <?php if (in_array(($canonicalUrl ?? ''), ['/auth/register','/auth/reset-password','/account'], true)): ?>
+  <script src="<?= View::asset('js/vendor/password-strength.js') ?>" defer></script>
+  <script src="<?= View::asset('js/modules/password-forms.js') ?>" defer></script>
+  <?php endif; ?>
   <!-- Self-Hosted GSAP + Progressive Enhancement Modules -->
   <script src="<?= View::asset('js/vendor/gsap.min.js') ?>" defer></script>
   <script src="<?= View::asset('js/core/surface-adapter.js') ?>" defer></script>

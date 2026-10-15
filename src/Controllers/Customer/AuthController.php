@@ -11,6 +11,7 @@ use Bulbula\Core\Response;
 use Bulbula\Core\Session;
 use Bulbula\Core\View;
 use Bulbula\Services\CustomerAuthService;
+use Bulbula\Services\CustomerRegistrationService;
 use Bulbula\Services\GoogleBrowserHandoffService;
 use Bulbula\Services\GoogleIdentityService;
 
@@ -22,7 +23,8 @@ final class AuthController
     public function __construct(
         private readonly CustomerAuthService $authService = new CustomerAuthService(),
         private readonly GoogleIdentityService $googleIdentity = new GoogleIdentityService(),
-        private readonly GoogleBrowserHandoffService $googleBridge = new GoogleBrowserHandoffService()
+        private readonly GoogleBrowserHandoffService $googleBridge = new GoogleBrowserHandoffService(),
+        private readonly CustomerRegistrationService $registration = new CustomerRegistrationService()
     ) {}
 
     public function showLogin(Request $request): Response
@@ -56,34 +58,68 @@ final class AuthController
         return Response::html(View::render('customer/register', [
             'pageTitle' => 'Create Your Bulbula.et Account', 'canonicalUrl' => '/auth/register',
             'request' => $request, 'customer' => null,
+            'googleClientId' => (string) Config::get('auth.google_client_id', ''),
+            'oldName' => Session::flash('register_name'), 'oldEmail' => Session::flash('register_email'),
         ]));
     }
 
     public function register(Request $request): Response
     {
+        if ($this->authService->currentCustomer() !== null) return Response::redirect('/account');
         if (!Csrf::verify((string) $request->input('_csrf', ''))) {
             Session::flash('error', 'Security session expired. Please try again.');
             return Response::redirect('/auth/register');
         }
+        $name = (string)$request->input('display_name', '');
+        $email = (string)$request->input('email', '');
+        Session::flash('register_name', $name);
+        Session::flash('register_email', $email);
         $password = (string) $request->input('password', '');
         if (!hash_equals($password, (string) $request->input('password_confirmation', ''))) {
-            Session::flash('error', 'Password confirmation does not match.');
+            Session::flash('error', 'Passwords do not match.');
             return Response::redirect('/auth/register');
         }
-        $result = $this->authService->registerWithPassword(
-            (string) $request->input('email', ''), (string) $request->input('display_name', ''),
-            $password, $request->surface()
-        );
+        $result = $this->registration->begin($email, $name, $password, $request->surface());
         if (!$result['ok']) {
-            Session::flash('error', (string) $result['error']);
+            Session::flash('error', (string)$result['error']);
             return Response::redirect('/auth/register');
         }
-        $otp = $this->authService->issueEmailVerification($result['customer'], $request->clientIpHash());
-        if (!empty($otp['ok']) && !empty($otp['dev_preview_otp'])) {
-            Session::set('email_verification_dev_preview', $otp['dev_preview_otp']);
-        }
-        Session::flash('success', 'Your account was created. Verify your email to complete setup.');
+        Session::flash('register_name');
+        Session::flash('register_email'); // discard old form inputs after successfully starting verification
+        if (!empty($result['dev_preview_code'])) Session::set('registration_dev_preview', $result['dev_preview_code']);
+        return Response::redirect('/auth/register/verify');
+    }
+
+    public function showRegistrationVerification(Request $request): Response
+    {
+        $pending = $this->registration->pending();
+        if ($pending === null) { Session::flash('error', 'Verification expired. Start registration again.'); return Response::redirect('/auth/register'); }
+        return Response::html(View::render('customer/registration-verify', [
+            'pageTitle'=>'Verify your email — Bulbula.et', 'canonicalUrl'=>'/auth/register/verify',
+            'request'=>$request, 'customer'=>null, 'pendingEmail'=>$pending['email'],
+            'devCode'=>Session::get('registration_dev_preview'),
+        ]));
+    }
+
+    public function verifyRegistration(Request $request): Response
+    {
+        if (!Csrf::verify((string)$request->input('_csrf', ''))) return Response::redirect('/auth/register/verify');
+        $result = $this->registration->verify(trim((string)$request->input('code', '')));
+        if (!$result['ok']) { Session::flash('error', (string)$result['error']); return Response::redirect('/auth/register/verify'); }
+        Session::flash('success', 'Your email is verified and your account is ready.');
         return Response::redirect('/account');
+    }
+
+    public function resendRegistrationCode(Request $request): Response
+    {
+        if (!Csrf::verify((string)$request->input('_csrf', ''))) return Response::redirect('/auth/register/verify');
+        $result = $this->registration->resend();
+        if (!$result['ok']) Session::flash('error', (string)$result['error']);
+        else {
+            Session::set('registration_dev_preview', $result['dev_preview_code'] ?? null);
+            Session::flash('success', 'A new code was sent. The previous code is no longer valid.');
+        }
+        return Response::redirect('/auth/register/verify');
     }
 
     public function passwordLogin(Request $request): Response
