@@ -184,6 +184,12 @@ final class ProfileController
         if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/account');}
         $result=$this->authService->verifySensitiveActionOtp($customer,(string)$request->input('otp_code',''));
         if(!$result['ok']){Session::flash('error',(string)$result['error']);return Response::redirect('/account');}
+        if(($result['action']??'')==='DATA_ACCESS'){
+            $json=(new \Bulbula\Services\CustomerDataExportService())->build($customer);
+            Session::forget('sensitive_action_type');Session::forget('sensitive_action_requested_at');Session::forget('sensitive_action_confirmed_at');Session::forget('sensitive_action_dev_preview');
+            $this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_DATA_EXPORTED','customer',(int)$customer['id'],['format'=>'JSON']);
+            return Response::download($json,'bulbula-account-data-'.date('Y-m-d').'.json','application/json; charset=UTF-8');
+        }
         return $this->requestDeletion($request);
     }
 

@@ -35,6 +35,18 @@ final class Response
         );
     }
 
+    public static function download(string $body, string $filename, string $contentType = 'application/octet-stream'): self
+    {
+        $safeName = preg_replace('/[^A-Za-z0-9._-]/', '-', $filename) ?: 'download';
+        return new self($body, 200, [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => 'attachment; filename="' . $safeName . '"',
+            'Content-Length' => (string) strlen($body),
+            'Cache-Control' => 'no-store, private, max-age=0',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     public static function redirect(string $url, int $status = 302): self
     {
         return new self('', $status, [
