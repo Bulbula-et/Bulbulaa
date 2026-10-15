@@ -65,9 +65,17 @@ final class CustomerAuthService
         $customer = $this->customerRepo->findByEmail($email);
         $valid = $customer !== null && is_string($customer['password_hash'] ?? null)
             && password_verify($password, (string) $customer['password_hash']);
-        if (!$valid || ($customer['account_status'] ?? '') !== 'ACTIVE') {
-            return ['ok' => false, 'error' => 'The email or password is incorrect.'];
+        if (!$valid) return ['ok' => false, 'error' => 'The email or password is incorrect.'];
+        if (($customer['account_status'] ?? '') === 'PENDING_DELETION') {
+            $effective = strtotime((string)($customer['deletion_effective_at'] ?? '')) ?: 0;
+            if ($effective > time()) {
+                Session::regenerate(); Session::set('restore_customer_id',(int)$customer['id']); Session::set('restore_verified_at',time());
+                return ['ok'=>true,'restore_required'=>true,'customer'=>$customer];
+            }
+            $this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);
+            return ['ok'=>false,'error'=>'The email or password is incorrect.'];
         }
+        if (($customer['account_status'] ?? '') !== 'ACTIVE') return ['ok' => false, 'error' => 'The email or password is incorrect.'];
         if (password_needs_rehash((string) $customer['password_hash'], PASSWORD_DEFAULT)) {
             $hash = password_hash($password, PASSWORD_DEFAULT);
             if (is_string($hash)) $this->customerRepo->updatePassword((int) $customer['id'], $hash);
@@ -183,6 +191,11 @@ final class CustomerAuthService
 
         $this->customerRepo->markOtpConsumed((int) $otpRow['id']);
         $customer = $this->customerRepo->findOrCreateByEmail($email, null, null, $surface);
+        if (($customer['account_status'] ?? '') === 'PENDING_DELETION') {
+            $effective=strtotime((string)($customer['deletion_effective_at']??''))?:0;
+            if($effective>time()){Session::regenerate();Session::set('restore_customer_id',(int)$customer['id']);Session::set('restore_verified_at',time());return ['ok'=>true,'restore_required'=>true,'customer'=>$customer];}
+            $this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);return ['ok'=>false,'error'=>'This account is no longer available.'];
+        }
 
         Session::regenerate();
         Session::set('customer_id', (int) $customer['id']);
@@ -349,10 +362,34 @@ final class CustomerAuthService
     public function signInWithVerifiedGoogleIdentity(string $email, string $displayName, string $googleSubId, string $surface = 'WEB'): array
     {
         $customer = $this->customerRepo->findOrCreateByEmail($email, $displayName, $googleSubId, $surface);
+        if (($customer['account_status'] ?? '') === 'PENDING_DELETION') {
+            $effective=strtotime((string)($customer['deletion_effective_at']??''))?:0;
+            if($effective>time()){Session::regenerate();Session::set('restore_customer_id',(int)$customer['id']);Session::set('restore_verified_at',time());$customer['_restore_required']=true;return $customer;}
+            $this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);return $customer;
+        }
         Session::regenerate();
         Session::set('customer_id', (int) $customer['id']);
         (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);
         return $customer;
+    }
+
+    public function pendingRestoreCustomer(): ?array
+    {
+        $id=(int)Session::get('restore_customer_id',0);$verified=(int)Session::get('restore_verified_at',0);
+        if($id<=0||$verified<time()-900)return null;
+        $customer=$this->customerRepo->findById($id);return $customer!==null&&($customer['account_status']??'')==='PENDING_DELETION'?$customer:null;
+    }
+
+    public function restorePendingAccount(): array
+    {
+        $customer=$this->pendingRestoreCustomer();if($customer===null)return ['ok'=>false,'error'=>'Your verified recovery session expired. Sign in again.'];
+        $this->customerRepo->restorePendingDeletion((int)$customer['id']);Session::forget('restore_customer_id');Session::forget('restore_verified_at');Session::regenerate();Session::set('customer_id',(int)$customer['id']);(new AccountSessionService())->begin('CUSTOMER',(int)$customer['id']);return ['ok'=>true,'customer'=>$this->customerRepo->findById((int)$customer['id'])];
+    }
+
+    public function permanentlyDeletePendingAccount(): array
+    {
+        $customer=$this->pendingRestoreCustomer();if($customer===null)return ['ok'=>false,'error'=>'Your verified recovery session expired. Sign in again.'];
+        $this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);Session::forget('restore_customer_id');Session::forget('restore_verified_at');Session::reset();return ['ok'=>true];
     }
 
     public function logout(): void

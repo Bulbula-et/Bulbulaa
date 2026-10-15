@@ -206,12 +206,22 @@ final class ProfileController
             return Response::redirect('/account');
         }
         $notes = trim((string) $request->input('notes', ''));
+        $reasonCode = (string) $request->input('reason_code', '');
+        if ($requestType === 'ACCOUNT_DELETION') {
+            $confirmation = trim((string) $request->input('delete_confirmation', ''));
+            $allowedReasons = ['PRIVACY_CONCERNS','NOT_USEFUL','TOO_MANY_EMAILS','FOUND_ALTERNATIVE','DIFFICULT_TO_USE','OTHER'];
+            if ($confirmation !== 'DELETE' || !in_array($reasonCode, $allowedReasons, true)) {
+                Session::flash('error', 'Select a reason and type DELETE exactly to schedule account deletion.');
+                return Response::redirect('/account');
+            }
+        }
 
         $reqId = $this->customerRepo->createPrivacyRequest(
             (int) $customer['id'],
             (string) $customer['email'],
             in_array($requestType, ['ACCOUNT_DELETION', 'DATA_ACCESS'], true) ? $requestType : 'ACCOUNT_DELETION',
-            $notes
+            mb_substr($notes, 0, 1000),
+            $reasonCode !== '' ? $reasonCode : null
         );
 
         $this->auditService->logCustomerAction(
@@ -223,7 +233,13 @@ final class ProfileController
         );
 
         Session::forget('sensitive_action_type'); Session::forget('sensitive_action_requested_at'); Session::forget('sensitive_action_confirmed_at'); Session::forget('sensitive_action_dev_preview');
-        Session::flash('success', 'Your privacy / account deletion request (#' . $reqId . ') has been recorded and routed for audited processing.');
+        if ($requestType === 'ACCOUNT_DELETION') {
+            (new \Bulbula\Services\AccountSessionService())->revokeOthers('CUSTOMER', (int)$customer['id']);
+            $this->authService->logout();
+            Session::flash('success', 'Your account is scheduled for deletion in 30 days. Sign in during the safety period to restore it.');
+            return Response::redirect('/auth/login');
+        }
+        Session::flash('success', 'Your data-access request (#' . $reqId . ') has been recorded.');
         return Response::redirect('/account');
     }
 }

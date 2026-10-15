@@ -16,6 +16,7 @@ final class MigrationRunnerTest extends TestCase
         foreach (['staff_users','categories','areas','businesses','branches','business_permissions','media_assets','customers','reviews','audit_logs'] as $table) {
             $this->pdo->exec("CREATE TABLE {$table} (id INTEGER PRIMARY KEY)");
         }
+        $this->pdo->exec("ALTER TABLE customers ADD COLUMN account_status TEXT NOT NULL DEFAULT 'ACTIVE'");
         $this->pdo->exec('CREATE TABLE customer_otp_tokens (id INTEGER PRIMARY KEY, email TEXT NOT NULL, expires_at DATETIME NOT NULL)');
         @unlink(BULBULA_ROOT . '/storage/migration.lock');
     }
@@ -35,10 +36,12 @@ final class MigrationRunnerTest extends TestCase
             '20261015010000_customer_password_profiles',
             '20261015020000_customer_otp_purposes',
             '20261015030000_account_sessions',
+            '20261015040000_customer_deletion_grace',
         ], $runner->migrate());
         self::assertSame('APPLIED', $runner->status()[0]['status']);
         self::assertSame([], $runner->migrate());
         self::assertSame([
+            '20261015040000_customer_deletion_grace',
             '20261015030000_account_sessions',
             '20261015020000_customer_otp_purposes',
             '20261015010000_customer_password_profiles',

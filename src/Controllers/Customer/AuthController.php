@@ -98,8 +98,28 @@ final class AuthController
             Session::flash('error', (string) $result['error']);
             return Response::redirect('/auth/login?return_to=' . rawurlencode($returnTo));
         }
+        if (!empty($result['restore_required'])) return Response::redirect('/auth/restore-account');
         Session::flash('success', 'Welcome back, ' . $result['customer']['display_name'] . '.');
         return Response::redirect($returnTo);
+    }
+
+    public function showRestoreAccount(Request $request): Response
+    {
+        $customer=$this->authService->pendingRestoreCustomer();if($customer===null)return Response::redirect('/auth/login');
+        return Response::html(View::render('customer/restore-account',['pageTitle'=>'Restore Your Account — Bulbula.et','canonicalUrl'=>'/auth/restore-account','request'=>$request,'customer'=>null,'pendingCustomer'=>$customer]));
+    }
+
+    public function restoreAccount(Request $request): Response
+    {
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security session expired.');return Response::redirect('/auth/restore-account');}
+        $result=$this->authService->restorePendingAccount();if(!$result['ok']){Session::flash('error',(string)$result['error']);return Response::redirect('/auth/login');}
+        Session::flash('success','Your account and access have been restored.');return Response::redirect('/account');
+    }
+
+    public function permanentlyDeleteAccount(Request $request): Response
+    {
+        if(!Csrf::verify((string)$request->input('_csrf',''))||trim((string)$request->input('confirmation',''))!=='DELETE'){Session::flash('error','Type DELETE exactly to permanently erase the account.');return Response::redirect('/auth/restore-account');}
+        $result=$this->authService->permanentlyDeletePendingAccount();if(!$result['ok'])Session::flash('error',(string)$result['error']);else Session::flash('success','Your account has been permanently deleted.');return Response::redirect('/');
     }
 
     public function showForgotPassword(Request $request): Response
@@ -217,6 +237,7 @@ final class AuthController
 
         Session::forget('otp_pending_email');
         Session::forget('otp_dev_preview');
+        if (!empty($result['restore_required'])) return Response::redirect('/auth/restore-account');
         Session::flash('success', 'Signed in as ' . $result['customer']['display_name'] . '.');
         return Response::redirect($returnTo);
     }
@@ -247,6 +268,8 @@ final class AuthController
             (string) $identity['sub'],
             $request->surface()
         );
+        if (!empty($customer['_restore_required'])) return Response::redirect('/auth/restore-account');
+        if (($customer['account_status'] ?? '') === 'DELETED') { Session::flash('error','This account is no longer available.'); return Response::redirect('/auth/login'); }
         Session::flash('success', 'Signed in with Google as ' . $customer['display_name'] . '.');
         return Response::redirect($returnTo);
     }

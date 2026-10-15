@@ -233,12 +233,12 @@ final class CustomerRepository
     /**
      * C-36 Submit Account Deletion / Privacy Request.
      */
-    public function createPrivacyRequest(int $customerId, string $email, string $requestType, ?string $notes = null): int
+    public function createPrivacyRequest(int $customerId, string $email, string $requestType, ?string $notes = null, ?string $reasonCode = null): int
     {
         if ($requestType === 'ACCOUNT_DELETION') {
             Database::execute(
-                "UPDATE customers SET account_status = 'PENDING_DELETION', updated_at = CURRENT_TIMESTAMP WHERE id = :id",
-                [':id' => $customerId]
+                "UPDATE customers SET account_status = 'PENDING_DELETION', deletion_requested_at = CURRENT_TIMESTAMP, deletion_effective_at = :effective, deletion_reason_code = :reason, deletion_reason_detail = :detail, updated_at = CURRENT_TIMESTAMP WHERE id = :id",
+                [':effective' => date('Y-m-d H:i:s', time() + 30 * 86400), ':reason' => $reasonCode, ':detail' => $notes, ':id' => $customerId]
             );
         }
 
@@ -252,5 +252,24 @@ final class CustomerRepository
                 ':notes' => $notes,
             ]
         );
+    }
+
+    public function restorePendingDeletion(int $customerId): void
+    {
+        Database::execute("UPDATE customers SET account_status='ACTIVE', deletion_requested_at=NULL, deletion_effective_at=NULL, deletion_reason_code=NULL, deletion_reason_detail=NULL, updated_at=CURRENT_TIMESTAMP WHERE id=:id AND account_status='PENDING_DELETION' AND deletion_effective_at>CURRENT_TIMESTAMP", [':id'=>$customerId]);
+        Database::execute("UPDATE privacy_requests SET status='REJECTED_WITH_REASON', resolution_summary='Cancelled by Customer during the 30-day safety period.', completed_at=CURRENT_TIMESTAMP WHERE customer_id=:id AND request_type='ACCOUNT_DELETION' AND status IN ('SUBMITTED','IN_PROGRESS')", [':id'=>$customerId]);
+    }
+
+    public function listDueDeletionIds(int $limit = 100): array
+    {
+        $limit=max(1,min(500,$limit));return array_map('intval',array_column(Database::fetchAll("SELECT id FROM customers WHERE account_status='PENDING_DELETION' AND deletion_effective_at<=CURRENT_TIMESTAMP ORDER BY deletion_effective_at ASC LIMIT {$limit}"),'id'));
+    }
+
+    public function permanentlyErasePendingDeletion(int $customerId): void
+    {
+        Database::execute("UPDATE customers SET email=:email, display_name='Deleted Customer', google_sub_id=NULL, password_hash=NULL, password_changed_at=NULL, phone_number=NULL, preferred_language='en', account_status='DELETED', email_verified_at=NULL, deletion_reason_detail=NULL, updated_at=CURRENT_TIMESTAMP WHERE id=:id AND account_status='PENDING_DELETION'", [':email'=>'deleted+'.$customerId.'@privacy.invalid', ':id'=>$customerId]);
+        Database::execute('DELETE FROM customer_saved_businesses WHERE customer_id=:id', [':id'=>$customerId]);
+        Database::execute("UPDATE account_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE actor_type='CUSTOMER' AND actor_id=:id AND revoked_at IS NULL", [':id'=>$customerId]);
+        Database::execute("UPDATE privacy_requests SET status='COMPLETED', resolution_summary='Self-service deletion completed after safety period.', completed_at=CURRENT_TIMESTAMP WHERE customer_id=:id AND request_type='ACCOUNT_DELETION' AND status IN ('SUBMITTED','IN_PROGRESS')", [':id'=>$customerId]);
     }
 }
