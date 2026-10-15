@@ -71,5 +71,6 @@ $flashError   = Session::flash('error');
   <script src="<?= View::asset('js/modules/nearby.js') ?>" defer></script>
   <script src="<?= View::asset('js/modules/modal-drawer.js') ?>" defer></script>
   <script src="<?= View::asset('js/modules/branch-switcher.js') ?>" defer></script>
+  <script src="<?= View::asset('js/modules/save-toggle.js') ?>" defer></script>
 </body>
 </html>

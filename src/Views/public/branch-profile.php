@@ -64,22 +64,18 @@ if ((int) ($b['published_review_count'] ?? 0) > 0 && $b['published_rating_avg'] 
       </span>
       <div>
         <?php if (!empty($customer)): ?>
-          <form action="/account/saved/toggle" method="POST" style="display: inline;">
+          <form action="/account/saved/toggle" method="POST" class="b-save-form" data-save-form>
             <?= View::csrfField() ?>
             <input type="hidden" name="branch_id" value="<?= (int) ($b['branch_id'] ?? 0) ?>">
             <input type="hidden" name="return_to" value="<?= View::e($canonicalPath) ?>">
-            <button type="submit" class="b-card__bookmark b-profile-save<?= $isSaved ? ' is-saved' : '' ?>" style="width: 38px; height: 38px; border-radius: 12px; cursor: pointer;" title="<?= $isSaved ? 'Remove from Saved Places' : 'Save Branch' ?>" aria-label="<?= $isSaved ? 'Remove this branch from Saved Places' : 'Save this branch' ?>" aria-pressed="<?= $isSaved ? 'true' : 'false' ?>">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="<?= $isSaved ? 'currentColor' : 'none' ?>" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-              </svg>
-              <span class="b-sr-only"><?= $isSaved ? 'Saved' : 'Not saved' ?></span>
+            <button type="submit" class="b-save-toggle b-save-toggle--detail<?= $isSaved ? ' is-saved' : '' ?>" data-save-toggle title="<?= $isSaved ? 'Remove from saved places' : 'Save place' ?>" aria-label="<?= $isSaved ? 'Remove this branch from saved places' : 'Save this branch' ?>" aria-pressed="<?= $isSaved ? 'true' : 'false' ?>">
+              <svg class="b-save-toggle__icon" viewBox="0 0 24 24" aria-hidden="true" data-lucide="bookmark"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              <span class="b-save-toggle__burst" aria-hidden="true"></span>
             </button>
           </form>
         <?php else: ?>
-          <a href="/auth/login" class="b-card__bookmark" style="width: 38px; height: 38px; border-radius: 12px;" title="Sign in to Save">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-            </svg>
+          <a href="/auth/login?return_to=<?= rawurlencode($canonicalPath) ?>" class="b-save-toggle b-save-toggle--detail" title="Sign in to save" aria-label="Sign in to save this branch">
+            <svg class="b-save-toggle__icon" viewBox="0 0 24 24" aria-hidden="true" data-lucide="bookmark"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
           </a>
         <?php endif; ?>
       </div>

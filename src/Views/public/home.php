@@ -454,11 +454,17 @@ $sponsoredHome = $sponsoredHome ?? [];
               <span class="b-badge b-badge--verified">Verified</span>
             <?php endif; ?>
 
-            <a href="<?= View::e($url) ?>" class="b-card__bookmark" title="Open Branch Profile" aria-label="View <?= View::e($b['branch_name_en'] ?? '') ?>">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-              </svg>
-            </a>
+            <?php $vendorSaved = !empty($b['is_saved']); ?>
+            <form action="/account/saved/toggle" method="POST" class="b-save-form" data-save-form>
+              <?= View::csrfField() ?>
+              <input type="hidden" name="branch_id" value="<?= (int) ($b['branch_id'] ?? $b['id'] ?? 0) ?>">
+              <input type="hidden" name="business_id" value="<?= (int) ($b['business_id'] ?? 0) ?>">
+              <input type="hidden" name="return_to" value="/">
+              <button type="submit" class="b-save-toggle<?= $vendorSaved ? ' is-saved' : '' ?>" data-save-toggle aria-pressed="<?= $vendorSaved ? 'true' : 'false' ?>" aria-label="<?= $vendorSaved ? 'Remove ' : 'Save ' ?><?= View::e($b['branch_name_en'] ?? 'this place') ?><?= $vendorSaved ? ' from saved places' : '' ?>" title="<?= $vendorSaved ? 'Remove from saved places' : 'Save place' ?>">
+                <svg class="b-save-toggle__icon" viewBox="0 0 24 24" aria-hidden="true" data-lucide="bookmark"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                <span class="b-save-toggle__burst" aria-hidden="true"></span>
+              </button>
+            </form>
           </div>
         </article>
       <?php endforeach; ?>
