@@ -190,6 +190,7 @@ final class StaffAuthService
             Session::remove('staff_logged_out');
             Session::set('preview_staff_id', (int) $staff['id']);
             Session::set('staff_id', (int) $staff['id']);
+            (new AccountSessionService())->begin('STAFF', (int) $staff['id']);
         }
         return $staff;
     }
