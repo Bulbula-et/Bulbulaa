@@ -2,7 +2,7 @@
 
 **Audit date:** 2026-10-15  
 **Specification:** `Bulbula_et_SaaS_Product_Features_V1.pdf` (40 capabilities, C-01–C-40)  
-**Audited code:** `main` at `92ab7db`
+**Audited code:** `main` at `dec3207`
 **Method:** specification-to-route, controller, service, repository, schema, view, JavaScript, test, deployment, and production-smoke comparison.
 
 ## Executive result
@@ -14,7 +14,7 @@
 | Implemented but launch-gated | 3 | Product code exists, but counsel/commercial or operational approval remains required. |
 | Wholly absent | 0 | Every capability has at least an implementation foundation. |
 
-**Overall:** Bulbula.et has broad V1 coverage, but route presence is not the same as launch readiness. The highest remaining risks are campaign termination, real-device Telegram acceptance, and outstanding legal/operational launch gates.
+**Overall:** Bulbula.et has broad V1 coverage, but route presence is not the same as launch readiness. The highest remaining risks are real-device Telegram acceptance and outstanding legal, commercial, billing, tax, and operational launch gates.
 
 ## Capability matrix
 
@@ -46,7 +46,7 @@
 | C-24 | Location management | Implemented | Administrator-only area create/edit supports bilingual area/sub-city labels, stable slugs, validated map centers, ordering, launch-boundary state, activation, and language-tagged aliases. Duplicate/ambiguous terms are rejected and assigned Areas cannot be deactivated until Branches are reassigned. Area and alias changes commit transactionally with before/after audit evidence and post-commit tagged cache invalidation. |
 | C-25 | Review moderation | Implemented | Human pre-publication moderation supports publish, reject, and Staff removal with recorded reasons and Customer notices. Eligible rejected/removed reviews expose a 180-day Customer appeal with immutable snapshots of the original decision and additional context. Appeal outcomes are separate append-only records, Administrator-only, independently reviewed when another Administrator exists, reasoned, audited, notified, and transactionally restore the review/rating aggregate only when uniqueness permits. |
 | C-26 | Report management | Implemented | Staff triage/resolution/escalation and audit logging exist; review reports route into the review domain. |
-| C-27 | Campaign management | Launch-gated / Partial | Creation, Administrator approval, dates, fixed price, formats, metrics, and D-39 gate exist. Early termination with a mandatory reason is absent. External commercial, billing, tax, and legal gates remain intentionally closed. |
+| C-27 | Campaign management | Launch-gated | Creation, fixed-price terms, approved formats, targeting, Administrator approval, dates, and first-party delivery metrics are implemented behind D-39. Administrator-only early termination immediately removes active/scheduled inventory, requires a reason, preserves campaign history/metrics, rejects stale post-termination metrics, audits the transition, and notifies the campaign creator without asserting billing/refund consequences. External commercial, billing, tax, and legal gates remain intentionally closed. |
 | C-28 | Operational analytics | Implemented | Server-side search/profile/action and queue summaries exist, including zero-result and campaign delivery reporting. |
 | C-29 | Audit logs | Implemented | Administrator-only audit viewer and broad consequential-action recording exist; sensitive values are excluded by policy. |
 | C-30 | Google authentication | Implemented | Official Google client adapter verifies server-side; email OTP fallback and guest browsing remain available. |
@@ -80,7 +80,6 @@ Do not remove it silently. Record one of these decisions before launch:
 
 ### P1 — Required capability completion
 
-4. **C-27 early campaign termination** — Administrator action with mandatory reason and immediate inventory removal.
 
 ### P2 — Launch assurance
 
@@ -91,7 +90,7 @@ Do not remove it silently. Record one of these decisions before launch:
 
 ## Immediate next implementation milestone
 
-Proceed with **C-27 early campaign termination** next while sponsorship activation remains behind the existing commercial/legal launch gate. Add an Administrator-only immediate termination action with a mandatory reason, remove terminated inventory from delivery atomically, preserve campaign history and metrics, notify affected operational stakeholders where configured, and test that Operators cannot terminate campaigns.
+All materially incomplete software capabilities identified by this audit are now implemented. Proceed with **P2 launch assurance** next: automated accessibility/performance/SEO checks, SMTP deliverability verification, backup/restore rehearsal, shared-hosting disaster-recovery evidence, and real-device Telegram acceptance. The Customer-password scope decision and legal/commercial launch gates require explicit human approval and must not be silently inferred by implementation.
 
 ## Verification basis
 
