@@ -9,8 +9,8 @@
 
 | Classification | Count | Meaning |
 |---|---:|---|
-| Implemented and materially evidenced | 28 | Primary V1 behavior exists with supporting code and/or tests. |
-| Implemented with a material completion gap | 9 | Useful implementation exists, but one or more explicit acceptance rules remain incomplete. |
+| Implemented and materially evidenced | 29 | Primary V1 behavior exists with supporting code and/or tests. |
+| Implemented with a material completion gap | 8 | Useful implementation exists, but one or more explicit acceptance rules remain incomplete. |
 | Implemented but launch-gated | 3 | Product code exists, but counsel/commercial or operational approval remains required. |
 | Wholly absent | 0 | Every capability has at least an implementation foundation. |
 
@@ -39,7 +39,7 @@
 | C-17 | Share a Business | Partial | Canonical Web Share/copy fallback and Telegram share adapter exist, but the official Telegram Mini App SDK is not loaded by the public layout, so native detection/share/haptics cannot initialize in the current document. |
 | C-18 | Policy pages | Launch-gated | Product pages exist; legal wording and publication readiness still require counsel/launch approval as the specification states. |
 | C-19 | Listing creation | Implemented | Evidence-backed, transactional onboarding validates active reference data and representative details, rejects deterministic normalized duplicates under a concurrency lock, never fabricates missing contact values, and records a minimal audit event. |
-| C-20 | Listing maintenance | Partial | Current update is limited mainly to branch phone, address, and hours status. Explicit closure, unpublish, lifecycle, broader Business/Branch field maintenance, and correction application controls are incomplete. |
+| C-20 | Listing maintenance | Implemented | Staff can correct Business-level identity/summary and Branch-level address/contact/hours through their proper records. Corrections to live data return affected listings to QC; temporary/permanent closure, unpublish, and reopen transitions are reasoned, transactional, audited, and cannot bypass reverification. |
 | C-21 | Verification/QC | Partial | Publication gate and QC record exist, but submitter and reviewer are always the same Staff member; the “second reviewer where available” workflow is not represented. Checklist values are controller constants rather than Staff-confirmed checks. |
 | C-22 | Media management | Partial | Validated upload exists; replace/remove and explicit permission-withdrawal cleanup workflows are incomplete. |
 | C-23 | Category management | Partial | Administrator can add level-1/2 records. Editing, controlled alias maintenance, activation/deactivation, and duplicate-safe validation are incomplete. |
@@ -75,9 +75,7 @@ Do not remove it silently. Record one of these decisions before launch:
 
 ### P0 — Launch integrity
 
-1. **C-20 listing lifecycle controls**
-   - Add audited closure, unpublish, correction, and Business/Branch maintenance actions.
-2. **Scope decision: Customer passwords**
+1. **Scope decision: Customer passwords**
    - Obtain and record explicit product approval or disable the out-of-scope surface.
 
 ### P1 — Required capability completion
@@ -99,17 +97,17 @@ Do not remove it silently. Record one of these decisions before launch:
 
 ## Immediate next implementation milestone
 
-Proceed with **C-20 listing lifecycle controls** next. Staff need safe, audited ways to correct, close, and unpublish records without bypassing the permission and quality-control model.
+Proceed with **C-21 verification separation** next while the Customer-password scope decision awaits explicit product approval. QC should preserve who prepared a listing, who independently reviewed it where available, and which checks the reviewer actually confirmed.
 
 ### Acceptance criteria for that milestone
 
-- Business-level and Branch-level fields remain correctly separated.
-- Staff can record corrections without silently republishing unverified data.
-- Closure and unpublish actions require explicit reasons and remove the Branch from public discovery immediately.
-- Reopening or republishing routes through the required verification gate.
-- Every lifecycle transition is RBAC-protected, CSRF-protected, transactional, and audited.
-- Existing public URLs degrade clearly for unavailable records.
-- Automated tests cover valid transitions, invalid transitions, authorization, and public visibility.
+- The Staff member who created or last prepared a listing is recorded separately from the QC reviewer.
+- Self-review is blocked when another active authorised Staff reviewer is available.
+- Staff explicitly confirm each required checklist item instead of the controller manufacturing successful checks.
+- Failed or returned QC records the real checklist and a mandatory reason.
+- Publication still requires granted permission and a passed QC outcome.
+- Every review and publication transition remains transactional and audited.
+- Automated tests cover independent review, controlled fallback, incomplete checklists, and publication-gate preservation.
 
 ## Verification basis
 
