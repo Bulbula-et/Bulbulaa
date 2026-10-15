@@ -216,6 +216,54 @@ final class CustomerAuthService
         return ['ok' => true];
     }
 
+    public function beginEmailChange(array $customer, string $newRawEmail, string $currentPassword, string $clientIpHash): array
+    {
+        $newEmail = mb_strtolower(trim($newRawEmail), 'UTF-8');
+        if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) return ['ok' => false, 'error' => 'Enter a valid new email address.'];
+        if (hash_equals(mb_strtolower((string) $customer['email'], 'UTF-8'), $newEmail)) return ['ok' => false, 'error' => 'Enter an email different from your current address.'];
+        if ($this->customerRepo->emailBelongsToAnotherCustomer($newEmail, (int) $customer['id'])) return ['ok' => false, 'error' => 'That email address cannot be used.'];
+        $hash = (string) ($customer['password_hash'] ?? '');
+        if ($hash !== '' && !password_verify($currentPassword, $hash)) return ['ok' => false, 'error' => 'Current password is incorrect.'];
+        $result = $this->issueEmailOtp((string) $customer['email'], $clientIpHash, 'SENSITIVE_ACTION');
+        if (!empty($result['ok'])) { Session::set('email_change_new_email', $newEmail); Session::set('email_change_stage', 'CURRENT'); Session::set('email_change_requested_at', time()); }
+        return $result;
+    }
+
+    public function verifyCurrentEmailForChange(array $customer, string $code, string $clientIpHash): array
+    {
+        $newEmail = (string) Session::get('email_change_new_email', '');
+        if ((string) Session::get('email_change_stage', '') !== 'CURRENT' || (int) Session::get('email_change_requested_at', 0) < time() - 600) return ['ok' => false, 'error' => 'Email change confirmation expired. Start again.'];
+        $result = $this->verifyPurposeOtp((string) $customer['email'], $code, 'SENSITIVE_ACTION');
+        if (!$result['ok']) return $result;
+        $delivery = $this->issueEmailOtp($newEmail, $clientIpHash, 'VERIFY_EMAIL');
+        if (!empty($delivery['ok'])) Session::set('email_change_stage', 'NEW');
+        return $delivery;
+    }
+
+    public function completeEmailChange(array $customer, string $code): array
+    {
+        $newEmail = (string) Session::get('email_change_new_email', '');
+        if ((string) Session::get('email_change_stage', '') !== 'NEW' || $newEmail === '') return ['ok' => false, 'error' => 'Email change confirmation expired. Start again.'];
+        $result = $this->verifyPurposeOtp($newEmail, $code, 'VERIFY_EMAIL');
+        if (!$result['ok']) return $result;
+        if ($this->customerRepo->emailBelongsToAnotherCustomer($newEmail, (int) $customer['id'])) return ['ok' => false, 'error' => 'That email address cannot be used.'];
+        $this->customerRepo->updateEmail((int) $customer['id'], $newEmail);
+        Session::forget('email_change_new_email'); Session::forget('email_change_stage'); Session::forget('email_change_requested_at');
+        Session::regenerate();
+        return ['ok' => true, 'email' => $newEmail];
+    }
+
+    private function verifyPurposeOtp(string $rawEmail, string $submittedCode, string $purpose): array
+    {
+        $email=mb_strtolower(trim($rawEmail),'UTF-8'); $code=preg_replace('/\D/','',$submittedCode);
+        if(strlen((string)$code)!==6)return ['ok'=>false,'error'=>'Enter the six-digit confirmation code.'];
+        $row=$this->customerRepo->findLatestActiveOtp($email,$purpose); if($row===null)return ['ok'=>false,'error'=>'The confirmation code expired. Request a new one.'];
+        if((int)$row['attempt_count']>=(int)Config::get('security.otp_max_attempts',5))return ['ok'=>false,'error'=>'Maximum confirmation attempts exceeded.'];
+        $this->customerRepo->incrementOtpAttempts((int)$row['id']); $expected=hash_hmac('sha256',$email.':'.$code,(string)Config::get('app.secret_key','bulbula_secret'));
+        if(!hash_equals((string)$row['code_hmac_sha256'],$expected))return ['ok'=>false,'error'=>'The confirmation code is incorrect.'];
+        $this->customerRepo->markOtpConsumed((int)$row['id']); return ['ok'=>true];
+    }
+
     public function issueSensitiveActionOtp(array $customer, string $clientIpHash, string $action): array
     {
         if (!in_array($action, ['DATA_ACCESS', 'ACCOUNT_DELETION'], true)) return ['ok' => false, 'error' => 'Unsupported account action.'];

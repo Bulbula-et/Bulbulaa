@@ -48,6 +48,9 @@ final class ProfileController
             'activeSessions' => (new \Bulbula\Services\AccountSessionService())->list('CUSTOMER', (int) $customer['id']),
             'pendingSensitiveAction' => Session::get('sensitive_action_type'),
             'sensitiveActionDevPreview' => Session::get('sensitive_action_dev_preview'),
+            'emailChangeStage' => Session::get('email_change_stage'),
+            'emailChangeNewEmail' => Session::get('email_change_new_email'),
+            'emailChangeDevPreview' => Session::get('email_change_dev_preview'),
         ]);
 
         return Response::html($html);
@@ -133,6 +136,35 @@ final class ProfileController
         $this->auditService->logCustomerAction((int) $customer['id'], 'CUSTOMER_PASSWORD_CHANGED', 'customer', (int) $customer['id'], []);
         Session::flash('success', 'Your password has been changed securely.');
         return Response::redirect('/account');
+    }
+
+    public function beginEmailChange(Request $request): Response
+    {
+        $customer=$this->authService->currentCustomer();if($customer===null)return Response::redirect('/auth/login');
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/account');}
+        $result=$this->authService->beginEmailChange($customer,(string)$request->input('new_email',''),(string)$request->input('current_password',''),$request->clientIpHash());
+        if(!$result['ok'])Session::flash('error',(string)$result['error']);else {if(!empty($result['dev_preview_otp']))Session::set('email_change_dev_preview',$result['dev_preview_otp']);Session::flash('success','Confirm the code sent to your current email.');}
+        return Response::redirect('/account');
+    }
+
+    public function verifyCurrentEmailChange(Request $request): Response
+    {
+        $customer=$this->authService->currentCustomer();if($customer===null)return Response::redirect('/auth/login');
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/account');}
+        $result=$this->authService->verifyCurrentEmailForChange($customer,(string)$request->input('otp_code',''),$request->clientIpHash());
+        if(!$result['ok'])Session::flash('error',(string)$result['error']);else {if(!empty($result['dev_preview_otp']))Session::set('email_change_dev_preview',$result['dev_preview_otp']);Session::flash('success','Now confirm the code sent to your new email.');}
+        return Response::redirect('/account');
+    }
+
+    public function completeEmailChange(Request $request): Response
+    {
+        $customer=$this->authService->currentCustomer();if($customer===null)return Response::redirect('/auth/login');
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/account');}
+        $old=(string)$customer['email'];$result=$this->authService->completeEmailChange($customer,(string)$request->input('otp_code',''));
+        if(!$result['ok']){Session::flash('error',(string)$result['error']);return Response::redirect('/account');}
+        Session::forget('email_change_dev_preview');(new \Bulbula\Services\AccountSessionService())->revokeOthers('CUSTOMER',(int)$customer['id']);
+        $this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_EMAIL_CHANGED','customer',(int)$customer['id'],['old_email'=>$old,'new_email'=>$result['email']]);
+        Session::flash('success','Your sign-in email was changed and other devices were signed out.');return Response::redirect('/account');
     }
 
     public function beginPrivacyConfirmation(Request $request): Response

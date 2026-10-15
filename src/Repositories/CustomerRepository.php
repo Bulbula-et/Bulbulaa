@@ -89,6 +89,17 @@ final class CustomerRepository
         );
     }
 
+    public function emailBelongsToAnotherCustomer(string $email, int $customerId): bool
+    {
+        $row = Database::fetchOne('SELECT id FROM customers WHERE LOWER(email) = :email AND id <> :id LIMIT 1', [':email' => mb_strtolower(trim($email), 'UTF-8'), ':id' => $customerId]);
+        return $row !== null;
+    }
+
+    public function updateEmail(int $customerId, string $email): void
+    {
+        Database::execute('UPDATE customers SET email = :email, email_verified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :id', [':email' => mb_strtolower(trim($email), 'UTF-8'), ':id' => $customerId]);
+    }
+
     public function markEmailVerified(int $customerId): void
     {
         Database::execute(

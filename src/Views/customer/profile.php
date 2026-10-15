@@ -53,6 +53,11 @@ $myReviews  = $myReviews ?? [];
         <button class="b-btn b-btn--outline b-btn--sm" type="submit">Save password</button>
       </form>
     </section>
+    <section class="b-card">
+      <h2 style="font-size:var(--text-lg);margin-bottom:var(--space-3)">Sign-in email</h2><p style="font-size:var(--text-sm);color:var(--neutral-600)"><?= View::e($customer['email'] ?? '') ?></p>
+      <?php if(empty($emailChangeStage)): ?><form method="POST" action="/account/email/change" style="display:grid;gap:var(--space-3)"><?= Csrf::field() ?><div><label class="b-label" for="new-email">New email address</label><input id="new-email" class="b-input" type="email" name="new_email" autocomplete="email" required></div><?php if(!empty($customer['password_hash'])): ?><div><label class="b-label" for="email-password">Current password</label><input id="email-password" class="b-input" type="password" name="current_password" autocomplete="current-password" required></div><?php endif; ?><button class="b-btn b-btn--outline b-btn--sm" type="submit">Begin email change</button></form>
+      <?php else: ?><div class="b-alert b-alert--info"><?php if(!empty($emailChangeDevPreview)): ?>Preview code: <strong><?= View::e($emailChangeDevPreview) ?></strong><br><?php endif; ?><?= $emailChangeStage==='CURRENT'?'Confirm the code sent to your current email.':'Confirm the code sent to '.View::e($emailChangeNewEmail).'.' ?></div><form method="POST" action="<?= $emailChangeStage==='CURRENT'?'/account/email/change/current':'/account/email/change/complete' ?>" style="display:flex;gap:var(--space-2)"><?= Csrf::field() ?><input class="b-input" name="otp_code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="Six-digit code" required><button class="b-btn b-btn--primary b-btn--sm" type="submit">Confirm</button></form><?php endif; ?>
+    </section>
   </div>
 
   <div class="b-grid b-grid--branches">
