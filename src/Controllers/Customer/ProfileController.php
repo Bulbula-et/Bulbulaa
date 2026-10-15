@@ -43,6 +43,8 @@ final class ProfileController
             'savedItems'   => $saved,
             'myReviews'    => $reviews,
             'emailVerificationDevPreview' => Session::get('email_verification_dev_preview'),
+            'sessionMetadata' => Session::metadata(),
+            'securityEvents' => $this->auditService->listCustomerSecurityEvents((int) $customer['id']),
         ]);
 
         return Response::html($html);

@@ -80,6 +80,28 @@ final class AuditLogRepository
         );
     }
 
+    public function listForCustomer(int $customerId, int $limit = 12): array
+    {
+        $safeLimit = max(1, min(50, $limit));
+        return Database::fetchAll(
+            "SELECT action_code, created_at FROM audit_logs
+             WHERE actor_type = 'CUSTOMER' AND actor_customer_id = :id
+             ORDER BY id DESC LIMIT {$safeLimit}",
+            [':id' => $customerId]
+        );
+    }
+
+    public function listForStaffMember(int $staffId, int $limit = 12): array
+    {
+        $safeLimit = max(1, min(50, $limit));
+        return Database::fetchAll(
+            "SELECT action_code, created_at FROM audit_logs
+             WHERE actor_type = 'STAFF' AND actor_staff_id = :id
+             ORDER BY id DESC LIMIT {$safeLimit}",
+            [':id' => $staffId]
+        );
+    }
+
     private function scrubSensitiveKeys(array $payload): array
     {
         $scrubbed = [];

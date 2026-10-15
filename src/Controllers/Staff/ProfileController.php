@@ -22,9 +22,13 @@ final class ProfileController
 
     public function index(Request $request): Response
     {
+        $staff = $this->auth->currentStaff();
+        if ($staff === null) return Response::redirect('/staff/login');
         return Response::html(View::render('staff/profile', [
             'pageTitle' => 'My Profile & Security', 'activeNav' => 'profile',
-            'staff' => $this->auth->currentStaff(),
+            'staff' => $staff,
+            'sessionMetadata' => Session::metadata(),
+            'securityEvents' => $this->audit->listStaffSecurityEvents((int) $staff['id']),
         ], 'staff'));
     }
 

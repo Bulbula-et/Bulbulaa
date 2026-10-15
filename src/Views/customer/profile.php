@@ -95,5 +95,15 @@ $myReviews  = $myReviews ?? [];
         <button type="submit" class="b-btn b-btn--outline b-btn--sm">Submit Request</button>
       </form>
     </section>
+
+    <section class="b-card" style="align-items:flex-start">
+      <div><span class="b-badge b-badge--verified">Current session</span><h2 style="font-size:var(--text-xl);margin-top:var(--space-3)">This device</h2><p style="font-size:var(--text-sm);color:var(--neutral-600)">Active since <?= View::e(date('M j, Y, g:i a', (int)($sessionMetadata['created_at'] ?? time()))) ?>. Last activity is current.</p></div>
+      <form method="POST" action="/auth/logout"><?= Csrf::field() ?><button class="b-btn b-btn--outline b-btn--sm" type="submit">Sign out this device</button></form>
+    </section>
+
+    <section class="b-card" style="display:block">
+      <span class="b-badge">Security activity</span><h2 style="font-size:var(--text-xl);margin-top:var(--space-3)">Recent account events</h2>
+      <?php if (empty($securityEvents)): ?><p style="font-size:var(--text-sm);color:var(--neutral-600)">No account security events have been recorded yet.</p><?php else: ?><ul style="list-style:none;padding:0;margin:var(--space-4) 0 0;display:grid;gap:var(--space-3)"><?php foreach ($securityEvents as $event): ?><li style="display:flex;justify-content:space-between;gap:var(--space-3);font-size:var(--text-sm);border-top:1px solid var(--neutral-100);padding-top:var(--space-3)"><strong><?= View::e(ucwords(strtolower(str_replace('_',' ',(string)$event['action_code'])))) ?></strong><time style="color:var(--neutral-500)"><?= View::e((string)$event['created_at']) ?></time></li><?php endforeach; ?></ul><?php endif; ?>
+    </section>
   </div>
 </div>

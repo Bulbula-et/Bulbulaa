@@ -41,4 +41,14 @@ final class AuditService
     {
         return $this->auditRepo->listForAdministrator($limit);
     }
+
+    public function listCustomerSecurityEvents(int $customerId, int $limit = 12): array
+    {
+        return $this->auditRepo->listForCustomer($customerId, $limit);
+    }
+
+    public function listStaffSecurityEvents(int $staffId, int $limit = 12): array
+    {
+        return $this->auditRepo->listForStaffMember($staffId, $limit);
+    }
 }

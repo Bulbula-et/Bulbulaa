@@ -75,6 +75,16 @@ final class Session
         return $created < $now - $absoluteSeconds || $lastSeen < $now - $idleSeconds;
     }
 
+    /** Non-sensitive lifecycle details for the signed-in user's session screen. */
+    public static function metadata(): array
+    {
+        return [
+            'created_at' => (int) ($_SESSION[self::CREATED_AT] ?? time()),
+            'last_seen_at' => (int) ($_SESSION[self::LAST_SEEN_AT] ?? time()),
+            'regenerated_at' => (int) ($_SESSION[self::REGENERATED_AT] ?? time()),
+        ];
+    }
+
     public static function get(string $key, mixed $default = null): mixed { return $_SESSION[$key] ?? $default; }
     public static function set(string $key, mixed $value): void { $_SESSION[$key] = $value; }
     public static function forget(string $key): void { unset($_SESSION[$key]); }
