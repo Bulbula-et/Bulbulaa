@@ -133,6 +133,9 @@ final class Config
         if (!(bool) self::get('security.require_staff_login', false)) {
             $problems[] = 'Production requires strict Staff Console authentication.';
         }
+        if (!(bool) self::get('gates.D_45_STAFF_2FA_REQUIRED', true)) {
+            $problems[] = 'Production requires Staff two-factor enrollment.';
+        }
         if ((bool) self::get('app.debug', false)) {
             $problems[] = 'Production debug mode must be disabled.';
         }

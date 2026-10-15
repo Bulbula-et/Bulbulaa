@@ -30,9 +30,10 @@ final class ProductionGuard
             if (self::isKnownPilotPassword($hash)) {
                 $problems[] = "Active Staff account {$email} still uses a known pilot password.";
             }
-            if (empty($row['totp_enabled']) || trim((string) ($row['totp_secret_enc'] ?? '')) === '') {
-                $problems[] = "Active Staff account {$email} has not completed encrypted TOTP enrollment.";
-            }
+            // An active Staff account may be awaiting first enrollment or an administrator-led
+            // authenticator reset. StaffAuthService requires password + verified TOTP enrollment
+            // before granting a staff session; this pending state must not take the public site
+            // offline. The production configuration separately requires the D-45 MFA gate.
         }
         return $problems;
     }

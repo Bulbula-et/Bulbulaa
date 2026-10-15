@@ -4,11 +4,13 @@ declare(strict_types=1);
 namespace Bulbula\Controllers\Staff;
 
 use Bulbula\Core\Csrf;
+use Bulbula\Core\Database;
 use Bulbula\Core\Request;
 use Bulbula\Core\Response;
 use Bulbula\Core\Session;
 use Bulbula\Core\View;
 use Bulbula\Repositories\StaffRepository;
+use Bulbula\Repositories\AccountSessionRepository;
 use Bulbula\Services\AuditService;
 use Bulbula\Services\StaffAuthService;
 
@@ -134,7 +136,10 @@ final class StaffUserController
             Session::flash('error', 'You cannot reset your own active two-factor enrollment. Another Administrator must do this.');
             return Response::redirect('/staff/users');
         }
-        $this->staffRepo->disableTotp($targetId);
+        Database::transaction(function () use ($targetId): void {
+            $this->staffRepo->disableTotp($targetId);
+            (new AccountSessionRepository())->revokeAll('STAFF', $targetId);
+        });
         $this->auditService->logStaffAction((int) ($actor['id'] ?? 1), 'STAFF_2FA_RESET', 'staff_user', $targetId, null, ['totp_enabled' => false]);
         Session::flash('success', 'Two-factor enrollment reset for Staff #' . $targetId . '. They must enroll again at next login.');
         return Response::redirect('/staff/users');
