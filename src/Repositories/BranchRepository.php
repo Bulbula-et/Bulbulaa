@@ -345,6 +345,15 @@ final class BranchRepository
         });
     }
 
+    public function preparerStaffId(int $branchId): ?int
+    {
+        $row = Database::fetchOne(
+            'SELECT COALESCE(bz.updated_by_staff_id, br.created_by_staff_id) AS preparer_id FROM branches br INNER JOIN businesses bz ON bz.id=br.business_id WHERE br.id=:id LIMIT 1',
+            [':id'=>$branchId]
+        );
+        return $row === null ? null : (int)$row['preparer_id'];
+    }
+
     public function findByIdForStaff(int $branchId): ?array
     {
         return Database::fetchOne(

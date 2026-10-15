@@ -48,6 +48,12 @@ final class StaffRepository
         );
     }
 
+    public function hasOtherActiveReviewer(int $staffId): bool
+    {
+        $row = Database::fetchOne('SELECT COUNT(*) AS total FROM staff_users WHERE is_active=1 AND id<>:id', [':id'=>$staffId]);
+        return (int)($row['total'] ?? 0) > 0;
+    }
+
     public function listActiveStaff(): array
     {
         return Database::fetchAll(

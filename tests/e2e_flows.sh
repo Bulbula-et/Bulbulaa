@@ -121,6 +121,20 @@ LIFECYCLE_STATUS="$(db_scalar "SELECT publication_status FROM branches WHERE id=
 [[ "$LIFECYCLE_STATUS" == "PENDING_QC" ]] || fail "Reopening did not return listing to QC"
 pass "C-20 lifecycle reasons, valid transitions, and mandatory re-verification are enforced"
 
+# C-21 maker-checker QC: preparer cannot self-publish while another active reviewer exists.
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/verification" -o "$TMP/operator-qc.html"; CSRF="$(csrf_from "$TMP/operator-qc.html")"
+QC_BEFORE="$(db_scalar "SELECT COUNT(*) FROM verification_reviews WHERE branch_id=$CREATED_BRANCH_ID")"
+curl -sS -o /dev/null -b "$TMP/staff.cookies" -c "$TMP/staff.cookies" -X POST "$BASE/staff/verification/$CREATED_BRANCH_ID/qc" --data-urlencode "_csrf=$CSRF" --data-urlencode 'outcome=PASSED' --data-urlencode 'permission_verified=1' --data-urlencode 'coordinates_checked=1' --data-urlencode 'category_checked=1' --data-urlencode 'reviewer_notes=Operator attempted a complete self review.'
+QC_AFTER_SELF="$(db_scalar "SELECT COUNT(*) FROM verification_reviews WHERE branch_id=$CREATED_BRANCH_ID")"
+[[ "$QC_AFTER_SELF" == "$QC_BEFORE" ]] || fail "Preparer self-review was accepted while another reviewer was available"
+curl -fsS -b "$TMP/staff.cookies" -c "$TMP/staff.cookies" "$BASE/staff?switch_staff=1" -o /dev/null
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/verification" -o "$TMP/admin-qc.html"; CSRF="$(csrf_from "$TMP/admin-qc.html")"
+curl -sS -o /dev/null -b "$TMP/staff.cookies" -X POST "$BASE/staff/verification/$CREATED_BRANCH_ID/qc" --data-urlencode "_csrf=$CSRF" --data-urlencode 'outcome=PASSED' --data-urlencode 'permission_verified=1' --data-urlencode 'coordinates_checked=1' --data-urlencode 'category_checked=1' --data-urlencode 'reviewer_notes=Independent Administrator review completed.'
+QC_AFTER_ADMIN="$(db_scalar "SELECT COUNT(*) FROM verification_reviews WHERE branch_id=$CREATED_BRANCH_ID")"
+PUBLISHED_STATUS="$(db_scalar "SELECT publication_status FROM branches WHERE id=$CREATED_BRANCH_ID")"
+[[ "$QC_AFTER_ADMIN" == "$((QC_BEFORE + 1))" && "$PUBLISHED_STATUS" == "PUBLISHED" ]] || fail "Independent QC review did not publish the listing atomically"
+pass "C-21 independent reviewer separation, explicit checklist, and atomic publication are enforced"
+
 # Customer OTP: request, HMAC-backed code preview in development, verification, account session.
 TEST_EMAIL="ci-otp-$(date +%s)-$$@example.com"
 curl -fsS -c "$TMP/customer.cookies" "$BASE/auth/login" -o "$TMP/customer-login.html"

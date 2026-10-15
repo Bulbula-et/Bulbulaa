@@ -10,7 +10,7 @@ $verified = 0;
 $pending = 0;
 foreach ($branches as $branch) {
     if (!empty($branch['is_verified'])) $verified++;
-    if (empty($branch['latest_qc']) || empty($branch['permission'])) $pending++;
+    if (empty($branch['permission']) || (($branch['latest_qc']['outcome']??'') !== 'PASSED')) $pending++;
 }
 ?>
 <section class="b-qc-summary" aria-label="Verification summary">
@@ -47,7 +47,7 @@ foreach ($branches as $branch) {
         <?php foreach ($branches as $br): ?>
           <?php $perm = $br['permission'] ?? null; $qc = $br['latest_qc'] ?? null; ?>
           <tr>
-            <td class="b-qc-branch"><strong><?= View::e($br['branch_name_en']) ?></strong><span><?= View::e($br['address_line_en']) ?></span></td>
+            <td class="b-qc-branch"><strong><?= View::e($br['branch_name_en']) ?></strong><span><?= View::e($br['address_line_en']) ?></span><span>Prepared by <?= View::e((string)($br['preparer']['full_name']??'unattributed Staff')) ?></span></td>
             <td>
               <?php if ($perm): ?>
                 <div class="b-qc-gate"><span class="b-qc-gate__icon">✓</span><div><span class="b-badge b-badge--verified"><?= View::e($perm['status']) ?></span><span class="b-qc-detail"><?= View::e(str_replace('_', ' ', $perm['permission_method'])) ?><br><?= View::e($perm['rep_full_name']) ?> · <?= View::e($perm['rep_role_title']) ?></span></div></div>
@@ -61,7 +61,7 @@ foreach ($branches as $branch) {
               <?php else: ?><span class="b-badge">Pending QC</span><span class="b-qc-detail">No completed quality review.</span><?php endif; ?>
             </td>
             <td><?= View::component('trust-badge', ['isVerified' => !empty($br['is_verified'])]) ?></td>
-            <td><form method="POST" action="/staff/verification/<?= (int) $br['branch_id'] ?>/qc" class="b-qc-action"><?= Csrf::field() ?><input type="hidden" name="outcome" value="PASSED"><button type="submit" class="b-btn b-btn--primary b-btn--sm">Re-verify &amp; publish</button></form></td>
+            <td><?php if(!empty($br['self_review_blocked'])): ?><div class="b-qc-separation"><strong>Independent review required</strong><span>Another active Staff member must review this listing.</span></div><?php else: ?><details class="b-qc-review"><summary>Review listing</summary><form method="POST" action="/staff/verification/<?= (int)$br['branch_id'] ?>/qc" class="b-qc-action"><?= Csrf::field() ?><?php if((int)($br['preparer']['id']??0)===(int)($staff['id']??0)): ?><div class="b-qc-separation"><strong>Controlled self-review fallback</strong><span>No other active Staff reviewer is available. Explain this exception in the notes.</span></div><?php endif; ?><fieldset><legend>Required checks</legend><label><input type="checkbox" name="permission_verified" value="1"> Permission evidence and scope confirmed</label><label><input type="checkbox" name="coordinates_checked" value="1"> Address, map position, and branch context checked</label><label><input type="checkbox" name="category_checked" value="1"> Primary category and classification checked</label></fieldset><label><span>Decision</span><select name="outcome" class="b-select" required><option value="">Choose outcome</option><option value="PASSED">Pass and publish</option><option value="RETURNED_FOR_FIXES">Return for fixes</option><option value="REJECTED">Reject verification</option></select></label><label><span>Reviewer notes</span><textarea name="reviewer_notes" class="b-input" rows="3" maxlength="1000" placeholder="Required for rejection, return, or controlled self-review"></textarea></label><button type="submit" class="b-btn b-btn--primary b-btn--sm">Record QC decision</button></form></details><?php endif; ?></td>
           </tr>
         <?php endforeach; ?>
         </tbody>
