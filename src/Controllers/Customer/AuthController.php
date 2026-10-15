@@ -251,7 +251,7 @@ final class AuthController
         if (!Csrf::verify((string) $request->input('_csrf', ''))) return Response::redirect('/auth/login');
         if ((string) Config::get('auth.google_client_id', '') === '') return Response::redirect('/auth/login');
         if ($this->authService->currentCustomer() !== null) return Response::redirect('/account');
-        $flow = $this->googleBridge->start($request->clientIpHash());
+        $flow = $this->googleBridge->start();
         if ($flow === null) {
             Session::flash('error', 'Too many Google sign-in requests. Please wait and try again.');
             return Response::redirect('/auth/login');
@@ -309,7 +309,7 @@ final class AuthController
         if (!Csrf::verify((string) $request->input('_csrf', '')) || !$this->googleBridge->available($flow)) {
             return Response::html('Google sign-in session expired. Return to Telegram and start again.', 403);
         }
-        if (!RateLimiter::allow('google-bridge-verify:' . $request->clientIpHash(), 8, 600)) {
+        if (!RateLimiter::allow('google-bridge-verify:' . hash('sha256', $flow), 8, 600)) {
             return Response::html('Too many verification attempts. Return to Telegram and try later.', 429);
         }
         $verified = $this->googleIdentity->verifyIdToken((string) $request->input('credential', ''));

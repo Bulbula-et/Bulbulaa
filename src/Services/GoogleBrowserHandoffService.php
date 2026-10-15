@@ -12,9 +12,10 @@ final class GoogleBrowserHandoffService
 {
     public function __construct(private readonly GoogleAuthBridgeRepository $repo = new GoogleAuthBridgeRepository()) {}
 
-    public function start(string $clientIpHash): ?string
+    public function start(): ?string
     {
-        if (!RateLimiter::allow('google-bridge-start:' . $clientIpHash, 5, 600)) return null;
+        $sessionId = session_id();
+        if ($sessionId === '' || !RateLimiter::allow('google-bridge-start:' . hash('sha256', $sessionId), 5, 600)) return null;
         $this->repo->purgeOld(date('Y-m-d H:i:s', time() - 86400));
         $flow = bin2hex(random_bytes(24));
         $sourceSecret = bin2hex(random_bytes(32));
