@@ -102,6 +102,8 @@ return [
     ['POST', '/staff/campaigns/{id}/approve',        ['Staff\CampaignController', 'approve'], ['access' => 'administrator']],          // C-27 Admin approves (blocked by D-39 if off)
     ['GET',  '/staff/analytics',                     ['Staff\AnalyticsController', 'index'], ['access' => 'authenticated']],           // C-28 Operational & zero-result analytics
     ['GET',  '/staff/audit-logs',                    ['Staff\AuditLogController', 'index'], ['access' => 'administrator']],            // C-29 Admin-only append-only audit trail
+    ['GET',  '/staff/privacy-requests',               ['Staff\PrivacyRequestController', 'index'], ['access' => 'administrator']],
+    ['POST', '/staff/privacy-requests/{id}/resolve',  ['Staff\PrivacyRequestController', 'resolve'], ['access' => 'administrator']],
     ['GET',  '/staff/users',                         ['Staff\StaffUserController', 'index'], ['access' => 'administrator']],           // D-45 Admin Staff/RBAC manager
     ['POST', '/staff/users/create',                  ['Staff\StaffUserController', 'create'], ['access' => 'administrator']],          // D-45 Create staff account
     ['POST', '/staff/users/{id}/toggle',             ['Staff\StaffUserController', 'toggleActive'], ['access' => 'administrator']],    // D-45 Suspend/activate staff
