@@ -2,19 +2,19 @@
 
 **Audit date:** 2026-10-15  
 **Specification:** `Bulbula_et_SaaS_Product_Features_V1.pdf` (40 capabilities, C-01–C-40)  
-**Audited code:** `main` at `45eab95`  
+**Audited code:** `main` at `d0d7bb2`
 **Method:** specification-to-route, controller, service, repository, schema, view, JavaScript, test, deployment, and production-smoke comparison.
 
 ## Executive result
 
 | Classification | Count | Meaning |
 |---|---:|---|
-| Implemented and materially evidenced | 29 | Primary V1 behavior exists with supporting code and/or tests. |
-| Implemented with a material completion gap | 8 | Useful implementation exists, but one or more explicit acceptance rules remain incomplete. |
+| Implemented and materially evidenced | 30 | Primary V1 behavior exists with supporting code and/or tests. |
+| Implemented with a material completion gap | 7 | Useful implementation exists, but one or more explicit acceptance rules remain incomplete. |
 | Implemented but launch-gated | 3 | Product code exists, but counsel/commercial or operational approval remains required. |
 | Wholly absent | 0 | Every capability has at least an implementation foundation. |
 
-**Overall:** Bulbula.et has broad V1 coverage, but route presence is not the same as launch readiness. The highest risks are directory-integrity controls in Staff onboarding, incomplete maintenance workflows, the Telegram launch integration, and missing review/moderation email notifications.
+**Overall:** Bulbula.et has broad V1 coverage, but route presence is not the same as launch readiness. The highest remaining risks are the Telegram launch integration, incomplete media/reference-data maintenance, review appeals, campaign termination, and missing review/moderation email notifications.
 
 ## Capability matrix
 
@@ -40,7 +40,7 @@
 | C-18 | Policy pages | Launch-gated | Product pages exist; legal wording and publication readiness still require counsel/launch approval as the specification states. |
 | C-19 | Listing creation | Implemented | Evidence-backed, transactional onboarding validates active reference data and representative details, rejects deterministic normalized duplicates under a concurrency lock, never fabricates missing contact values, and records a minimal audit event. |
 | C-20 | Listing maintenance | Implemented | Staff can correct Business-level identity/summary and Branch-level address/contact/hours through their proper records. Corrections to live data return affected listings to QC; temporary/permanent closure, unpublish, and reopen transitions are reasoned, transactional, audited, and cannot bypass reverification. |
-| C-21 | Verification/QC | Partial | Publication gate and QC record exist, but submitter and reviewer are always the same Staff member; the “second reviewer where available” workflow is not represented. Checklist values are controller constants rather than Staff-confirmed checks. |
+| C-21 | Verification/QC | Implemented | Preparation attribution is preserved separately from reviewer identity; independent review is enforced whenever another active Staff reviewer exists. Controlled same-person fallback requires no available reviewer, explicit justification, and audit evidence. Staff submit the real required checklist and decision; failed/returned reviews retain checklist evidence and a mandatory reason. QC history, publication state, and audit evidence are committed transactionally, and permission plus PASSED QC remains the authoritative publication gate. |
 | C-22 | Media management | Partial | Validated upload exists; replace/remove and explicit permission-withdrawal cleanup workflows are incomplete. |
 | C-23 | Category management | Partial | Administrator can add level-1/2 records. Editing, controlled alias maintenance, activation/deactivation, and duplicate-safe validation are incomplete. |
 | C-24 | Location management | Partial | Administrator can add areas. Editing, aliases, activation/boundary maintenance, hierarchy controls, and assignment maintenance are incomplete. |
@@ -80,13 +80,12 @@ Do not remove it silently. Record one of these decisions before launch:
 
 ### P1 — Required capability completion
 
-4. **C-21 verification separation** — submitter/reviewer attribution and Staff-confirmed checklist.
-5. **C-39 review notifications** — notify Customers of submitted, published, rejected, removed, and edited-review outcomes where applicable.
-6. **C-17/C-32 Telegram Mini App bootstrap** — official SDK loading, CSP-compatible integration, runtime detection, canonical sharing, and real-device validation; never treat launch context as Customer identity.
-7. **C-22 media lifecycle** — replace/remove and permission-withdrawal handling.
-8. **C-23/C-24 reference-data maintenance** — edit, aliases, activation, validation, and safe cache invalidation.
-9. **C-25 appeals** — Administrator-only appeal review and audited outcome.
-10. **C-27 early campaign termination** — Administrator action with mandatory reason and immediate inventory removal.
+4. **C-39 review notifications** — notify Customers of submitted, published, rejected, removed, and edited-review outcomes where applicable.
+5. **C-17/C-32 Telegram Mini App bootstrap** — official SDK loading, CSP-compatible integration, runtime detection, canonical sharing, and real-device validation; never treat launch context as Customer identity.
+6. **C-22 media lifecycle** — replace/remove and permission-withdrawal handling.
+7. **C-23/C-24 reference-data maintenance** — edit, aliases, activation, validation, and safe cache invalidation.
+8. **C-25 appeals** — Administrator-only appeal review and audited outcome.
+9. **C-27 early campaign termination** — Administrator action with mandatory reason and immediate inventory removal.
 
 ### P2 — Launch assurance
 
@@ -97,17 +96,7 @@ Do not remove it silently. Record one of these decisions before launch:
 
 ## Immediate next implementation milestone
 
-Proceed with **C-21 verification separation** next while the Customer-password scope decision awaits explicit product approval. QC should preserve who prepared a listing, who independently reviewed it where available, and which checks the reviewer actually confirmed.
-
-### Acceptance criteria for that milestone
-
-- The Staff member who created or last prepared a listing is recorded separately from the QC reviewer.
-- Self-review is blocked when another active authorised Staff reviewer is available.
-- Staff explicitly confirm each required checklist item instead of the controller manufacturing successful checks.
-- Failed or returned QC records the real checklist and a mandatory reason.
-- Publication still requires granted permission and a passed QC outcome.
-- Every review and publication transition remains transactional and audited.
-- Automated tests cover independent review, controlled fallback, incomplete checklists, and publication-gate preservation.
+Proceed with **C-39 review notifications** next while the Customer-password scope decision awaits explicit product approval. Customers should receive concise, non-sensitive notifications for review submission and material moderation outcomes, with reliable SMTP adapter behavior and auditable failure handling suitable for shared hosting.
 
 ## Verification basis
 
