@@ -81,13 +81,13 @@ $isVerifiedOnly = !empty($verifiedOnly) || !empty($filters['verified_only']);
       </div>
     </form>
     <div class="b-filter-pills" role="navigation" aria-label="Quick category filter" style="margin-top: var(--space-4); margin-bottom: var(--space-2);">
-      <a href="/search" class="b-filter-pill <?= $catFilter === '' ? 'is-active' : '' ?>">All Branches</a>
-      <a href="/search?category=clinics-medical-centers" class="b-filter-pill <?= $catFilter === 'clinics-medical-centers' ? 'is-active' : '' ?>">Clinics</a>
-      <a href="/search?category=pharmacies" class="b-filter-pill <?= $catFilter === 'pharmacies' ? 'is-active' : '' ?>">Pharmacies</a>
-      <a href="/search?category=cafes-coffee-roasters" class="b-filter-pill <?= $catFilter === 'cafes-coffee-roasters' ? 'is-active' : '' ?>">Coffee &amp; Cafes</a>
-      <a href="/search?category=supermarkets" class="b-filter-pill <?= $catFilter === 'supermarkets' ? 'is-active' : '' ?>">Supermarkets</a>
-      <a href="/search?category=dental-clinics" class="b-filter-pill <?= $catFilter === 'dental-clinics' ? 'is-active' : '' ?>">Dental Care</a>
-      <a href="/search?category=auto-repair-garages" class="b-filter-pill <?= $catFilter === 'auto-repair-garages' ? 'is-active' : '' ?>">Auto Garages</a>
+      <a href="/search" class="b-filter-pill <?= $catFilter === '' ? 'is-active' : '' ?>" <?= $catFilter === '' ? 'aria-current="true"' : '' ?>>All Branches</a>
+      <a href="/search?category=clinics-medical-centers" class="b-filter-pill <?= $catFilter === 'clinics-medical-centers' ? 'is-active' : '' ?>" <?= $catFilter === 'clinics-medical-centers' ? 'aria-current="true"' : '' ?>>Clinics</a>
+      <a href="/search?category=pharmacies" class="b-filter-pill <?= $catFilter === 'pharmacies' ? 'is-active' : '' ?>" <?= $catFilter === 'pharmacies' ? 'aria-current="true"' : '' ?>>Pharmacies</a>
+      <a href="/search?category=cafes-coffee-roasters" class="b-filter-pill <?= $catFilter === 'cafes-coffee-roasters' ? 'is-active' : '' ?>" <?= $catFilter === 'cafes-coffee-roasters' ? 'aria-current="true"' : '' ?>>Coffee &amp; Cafes</a>
+      <a href="/search?category=supermarkets" class="b-filter-pill <?= $catFilter === 'supermarkets' ? 'is-active' : '' ?>" <?= $catFilter === 'supermarkets' ? 'aria-current="true"' : '' ?>>Supermarkets</a>
+      <a href="/search?category=dental-clinics" class="b-filter-pill <?= $catFilter === 'dental-clinics' ? 'is-active' : '' ?>" <?= $catFilter === 'dental-clinics' ? 'aria-current="true"' : '' ?>>Dental Care</a>
+      <a href="/search?category=auto-repair-garages" class="b-filter-pill <?= $catFilter === 'auto-repair-garages' ? 'is-active' : '' ?>" <?= $catFilter === 'auto-repair-garages' ? 'aria-current="true"' : '' ?>>Auto Garages</a>
     </div>
   </div>
 </section>

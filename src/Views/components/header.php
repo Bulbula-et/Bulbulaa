@@ -12,11 +12,11 @@ $currentPath = isset($request) ? $request->path() : '/';
     </a>
 
     <nav class="b-nav" aria-label="Primary Navigation">
-      <a href="/" class="b-nav__link <?= $currentPath === '/' ? 'is-active' : '' ?>">Discover</a>
-      <a href="/categories" class="b-nav__link <?= (str_starts_with($currentPath, '/categories') || str_starts_with($currentPath, '/c/')) ? 'is-active' : '' ?>">Categories</a>
-      <a href="/areas" class="b-nav__link <?= (str_starts_with($currentPath, '/areas') || str_starts_with($currentPath, '/a/')) ? 'is-active' : '' ?>">Areas</a>
-      <a href="/nearby" class="b-nav__link <?= str_starts_with($currentPath, '/nearby') ? 'is-active' : '' ?>">Nearby</a>
-      <a href="/about" class="b-nav__link <?= (str_starts_with($currentPath, '/about') || str_starts_with($currentPath, '/policies')) ? 'is-active' : '' ?>">About</a>
+      <a href="/" class="b-nav__link <?= $currentPath === '/' ? 'is-active' : '' ?>" <?= $currentPath === '/' ? 'aria-current="page"' : '' ?>>Discover</a>
+      <a href="/categories" class="b-nav__link <?= (str_starts_with($currentPath, '/categories') || str_starts_with($currentPath, '/c/')) ? 'is-active' : '' ?>" <?= (str_starts_with($currentPath, '/categories') || str_starts_with($currentPath, '/c/')) ? 'aria-current="page"' : '' ?>>Categories</a>
+      <a href="/areas" class="b-nav__link <?= (str_starts_with($currentPath, '/areas') || str_starts_with($currentPath, '/a/')) ? 'is-active' : '' ?>" <?= (str_starts_with($currentPath, '/areas') || str_starts_with($currentPath, '/a/')) ? 'aria-current="page"' : '' ?>>Areas</a>
+      <a href="/nearby" class="b-nav__link <?= str_starts_with($currentPath, '/nearby') ? 'is-active' : '' ?>" <?= str_starts_with($currentPath, '/nearby') ? 'aria-current="page"' : '' ?>>Nearby</a>
+      <a href="/about" class="b-nav__link <?= (str_starts_with($currentPath, '/about') || str_starts_with($currentPath, '/policies')) ? 'is-active' : '' ?>" <?= (str_starts_with($currentPath, '/about') || str_starts_with($currentPath, '/policies')) ? 'aria-current="page"' : '' ?>>About</a>
     </nav>
 
     <div class="b-header__right">
@@ -37,7 +37,7 @@ $currentPath = isset($request) ? $request->path() : '/';
       </form>
 
       <?php if (!empty($customer)): ?>
-        <a href="/account" class="b-btn b-btn--outline b-btn--sm">
+        <a href="/account" class="b-btn b-btn--outline b-btn--sm <?= str_starts_with($currentPath, '/account') ? 'is-current' : '' ?>" <?= str_starts_with($currentPath, '/account') ? 'aria-current="page"' : '' ?>>
           <span><?= View::e($customer['display_name']) ?></span>
         </a>
       <?php else: ?>

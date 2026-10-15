@@ -49,6 +49,7 @@ $radii      = [1000 => '1 km', 2000 => '2 km', 3500 => '3.5 km', 5000 => '5 km']
           <?php foreach ($radii as $rMeters => $rLabel): ?>
             <a href="/nearby?lat=<?= View::e((string) $lat) ?>&amp;lng=<?= View::e((string) $lng) ?>&amp;radius=<?= $rMeters ?>"
                class="b-filter-pill <?= $radiusM === $rMeters ? 'is-active' : '' ?>"
+               <?= $radiusM === $rMeters ? 'aria-current="true"' : '' ?>
                style="padding: 0.28rem 0.75rem; font-size: 0.75rem;">
               <?= View::e($rLabel) ?>
             </a>

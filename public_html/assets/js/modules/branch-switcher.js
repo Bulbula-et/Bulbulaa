@@ -21,7 +21,8 @@
     const filterPills = document.querySelectorAll('[data-vendor-filter]');
     const vendorRows = document.querySelectorAll('[data-vendor-list] [data-vendor-category]');
     if (filterPills.length > 0 && vendorRows.length > 0) {
-      filterPills.forEach((pill) => {
+      filterPills.forEach((pill, index) => {
+        pill.tabIndex = pill.getAttribute('aria-selected') === 'true' ? 0 : -1;
         pill.addEventListener('click', (e) => {
           e.preventDefault();
           const targetCat = pill.getAttribute('data-vendor-filter') || 'all';
@@ -30,6 +31,7 @@
             const active = p === pill;
             p.classList.toggle('is-active', active);
             p.setAttribute('aria-selected', active ? 'true' : 'false');
+            p.tabIndex = active ? 0 : -1;
           });
 
           vendorRows.forEach((row) => {
@@ -37,6 +39,17 @@
             const matches = targetCat === 'all' || rowCat === targetCat;
             row.style.display = matches ? '' : 'none';
           });
+        });
+        pill.addEventListener('keydown', (e) => {
+          let next = index;
+          if (e.key === 'ArrowRight') next = (index + 1) % filterPills.length;
+          else if (e.key === 'ArrowLeft') next = (index - 1 + filterPills.length) % filterPills.length;
+          else if (e.key === 'Home') next = 0;
+          else if (e.key === 'End') next = filterPills.length - 1;
+          else return;
+          e.preventDefault();
+          filterPills[next].focus();
+          filterPills[next].click();
         });
       });
     }
