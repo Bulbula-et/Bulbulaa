@@ -54,6 +54,7 @@ if ((int) ($b['published_review_count'] ?? 0) > 0 && $b['published_rating_avg'] 
 
 <section class="b-section" style="padding-top: var(--space-5);">
   <div class="b-container">
+    <?php if(($b['publication_status']??'')==='TEMPORARILY_CLOSED'): ?><div class="b-alert b-alert--info" role="status"><div><strong>Temporarily closed</strong><p style="margin:.2rem 0 0">This Branch is not currently serving visitors. Its verified profile and history remain available while Bulbula confirms reopening details.</p></div></div><?php endif; ?>
     <!-- Top App Details Bar: < Back | Details | Bookmark (Cloned from Image 1 "Details" Screen) -->
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4);">
       <a href="/search" class="b-btn b-btn--outline b-btn--sm" style="border-radius: 12px;">

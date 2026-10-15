@@ -15,6 +15,7 @@ use Bulbula\Repositories\BranchRepository;
 use Bulbula\Repositories\TaxonomyRepository;
 use Bulbula\Services\AuditService;
 use Bulbula\Services\MediaUploadService;
+use Bulbula\Services\ListingLifecycleService;
 use Bulbula\Services\StaffAuthService;
 
 /**
@@ -28,7 +29,8 @@ final class ListingController
         private readonly TaxonomyRepository $taxonomyRepo = new TaxonomyRepository(),
         private readonly AreaRepository $areaRepo = new AreaRepository(),
         private readonly AuditService $auditService = new AuditService(),
-        private readonly MediaUploadService $mediaUpload = new MediaUploadService()
+        private readonly MediaUploadService $mediaUpload = new MediaUploadService(),
+        private readonly ListingLifecycleService $lifecycle = new ListingLifecycleService()
     ) {}
 
     public function index(Request $request): Response
@@ -69,49 +71,24 @@ final class ListingController
             Session::flash('error', 'Security token expired.');
             return Response::redirect('/staff/listings');
         }
+        $staff = $this->staffAuth->currentStaff();
+        $result = $this->lifecycle->updateVerifiedDetails((int)$request->param('branch_id', 0), (array)$request->input(), (int)($staff['id'] ?? 0));
+        if (!$result['ok']) Session::flash('error', (string)$result['error']);
+        elseif (!empty($result['reverification_required'])) Session::flash('success', 'Correction saved. The listing was removed from public discovery and returned to quality control.');
+        else Session::flash('success', 'Draft listing details updated.');
+        return Response::redirect('/staff/listings');
+    }
 
-        $branchId    = (int) $request->param('branch_id', 0);
-        $branch      = $this->branchRepo->findByIdForStaff($branchId);
-        if ($branch === null) {
-            Session::flash('error', 'Branch not found.');
+    public function lifecycle(Request $request): Response
+    {
+        if (!Csrf::verify((string)$request->input('_csrf', ''))) {
+            Session::flash('error', 'Security token expired.');
             return Response::redirect('/staff/listings');
         }
-
-        $phone       = trim((string) $request->input('phone_primary', (string) ($branch['phone_primary'] ?? ''))) ?: null;
-        $addressEn   = trim((string) $request->input('address_line_en', (string) ($branch['address_line_en'] ?? '')));
-        $hoursStatus = (string) $request->input('opening_hours_status', (string) ($branch['opening_hours_status'] ?? 'UNKNOWN'));
-        if (!in_array($hoursStatus, ['KNOWN', 'UNKNOWN', 'BY_APPOINTMENT'], true)) {
-            $hoursStatus = 'UNKNOWN';
-        }
-
-        $stmt = Database::pdo()->prepare(
-            'UPDATE branches
-             SET phone_primary = :phone,
-                 address_line_en = :addr,
-                 opening_hours_status = :hours_status,
-                 updated_at = CURRENT_TIMESTAMP
-             WHERE id = :id'
-        );
-        $stmt->execute([
-            ':phone'        => $phone,
-            ':addr'         => $addressEn,
-            ':hours_status' => $hoursStatus,
-            ':id'           => $branchId,
-        ]);
-
-        $staff   = $this->staffAuth->currentStaff();
-        $staffId = (int) ($staff['id'] ?? 1);
-        $this->auditService->logStaffAction(
-            $staffId,
-            'BRANCH_ATTRIBUTES_UPDATED',
-            'branch',
-            $branchId,
-            ['phone_primary' => $branch['phone_primary'], 'opening_hours_status' => $branch['opening_hours_status']],
-            ['phone_primary' => $phone, 'opening_hours_status' => $hoursStatus]
-        );
-        Cache::flushAll();
-
-        Session::flash('success', 'Branch #' . $branchId . ' attributes updated and directory cache invalidated.');
+        $staff = $this->staffAuth->currentStaff();
+        $result = $this->lifecycle->transition((int)$request->param('branch_id', 0), (string)$request->input('target_status', ''), (string)$request->input('reason', ''), (int)($staff['id'] ?? 0));
+        if (!$result['ok']) Session::flash('error', (string)$result['error']);
+        else Session::flash('success', 'Listing lifecycle updated. Reopening and republishing require quality-control approval.');
         return Response::redirect('/staff/listings');
     }
 

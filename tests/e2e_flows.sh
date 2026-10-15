@@ -105,6 +105,22 @@ AFTER_INVALID="$(db_scalar 'SELECT COUNT(*) FROM businesses')"
 [[ "$STATUS" == "302" && "$AFTER_INVALID" == "$AFTER_CREATE" ]] || fail "Missing permission evidence created a partial listing"
 pass "C-19 onboarding validates evidence and references, rejects normalized duplicates, and preserves atomicity"
 
+# C-20 lifecycle transitions require reasons and cannot bypass quality control.
+CREATED_BRANCH_ID="$(db_scalar "SELECT br.id FROM branches br INNER JOIN businesses bz ON bz.id=br.business_id WHERE bz.name_en='$ONBOARD_NAME' ORDER BY br.id DESC LIMIT 1")"
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/listings" -o "$TMP/lifecycle-listings.html"; CSRF="$(csrf_from "$TMP/lifecycle-listings.html")"
+STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" -c "$TMP/staff.cookies" -X POST "$BASE/staff/listings/$CREATED_BRANCH_ID/lifecycle" --data-urlencode "_csrf=$CSRF" --data-urlencode 'target_status=UNPUBLISHED' --data-urlencode 'reason=CI verified the listing should not remain available.')"
+LIFECYCLE_STATUS="$(db_scalar "SELECT publication_status FROM branches WHERE id=$CREATED_BRANCH_ID")"
+[[ "$STATUS" == "302" && "$LIFECYCLE_STATUS" == "UNPUBLISHED" ]] || fail "Valid unpublish lifecycle transition failed"
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/listings" -o "$TMP/lifecycle-listings-2.html"; CSRF="$(csrf_from "$TMP/lifecycle-listings-2.html")"
+curl -sS -o /dev/null -b "$TMP/staff.cookies" -c "$TMP/staff.cookies" -X POST "$BASE/staff/listings/$CREATED_BRANCH_ID/lifecycle" --data-urlencode "_csrf=$CSRF" --data-urlencode 'target_status=PUBLISHED' --data-urlencode 'reason=Attempt to bypass required quality control.'
+LIFECYCLE_STATUS="$(db_scalar "SELECT publication_status FROM branches WHERE id=$CREATED_BRANCH_ID")"
+[[ "$LIFECYCLE_STATUS" == "UNPUBLISHED" ]] || fail "Lifecycle workflow allowed direct republishing without QC"
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/listings" -o "$TMP/lifecycle-listings-3.html"; CSRF="$(csrf_from "$TMP/lifecycle-listings-3.html")"
+curl -sS -o /dev/null -b "$TMP/staff.cookies" -X POST "$BASE/staff/listings/$CREATED_BRANCH_ID/lifecycle" --data-urlencode "_csrf=$CSRF" --data-urlencode 'target_status=PENDING_QC' --data-urlencode 'reason=Business supplied evidence to begin reverification.'
+LIFECYCLE_STATUS="$(db_scalar "SELECT publication_status FROM branches WHERE id=$CREATED_BRANCH_ID")"
+[[ "$LIFECYCLE_STATUS" == "PENDING_QC" ]] || fail "Reopening did not return listing to QC"
+pass "C-20 lifecycle reasons, valid transitions, and mandatory re-verification are enforced"
+
 # Customer OTP: request, HMAC-backed code preview in development, verification, account session.
 TEST_EMAIL="ci-otp-$(date +%s)-$$@example.com"
 curl -fsS -c "$TMP/customer.cookies" "$BASE/auth/login" -o "$TMP/customer-login.html"

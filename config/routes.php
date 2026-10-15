@@ -90,6 +90,7 @@ return [
     ['GET',  '/staff/listings',                      ['Staff\ListingController', 'index'], ['access' => 'authenticated']],             // C-19, C-20 Business & Branch directory
     ['POST', '/staff/listings/create',               ['Staff\ListingController', 'create'], ['access' => 'authenticated']],            // C-19 Create prospect/draft + Permission
     ['POST', '/staff/listings/{branch_id}/update',   ['Staff\ListingController', 'update'], ['access' => 'authenticated']],            // C-20 Edit Business/Branch attributes
+    ['POST', '/staff/listings/{branch_id}/lifecycle',['Staff\ListingController', 'lifecycle'], ['access' => 'authenticated']],         // C-20 Audited close/unpublish/reopen workflow
     ['POST', '/staff/listings/{branch_id}/media',    ['Staff\ListingController', 'uploadMedia'], ['access' => 'authenticated']],       // C-22 Permitted media management
     ['GET',  '/staff/verification',                  ['Staff\VerificationController', 'index'], ['access' => 'authenticated']],        // C-21 Verification & QC queue
     ['POST', '/staff/verification/{branch_id}/qc',   ['Staff\VerificationController', 'recordQc'], ['access' => 'authenticated']],     // C-21 Pass/Fail QC + Publish gate

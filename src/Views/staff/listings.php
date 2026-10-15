@@ -6,6 +6,12 @@ use Bulbula\Core\View;
 $branches   = $branches ?? [];
 $categories = $categories ?? [];
 $areas      = $areas ?? [];
+$lifecycleTransitions = [
+  'PUBLISHED'=>['TEMPORARILY_CLOSED'=>'Temporarily close','PERMANENTLY_CLOSED'=>'Permanently close','UNPUBLISHED'=>'Unpublish'],
+  'TEMPORARILY_CLOSED'=>['PENDING_QC'=>'Reopen through QC','PERMANENTLY_CLOSED'=>'Permanently close','UNPUBLISHED'=>'Unpublish'],
+  'PERMANENTLY_CLOSED'=>['PENDING_QC'=>'Reopen through QC'], 'UNPUBLISHED'=>['PENDING_QC'=>'Return to QC'],
+  'DRAFT'=>['PENDING_QC'=>'Submit to QC','UNPUBLISHED'=>'Unpublish'], 'PENDING_QC'=>['DRAFT'=>'Return to draft','UNPUBLISHED'=>'Unpublish'],
+];
 ?>
 <section class="b-card b-listing-onboard">
   <header class="b-listing-onboard__header"><div><h2>Onboard a business and branch</h2><p>Capture permission, location, category, and contact details before verification.</p></div><span class="b-listing-onboard__step">Permission required</span></header>
@@ -116,17 +122,26 @@ $areas      = $areas ?? [];
           <td><span class="b-status-dot"><?= View::e(str_replace('_', ' ', $br['opening_hours_status'])) ?></span></td>
           <td><span class="b-badge b-badge--verified"><?= View::e($br['publication_status']) ?></span></td>
           <td class="b-listing-actions">
-            <form action="/staff/listings/<?= (int) $br['branch_id'] ?>/update" method="POST" class="b-listing-actions__edit">
+            <details class="b-listing-control"><summary>Correct listing details</summary><form action="/staff/listings/<?= (int) $br['branch_id'] ?>/update" method="POST" class="b-listing-actions__edit">
               <?= Csrf::field() ?>
-              <input type="hidden" name="address_line_en" value="<?= View::e((string) ($br['address_line_en'] ?? '')) ?>">
-              <input type="text" name="phone_primary" value="<?= View::e((string) ($br['phone_primary'] ?? '')) ?>" class="b-input" style="width: 125px; min-height: 30px; padding: 0.2rem 0.45rem; font-size: 0.72rem;" placeholder="+251...">
-              <select name="opening_hours_status" class="b-select" style="width: 118px; min-height: 30px; padding: 0.2rem 0.4rem; font-size: 0.72rem;">
+              <label><span>Business name</span><input type="text" name="business_name_en" value="<?= View::e((string)$br['business_name_en']) ?>" class="b-input" maxlength="180" required></label>
+              <label><span>Brand summary</span><input type="text" name="brand_summary_en" value="<?= View::e((string)($br['brand_summary_en']??'')) ?>" class="b-input" maxlength="500"></label>
+              <label><span>Branch address</span><input type="text" name="address_line_en" value="<?= View::e((string)($br['address_line_en']??'')) ?>" class="b-input" maxlength="300" required></label>
+              <label><span>Branch phone</span><input type="text" name="phone_primary" value="<?= View::e((string)($br['phone_primary']??'')) ?>" class="b-input" maxlength="40" placeholder="+251..."></label>
+              <label><span>Hours data</span><select name="opening_hours_status" class="b-select">
                 <option value="KNOWN" <?= ($br['opening_hours_status'] ?? '') === 'KNOWN' ? 'selected' : '' ?>>KNOWN</option>
                 <option value="UNKNOWN" <?= ($br['opening_hours_status'] ?? '') === 'UNKNOWN' ? 'selected' : '' ?>>UNKNOWN</option>
-                <option value="BY_APPOINTMENT" <?= ($br['opening_hours_status'] ?? '') === 'BY_APPOINTMENT' ? 'selected' : '' ?>>BY_APPOINTMENT</option>
-              </select>
-              <button type="submit" class="b-btn b-btn--outline b-btn--sm" style="padding: 0.2rem 0.55rem; font-size: 0.7rem;">Save</button>
-            </form>
+                <option value="BY_APPOINTMENT" <?= ($br['opening_hours_status'] ?? '') === 'BY_APPOINTMENT' ? 'selected' : '' ?>>BY APPOINTMENT</option>
+              </select></label>
+              <p>Corrections to a live listing remove it from public discovery until quality control passes again.</p>
+              <button type="submit" class="b-btn b-btn--outline b-btn--sm">Save correction</button>
+            </form></details>
+            <details class="b-listing-control b-listing-control--lifecycle"><summary>Change lifecycle status</summary><form action="/staff/listings/<?= (int)$br['branch_id'] ?>/lifecycle" method="POST" class="b-listing-actions__lifecycle">
+              <?= Csrf::field() ?><label><span>Next status</span><select name="target_status" class="b-select" required><?php foreach($lifecycleTransitions[(string)$br['publication_status']]??[] as $status=>$label): ?><option value="<?= View::e($status) ?>"><?= View::e($label) ?></option><?php endforeach; ?></select></label>
+              <label><span>Reason for change</span><textarea name="reason" class="b-input" minlength="10" maxlength="500" rows="2" required placeholder="State the verified operational reason"></textarea></label>
+              <p>Closed and unpublished Branches leave public discovery immediately. Reopening always returns to QC.</p>
+              <button type="submit" class="b-btn b-btn--outline b-btn--sm">Apply lifecycle change</button>
+            </form></details>
             <form action="/staff/listings/<?= (int) $br['branch_id'] ?>/media" method="POST" enctype="multipart/form-data" class="b-listing-actions__media">
               <?= Csrf::field() ?>
               <input type="hidden" name="MAX_FILE_SIZE" value="8388608">
