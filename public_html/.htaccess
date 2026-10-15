@@ -22,6 +22,12 @@ Options -Indexes -MultiViews
     Header always set X-Content-Type-Options "nosniff"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
 
+    # robots.txt changes with the configured origin; do not let edge caches retain
+    # a previous sitemap declaration for the default 30-day static-file TTL.
+    <Files "robots.txt">
+        Header always set Cache-Control "public, max-age=300, s-maxage=300"
+    </Files>
+
     # Static assets use ?v=filemtime() cache-busting, so they are safe to cache
     <FilesMatch "\.(css|js|svg|webp|png|jpg|jpeg|woff2)$">
         Header set Cache-Control "public, max-age=31536000, immutable"
