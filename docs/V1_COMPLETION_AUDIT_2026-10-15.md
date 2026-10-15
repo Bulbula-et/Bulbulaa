@@ -1,0 +1,130 @@
+# Bulbula.et V1 Completion Audit
+
+**Audit date:** 2026-10-15  
+**Specification:** `Bulbula_et_SaaS_Product_Features_V1.pdf` (40 capabilities, C-01–C-40)  
+**Audited code:** `main` at `45eab95`  
+**Method:** specification-to-route, controller, service, repository, schema, view, JavaScript, test, deployment, and production-smoke comparison.
+
+## Executive result
+
+| Classification | Count | Meaning |
+|---|---:|---|
+| Implemented and materially evidenced | 27 | Primary V1 behavior exists with supporting code and/or tests. |
+| Implemented with a material completion gap | 10 | Useful implementation exists, but one or more explicit acceptance rules remain incomplete. |
+| Implemented but launch-gated | 3 | Product code exists, but counsel/commercial or operational approval remains required. |
+| Wholly absent | 0 | Every capability has at least an implementation foundation. |
+
+**Overall:** Bulbula.et has broad V1 coverage, but route presence is not the same as launch readiness. The highest risks are directory-integrity controls in Staff onboarding, incomplete maintenance workflows, the Telegram launch integration, and missing review/moderation email notifications.
+
+## Capability matrix
+
+| ID | Capability | Status | Evidence and remaining gap |
+|---|---|---|---|
+| C-01 | Homepage | Implemented | Search-first public homepage, curated category/area entry points, gated sponsored slots. |
+| C-02 | Search | Implemented | Organic branch search includes business, category, area, aliases, and published-status filtering. |
+| C-03 | Search autocomplete | Implemented | `/api/v1/autocomplete`, controlled taxonomy/area/branch suggestions, original-query submission remains available. |
+| C-04 | Category/subcategory browsing | Implemented | Two-level browse routes and primary/secondary category query support. |
+| C-05 | Location/area browsing | Implemented | Area catalogue and area pages exist; controlled reference data is used. |
+| C-06 | Category-by-area pages | Implemented | Stable `/a/{area}/{category}` destination and published listing filtering. |
+| C-07 | Nearby discovery | Implemented | Coordinates, radius controls, geolocation enhancement, and area fallback exist without mandatory location access. |
+| C-08 | Business profiles | Implemented | Business and branch context, multi-branch switching, media, categories, reviews, and actions exist. |
+| C-09 | Hours/open status | Implemented | Branch-level hours and explicit unknown/by-appointment handling. |
+| C-10 | Maps/directions | Implemented | Maps handoff and location presentation exist. |
+| C-11 | Contact actions | Implemented | Conditional call, email, website, Telegram, and directions actions with server-side action metrics. |
+| C-12 | Trust indicators | Implemented | Verification presentation is operationally derived and separate from sponsorship. |
+| C-13 | Reviews | Implemented | Integer ratings, optional text, one active review, 30-day edit window, moderation, newest-first public display, and unweighted aggregate. |
+| C-14 | Save a Business | Implemented | Listing/detail save controls, guest sign-in handoff, Customer-bound saved state. |
+| C-15 | Reports/corrections | Implemented | Guest listing reports, authenticated review-report rule, rate limiting, and Staff queue. |
+| C-16 | Sponsored placements | Implemented | Three formats, visible labels, organic separation, D-39 activation gate, first-party metrics. |
+| C-17 | Share a Business | Partial | Canonical Web Share/copy fallback and Telegram share adapter exist, but the official Telegram Mini App SDK is not loaded by the public layout, so native detection/share/haptics cannot initialize in the current document. |
+| C-18 | Policy pages | Launch-gated | Product pages exist; legal wording and publication readiness still require counsel/launch approval as the specification states. |
+| C-19 | Listing creation | Partial — **P0** | Draft/permission/branch creation exists, but there is no duplicate check before insert. Missing permission phone currently falls back to fabricated `+251911000000`, which conflicts with accuracy and minimisation. Prospect state is collapsed directly into granted onboarding. |
+| C-20 | Listing maintenance | Partial | Current update is limited mainly to branch phone, address, and hours status. Explicit closure, unpublish, lifecycle, broader Business/Branch field maintenance, and correction application controls are incomplete. |
+| C-21 | Verification/QC | Partial | Publication gate and QC record exist, but submitter and reviewer are always the same Staff member; the “second reviewer where available” workflow is not represented. Checklist values are controller constants rather than Staff-confirmed checks. |
+| C-22 | Media management | Partial | Validated upload exists; replace/remove and explicit permission-withdrawal cleanup workflows are incomplete. |
+| C-23 | Category management | Partial | Administrator can add level-1/2 records. Editing, controlled alias maintenance, activation/deactivation, and duplicate-safe validation are incomplete. |
+| C-24 | Location management | Partial | Administrator can add areas. Editing, aliases, activation/boundary maintenance, hierarchy controls, and assignment maintenance are incomplete. |
+| C-25 | Review moderation | Partial | Pending queue and approve/reject/remove decisions exist. A distinct Administrator appeal workflow is not implemented. |
+| C-26 | Report management | Implemented | Staff triage/resolution/escalation and audit logging exist; review reports route into the review domain. |
+| C-27 | Campaign management | Launch-gated / Partial | Creation, Administrator approval, dates, fixed price, formats, metrics, and D-39 gate exist. Early termination with a mandatory reason is absent. External commercial, billing, tax, and legal gates remain intentionally closed. |
+| C-28 | Operational analytics | Implemented | Server-side search/profile/action and queue summaries exist, including zero-result and campaign delivery reporting. |
+| C-29 | Audit logs | Implemented | Administrator-only audit viewer and broad consequential-action recording exist; sensitive values are excluded by policy. |
+| C-30 | Google authentication | Implemented | Official Google client adapter verifies server-side; email OTP fallback and guest browsing remain available. |
+| C-31 | Email OTP | Implemented | Short-lived, single-use, hashed, purpose-bound, rate-limited OTP flow using PHPMailer. |
+| C-32 | Unified identity | Partial | Web/Telegram surface model and shared Customer data exist, and Telegram launch data is not trusted as identity. Actual Mini App SDK/bootstrap integration is incomplete. |
+| C-33 | Customer profile | Implemented | Minimal profile, saved/review/privacy/session controls exist. Review the optional phone field against minimisation before launch. |
+| C-34 | Save management | Implemented | Saved list, removal, and unavailable-business handling exist. |
+| C-35 | Review management | Implemented | Own-review list/status, edit-window enforcement, moderation reset, and withdrawal exist. |
+| C-36 | Account deletion/privacy controls | Implemented | Self-service verified export/deletion, 30-day recovery, permanent deletion, Staff exceptional route, auditing, sessions, and notifications. |
+| C-37 | SEO | Implemented | SSR, canonical URLs, metadata, dynamic sitemap, and LocalBusiness structured data exist. |
+| C-38 | Product analytics | Implemented | First-party server-side measurement; no third-party behavioral tracker is present. |
+| C-39 | Notifications | Partial | OTP, account lifecycle, and credential-change messages exist. Review submission/moderation outcomes and relevant operational/service notifications are not sent. |
+| C-40 | Privacy/data handling | Launch-gated | Minimisation controls, export/deletion, access control, and no ad-tech are implemented. Retention, cross-border/data-location, and final legal handling remain counsel decisions; fabricated permission contact data must be removed. |
+
+## Scope deviation requiring a product decision
+
+The approved catalogue says Customer **password login is not V1**, but the deployed application now supports registration, password login, password recovery, and password changes in addition to Google and email OTP. This was intentionally built during later account work, but it is a scope deviation and increases authentication, recovery, notification, and support obligations.
+
+Do not remove it silently. Record one of these decisions before launch:
+
+1. Approve password authentication as a formal V1 scope amendment; or
+2. Hide/disable it while retaining migration compatibility; or
+3. Move it to a post-V1 feature and preserve OTP/Google as the only V1 methods.
+
+## Prioritized completion roadmap
+
+### P0 — Launch integrity
+
+1. **C-19 listing-onboarding integrity**
+   - Add normalized duplicate checks before creation.
+   - Never manufacture permission contact information.
+   - Separate prospect capture from permission granted where the operating process requires it.
+   - Validate referenced category and area records and make the transaction/audit trail explicit.
+2. **C-20 listing lifecycle controls**
+   - Add audited closure, unpublish, correction, and Business/Branch maintenance actions.
+3. **Scope decision: Customer passwords**
+   - Obtain and record explicit product approval or disable the out-of-scope surface.
+
+### P1 — Required capability completion
+
+4. **C-21 verification separation** — submitter/reviewer attribution and Staff-confirmed checklist.
+5. **C-39 review notifications** — notify Customers of submitted, published, rejected, removed, and edited-review outcomes where applicable.
+6. **C-17/C-32 Telegram Mini App bootstrap** — official SDK loading, CSP-compatible integration, runtime detection, canonical sharing, and real-device validation; never treat launch context as Customer identity.
+7. **C-22 media lifecycle** — replace/remove and permission-withdrawal handling.
+8. **C-23/C-24 reference-data maintenance** — edit, aliases, activation, validation, and safe cache invalidation.
+9. **C-25 appeals** — Administrator-only appeal review and audited outcome.
+10. **C-27 early campaign termination** — Administrator action with mandatory reason and immediate inventory removal.
+
+### P2 — Launch assurance
+
+11. Final counsel approval for policy wording, retention, deletion, cross-border/data-location, and campaign terms.
+12. Telegram mobile/desktop acceptance testing.
+13. Accessibility, performance, SEO, email-deliverability, backup/restore, and shared-hosting disaster-recovery exercises.
+14. Operational pilot with real permission, QC, report, moderation, and closure cases.
+
+## Immediate next implementation milestone
+
+Proceed with **C-19 listing-onboarding integrity** first. It protects the core promise of a trustworthy, permissioned directory and removes a concrete data-quality/privacy defect before more records are created.
+
+### Acceptance criteria for that milestone
+
+- Staff receives a clear duplicate warning before creating a Business/Branch.
+- Duplicate checks use normalized business name plus relevant branch/location/contact signals and are race-safe where practical.
+- No fake phone, email, representative, or permission value is generated.
+- Permission evidence fields are validated consistently with the chosen permission method.
+- Invalid/inactive category and area references are rejected server-side.
+- Creation remains transactional and audited without logging unnecessary personal data.
+- Existing publication gate, CSRF, RBAC, cache invalidation, and shared-hosting compatibility remain intact.
+- Automated tests cover valid creation, likely duplicate rejection, missing permission evidence, and transaction safety.
+
+## Verification basis
+
+- `config/routes.php` route inventory.
+- Public, Customer, and Staff controllers.
+- Domain policies and services.
+- Repositories and baseline/incremental migrations.
+- Public/Customer/Staff views and frontend modules.
+- Existing unit, E2E, production-preflight, security-header, concurrency, and parity tests.
+- Successful production smoke checks and CI through deployed `45eab95`.
+
+This audit measures software completion against the approved catalogue. It does not declare unresolved counsel, tax, billing, campaign-integrity, provider, or operational decisions complete.
