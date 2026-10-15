@@ -48,7 +48,19 @@ $areas      = $areas ?? [];
     </div>
     <div>
       <label class="b-label" for="lst-rep">Authorizing representative</label>
-      <input id="lst-rep" type="text" name="rep_full_name" class="b-input" placeholder="Owner / General Manager" required>
+      <input id="lst-rep" type="text" name="rep_full_name" class="b-input" maxlength="160" placeholder="Full name" required>
+    </div>
+    <div>
+      <label class="b-label" for="lst-rep-role">Representative role</label>
+      <input id="lst-rep-role" type="text" name="rep_role_title" class="b-input" maxlength="120" placeholder="Owner or General Manager" required>
+    </div>
+    <div>
+      <label class="b-label" for="lst-rep-phone">Representative phone</label>
+      <input id="lst-rep-phone" type="tel" name="rep_phone" class="b-input" maxlength="40" autocomplete="off" placeholder="+251 9..." required>
+    </div>
+    <div>
+      <label class="b-label" for="lst-rep-email">Representative email</label>
+      <input id="lst-rep-email" type="email" name="rep_email" class="b-input" maxlength="190" autocomplete="off" placeholder="Required for verified email">
     </div>
     <div>
       <label class="b-label" for="lst-method">Permission Method</label>
@@ -58,6 +70,10 @@ $areas      = $areas ?? [];
         <option value="VERIFIED_PHONE">Verified Phone Confirmation</option>
         <option value="VERIFIED_EMAIL">Verified Email Confirmation</option>
       </select>
+    </div>
+    <div>
+      <label class="b-label" for="lst-evidence">Permission evidence reference</label>
+      <input id="lst-evidence" type="text" name="permission_evidence_reference" class="b-input" maxlength="180" placeholder="Visit log, signed form, call or email reference" required>
     </div>
     <div class="b-listing-form__wide">
       <div style="flex: 1; min-width: 240px;">

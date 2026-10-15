@@ -72,6 +72,39 @@ BUSINESSES_AFTER="$(db_scalar 'SELECT COUNT(*) FROM businesses')"
 [[ "$STATUS" == "302" && "$BUSINESSES_BEFORE" == "$BUSINESSES_AFTER" ]] || fail "Invalid-CSRF Staff mutation changed database state"
 pass "Unauthenticated and invalid-CSRF Staff mutations preserve database state"
 
+# C-19 onboarding integrity: explicit evidence, valid reference data, normalized duplicate rejection, atomic failures.
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/listings" -o "$TMP/operator-listings.html"
+CSRF="$(csrf_from "$TMP/operator-listings.html")"; [[ -n "$CSRF" ]] || fail "Listing onboarding CSRF missing"
+CATEGORY_ID="$(db_scalar 'SELECT id FROM categories WHERE is_active=1 ORDER BY id LIMIT 1')"
+AREA_ID="$(db_scalar 'SELECT id FROM areas WHERE is_active=1 ORDER BY id LIMIT 1')"
+ONBOARD_NAME="CI Integrity Clinic $RANDOM-$$"
+BEFORE="$(db_scalar 'SELECT COUNT(*) FROM businesses')"
+STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" -c "$TMP/staff.cookies" -X POST "$BASE/staff/listings/create" \
+  --data-urlencode "_csrf=$CSRF" --data-urlencode "business_name_en=$ONBOARD_NAME" --data-urlencode "primary_category_id=$CATEGORY_ID" \
+  --data-urlencode "area_id=$AREA_ID" --data-urlencode 'address_line_en=93 Integrity Avenue' --data-urlencode 'phone_primary=+251911222333' \
+  --data-urlencode 'rep_full_name=CI Authorizer' --data-urlencode 'rep_role_title=Owner' --data-urlencode 'rep_phone=+251911444555' \
+  --data-urlencode 'permission_method=RECORDED_VISIT' --data-urlencode 'permission_evidence_reference=CI-VISIT-001')"
+AFTER_CREATE="$(db_scalar 'SELECT COUNT(*) FROM businesses')"
+[[ "$STATUS" == "302" && "$AFTER_CREATE" == "$((BEFORE + 1))" ]] || fail "Valid evidence-backed listing onboarding failed"
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/listings" -o "$TMP/operator-listings-2.html"
+CSRF="$(csrf_from "$TMP/operator-listings-2.html")"
+STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" -c "$TMP/staff.cookies" -X POST "$BASE/staff/listings/create" \
+  --data-urlencode "_csrf=$CSRF" --data-urlencode "business_name_en=  $ONBOARD_NAME  " --data-urlencode "primary_category_id=$CATEGORY_ID" \
+  --data-urlencode "area_id=$AREA_ID" --data-urlencode 'address_line_en=93--Integrity Avenue' --data-urlencode 'rep_full_name=CI Authorizer' \
+  --data-urlencode 'rep_role_title=Owner' --data-urlencode 'rep_phone=+251911444555' --data-urlencode 'permission_method=RECORDED_VISIT' \
+  --data-urlencode 'permission_evidence_reference=CI-VISIT-002')"
+AFTER_DUPLICATE="$(db_scalar 'SELECT COUNT(*) FROM businesses')"
+[[ "$STATUS" == "302" && "$AFTER_DUPLICATE" == "$AFTER_CREATE" ]] || fail "Normalized duplicate listing was not rejected"
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/listings" -o "$TMP/operator-listings-3.html"
+CSRF="$(csrf_from "$TMP/operator-listings-3.html")"
+STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" -X POST "$BASE/staff/listings/create" \
+  --data-urlencode "_csrf=$CSRF" --data-urlencode 'business_name_en=Missing Evidence Business' --data-urlencode "primary_category_id=$CATEGORY_ID" \
+  --data-urlencode "area_id=$AREA_ID" --data-urlencode 'address_line_en=44 Evidence Road' --data-urlencode 'rep_full_name=CI Authorizer' \
+  --data-urlencode 'rep_role_title=Owner' --data-urlencode 'rep_phone=+251911444555' --data-urlencode 'permission_method=RECORDED_VISIT')"
+AFTER_INVALID="$(db_scalar 'SELECT COUNT(*) FROM businesses')"
+[[ "$STATUS" == "302" && "$AFTER_INVALID" == "$AFTER_CREATE" ]] || fail "Missing permission evidence created a partial listing"
+pass "C-19 onboarding validates evidence and references, rejects normalized duplicates, and preserves atomicity"
+
 # Customer OTP: request, HMAC-backed code preview in development, verification, account session.
 TEST_EMAIL="ci-otp-$(date +%s)-$$@example.com"
 curl -fsS -c "$TMP/customer.cookies" "$BASE/auth/login" -o "$TMP/customer-login.html"
