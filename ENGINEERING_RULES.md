@@ -1,5 +1,9 @@
 # Bulbula.et Engineering Rules
 
+## Research Before Every Change (Locked — 2026-10-15)
+
+Before updating, changing, or modifying any Bulbula.et behavior, interface, architecture, dependency, security control, or deployment process, perform deep research first. Review the current code and impact surface as the primary source of truth, then consult authoritative standards, mature design systems, official documentation, security guidance, and relevant production patterns. Record the findings that drive the implementation, make the smallest safe change, and verify regressions before deployment. Do not modify first and research afterward.
+
 ## Plain PHP, Clean Architecture & Selective Dependency Rule (Locked — 2026-10-14)
 
 Bulbula.et must remain a **plain PHP application without a framework**. It must stay easy to understand, upload, configure, and run on inexpensive shared hosting.
