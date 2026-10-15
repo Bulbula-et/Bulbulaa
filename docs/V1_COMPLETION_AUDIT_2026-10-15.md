@@ -9,8 +9,8 @@
 
 | Classification | Count | Meaning |
 |---|---:|---|
-| Implemented and materially evidenced | 27 | Primary V1 behavior exists with supporting code and/or tests. |
-| Implemented with a material completion gap | 10 | Useful implementation exists, but one or more explicit acceptance rules remain incomplete. |
+| Implemented and materially evidenced | 28 | Primary V1 behavior exists with supporting code and/or tests. |
+| Implemented with a material completion gap | 9 | Useful implementation exists, but one or more explicit acceptance rules remain incomplete. |
 | Implemented but launch-gated | 3 | Product code exists, but counsel/commercial or operational approval remains required. |
 | Wholly absent | 0 | Every capability has at least an implementation foundation. |
 
@@ -38,7 +38,7 @@
 | C-16 | Sponsored placements | Implemented | Three formats, visible labels, organic separation, D-39 activation gate, first-party metrics. |
 | C-17 | Share a Business | Partial | Canonical Web Share/copy fallback and Telegram share adapter exist, but the official Telegram Mini App SDK is not loaded by the public layout, so native detection/share/haptics cannot initialize in the current document. |
 | C-18 | Policy pages | Launch-gated | Product pages exist; legal wording and publication readiness still require counsel/launch approval as the specification states. |
-| C-19 | Listing creation | Partial — **P0** | Draft/permission/branch creation exists, but there is no duplicate check before insert. Missing permission phone currently falls back to fabricated `+251911000000`, which conflicts with accuracy and minimisation. Prospect state is collapsed directly into granted onboarding. |
+| C-19 | Listing creation | Implemented | Evidence-backed, transactional onboarding validates active reference data and representative details, rejects deterministic normalized duplicates under a concurrency lock, never fabricates missing contact values, and records a minimal audit event. |
 | C-20 | Listing maintenance | Partial | Current update is limited mainly to branch phone, address, and hours status. Explicit closure, unpublish, lifecycle, broader Business/Branch field maintenance, and correction application controls are incomplete. |
 | C-21 | Verification/QC | Partial | Publication gate and QC record exist, but submitter and reviewer are always the same Staff member; the “second reviewer where available” workflow is not represented. Checklist values are controller constants rather than Staff-confirmed checks. |
 | C-22 | Media management | Partial | Validated upload exists; replace/remove and explicit permission-withdrawal cleanup workflows are incomplete. |
@@ -75,14 +75,9 @@ Do not remove it silently. Record one of these decisions before launch:
 
 ### P0 — Launch integrity
 
-1. **C-19 listing-onboarding integrity**
-   - Add normalized duplicate checks before creation.
-   - Never manufacture permission contact information.
-   - Separate prospect capture from permission granted where the operating process requires it.
-   - Validate referenced category and area records and make the transaction/audit trail explicit.
-2. **C-20 listing lifecycle controls**
+1. **C-20 listing lifecycle controls**
    - Add audited closure, unpublish, correction, and Business/Branch maintenance actions.
-3. **Scope decision: Customer passwords**
+2. **Scope decision: Customer passwords**
    - Obtain and record explicit product approval or disable the out-of-scope surface.
 
 ### P1 — Required capability completion
@@ -104,18 +99,17 @@ Do not remove it silently. Record one of these decisions before launch:
 
 ## Immediate next implementation milestone
 
-Proceed with **C-19 listing-onboarding integrity** first. It protects the core promise of a trustworthy, permissioned directory and removes a concrete data-quality/privacy defect before more records are created.
+Proceed with **C-20 listing lifecycle controls** next. Staff need safe, audited ways to correct, close, and unpublish records without bypassing the permission and quality-control model.
 
 ### Acceptance criteria for that milestone
 
-- Staff receives a clear duplicate warning before creating a Business/Branch.
-- Duplicate checks use normalized business name plus relevant branch/location/contact signals and are race-safe where practical.
-- No fake phone, email, representative, or permission value is generated.
-- Permission evidence fields are validated consistently with the chosen permission method.
-- Invalid/inactive category and area references are rejected server-side.
-- Creation remains transactional and audited without logging unnecessary personal data.
-- Existing publication gate, CSRF, RBAC, cache invalidation, and shared-hosting compatibility remain intact.
-- Automated tests cover valid creation, likely duplicate rejection, missing permission evidence, and transaction safety.
+- Business-level and Branch-level fields remain correctly separated.
+- Staff can record corrections without silently republishing unverified data.
+- Closure and unpublish actions require explicit reasons and remove the Branch from public discovery immediately.
+- Reopening or republishing routes through the required verification gate.
+- Every lifecycle transition is RBAC-protected, CSRF-protected, transactional, and audited.
+- Existing public URLs degrade clearly for unavailable records.
+- Automated tests cover valid transitions, invalid transitions, authorization, and public visibility.
 
 ## Verification basis
 
