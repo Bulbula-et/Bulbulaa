@@ -74,6 +74,8 @@ return [
     ['POST', '/staff/profile',                       ['Staff\ProfileController', 'updateProfile'], ['access' => 'authenticated']],     // Staff personal identity
     ['POST', '/staff/profile/password',              ['Staff\ProfileController', 'changePassword'], ['access' => 'authenticated']],    // Staff self-service password change
     ['POST', '/staff/profile/sessions/others/revoke', ['Staff\ProfileController', 'revokeOtherSessions'], ['access' => 'authenticated']],
+    ['POST', '/staff/profile/authenticator/replace', ['Staff\ProfileController', 'beginAuthenticatorReplacement'], ['access' => 'authenticated']],
+    ['POST', '/staff/profile/authenticator/confirm', ['Staff\ProfileController', 'completeAuthenticatorReplacement'], ['access' => 'authenticated']],
     ['POST', '/staff/system/flush-cache',            ['Staff\DashboardController', 'flushCache'], ['access' => 'administrator']],      // Zero-restart cache & OPcache flush
     ['POST', '/staff/gates/toggle',                  ['Staff\DashboardController', 'toggleGate'], ['access' => 'administrator']],      // D-31..D-45 Readiness Gate toggle
     ['GET',  '/staff/listings',                      ['Staff\ListingController', 'index'], ['access' => 'authenticated']],             // C-19, C-20 Business & Branch directory

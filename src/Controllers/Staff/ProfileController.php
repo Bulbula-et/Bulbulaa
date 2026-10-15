@@ -30,7 +30,27 @@ final class ProfileController
             'sessionMetadata' => Session::metadata(),
             'securityEvents' => $this->audit->listStaffSecurityEvents((int) $staff['id']),
             'activeSessions' => (new \Bulbula\Services\AccountSessionService())->list('STAFF', (int) $staff['id']),
+            'pendingAuthenticator' => $this->auth->pendingAuthenticatorReplacement($staff),
         ], 'staff'));
+    }
+
+    public function beginAuthenticatorReplacement(Request $request): Response
+    {
+        $staff=$this->auth->currentStaff(); if($staff===null)return Response::redirect('/staff/login');
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/staff/profile');}
+        $result=$this->auth->beginAuthenticatorReplacement($staff,(string)$request->input('current_password',''),(string)$request->input('current_totp',''));
+        if(!$result['ok'])Session::flash('error',(string)$result['error']);else Session::flash('success','Add the new secret to your authenticator, then confirm its code. Your existing authenticator remains active until confirmation.');
+        return Response::redirect('/staff/profile');
+    }
+
+    public function completeAuthenticatorReplacement(Request $request): Response
+    {
+        $staff=$this->auth->currentStaff(); if($staff===null)return Response::redirect('/staff/login');
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/staff/profile');}
+        $result=$this->auth->completeAuthenticatorReplacement($staff,(string)$request->input('new_totp',''));
+        if(!$result['ok']){Session::flash('error',(string)$result['error']);return Response::redirect('/staff/profile');}
+        $this->audit->logStaffAction((int)$staff['id'],'STAFF_2FA_REPLACED','staff_user',(int)$staff['id'],null,['self_service'=>true]);
+        Session::flash('success','Your authenticator was replaced. The previous secret is no longer valid.');return Response::redirect('/staff/profile');
     }
 
     public function revokeOtherSessions(Request $request): Response

@@ -156,6 +156,47 @@ final class StaffAuthService
         return $record !== null && password_verify($password, (string) ($record['password_hash'] ?? ''));
     }
 
+    public function beginAuthenticatorReplacement(array $staff, string $password, string $currentCode): array
+    {
+        $record = $this->staffRepo->findByEmailForAuth((string) $staff['email']);
+        if ($record === null || !password_verify($password, (string) ($record['password_hash'] ?? ''))) {
+            return ['ok' => false, 'error' => 'Current password is incorrect.'];
+        }
+        try {
+            $currentSecret = $this->twoFactor->decryptSecret((string) ($record['totp_secret_enc'] ?? ''));
+        } catch (\Throwable) {
+            return ['ok' => false, 'error' => 'Current authenticator configuration is unavailable. Contact another Administrator.'];
+        }
+        if (!$this->twoFactor->verify($currentSecret, $currentCode)) {
+            return ['ok' => false, 'error' => 'Current authenticator code is incorrect or expired.'];
+        }
+        $newSecret = $this->twoFactor->createSecret();
+        Session::regenerate();
+        Session::set('staff_totp_replace_secret', $newSecret);
+        Session::set('staff_totp_replace_at', time());
+        return ['ok' => true, 'secret' => $newSecret, 'uri' => $this->twoFactor->provisioningUri((string) $staff['email'], $newSecret)];
+    }
+
+    public function pendingAuthenticatorReplacement(array $staff): ?array
+    {
+        $secret = Session::get('staff_totp_replace_secret');
+        $at = (int) Session::get('staff_totp_replace_at', 0);
+        if (!is_string($secret) || $secret === '' || $at < time() - 600) {
+            Session::forget('staff_totp_replace_secret'); Session::forget('staff_totp_replace_at'); return null;
+        }
+        return ['secret' => $secret, 'uri' => $this->twoFactor->provisioningUri((string) $staff['email'], $secret)];
+    }
+
+    public function completeAuthenticatorReplacement(array $staff, string $newCode): array
+    {
+        $pending = $this->pendingAuthenticatorReplacement($staff);
+        if ($pending === null) return ['ok' => false, 'error' => 'Authenticator replacement expired. Start again.'];
+        if (!$this->twoFactor->verify((string) $pending['secret'], $newCode)) return ['ok' => false, 'error' => 'The new authenticator code is incorrect or expired.'];
+        $this->staffRepo->enableTotp((int) $staff['id'], $this->twoFactor->encryptSecret((string) $pending['secret']));
+        Session::forget('staff_totp_replace_secret'); Session::forget('staff_totp_replace_at'); Session::regenerate();
+        return ['ok' => true];
+    }
+
     public function changePassword(array $staff, string $currentPassword, string $newPassword): array
     {
         $authRecord = $this->staffRepo->findByEmailForAuth((string) $staff['email']);
