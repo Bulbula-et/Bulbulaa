@@ -12,6 +12,7 @@ $base = rtrim(getenv('BULBULA_BASE_URL') ?: 'http://127.0.0.1:8080', '/');
 $config = json_decode((string) file_get_contents(dirname(__DIR__) . '/config/env.json'), true, 512, JSON_THROW_ON_ERROR);
 $publicOrigin = rtrim((string) ($config['app']['url'] ?? ''), '/');
 $paths = ['/', '/search?q=coffee', '/categories', '/c/health-medical', '/areas', '/a/bulbula-93-mazoria', '/b/birhan-medium-clinic/bole-bulbula-main', '/about', '/policies/privacy'];
+$indexedCanonicals = [];
 
 function fail(string $message): never { fwrite(STDERR, "[FAIL] {$message}\n"); exit(1); }
 function expect(bool $condition, string $message): void { if (!$condition) fail($message); }
@@ -48,6 +49,8 @@ foreach ($paths as $path) {
     $canonical = $xpath->query('//link[@rel="canonical"]')->item(0)?->attributes?->getNamedItem('href')?->nodeValue;
     expect(is_string($canonical) && str_starts_with($canonical, $publicOrigin . '/'), "{$path}: canonical must use configured absolute origin");
     expect(!str_contains($canonical, '?'), "{$path}: canonical must not contain a query string");
+    // Policy wording is launch-gated and intentionally excluded from the sitemap.
+    if (!str_starts_with($path, '/policies/')) $indexedCanonicals[] = $canonical;
 
     foreach ($xpath->query('//script[@type="application/ld+json"]') as $script) {
         $data = json_decode((string) $script->textContent, true);
@@ -68,6 +71,9 @@ foreach ($xml->url as $entry) {
     $urls[] = $url;
 }
 expect(count($urls) === count(array_unique($urls)), 'Sitemap URLs must be unique');
+foreach ($indexedCanonicals as $canonical) {
+    expect(in_array($canonical, $urls, true), "Public indexed canonical absent from sitemap: {$canonical}");
+}
 
 $robots = fetch($base . '/robots.txt');
 expect($robots['status'] === 200 && str_contains($robots['type'], 'text/plain'), 'robots.txt must return text/plain and 200');
