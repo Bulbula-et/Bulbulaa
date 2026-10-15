@@ -2,19 +2,19 @@
 
 **Audit date:** 2026-10-15  
 **Specification:** `Bulbula_et_SaaS_Product_Features_V1.pdf` (40 capabilities, C-01–C-40)  
-**Audited code:** `main` at `d0d7bb2`
+**Audited code:** `main` at `4997036`
 **Method:** specification-to-route, controller, service, repository, schema, view, JavaScript, test, deployment, and production-smoke comparison.
 
 ## Executive result
 
 | Classification | Count | Meaning |
 |---|---:|---|
-| Implemented and materially evidenced | 30 | Primary V1 behavior exists with supporting code and/or tests. |
-| Implemented with a material completion gap | 7 | Useful implementation exists, but one or more explicit acceptance rules remain incomplete. |
+| Implemented and materially evidenced | 31 | Primary V1 behavior exists with supporting code and/or tests. |
+| Implemented with a material completion gap | 6 | Useful implementation exists, but one or more explicit acceptance rules remain incomplete. |
 | Implemented but launch-gated | 3 | Product code exists, but counsel/commercial or operational approval remains required. |
 | Wholly absent | 0 | Every capability has at least an implementation foundation. |
 
-**Overall:** Bulbula.et has broad V1 coverage, but route presence is not the same as launch readiness. The highest remaining risks are the Telegram launch integration, incomplete media/reference-data maintenance, review appeals, campaign termination, and missing review/moderation email notifications.
+**Overall:** Bulbula.et has broad V1 coverage, but route presence is not the same as launch readiness. The highest remaining risks are the Telegram launch integration, incomplete media/reference-data maintenance, review appeals, campaign termination, and outstanding legal/operational launch gates.
 
 ## Capability matrix
 
@@ -58,7 +58,7 @@
 | C-36 | Account deletion/privacy controls | Implemented | Self-service verified export/deletion, 30-day recovery, permanent deletion, Staff exceptional route, auditing, sessions, and notifications. |
 | C-37 | SEO | Implemented | SSR, canonical URLs, metadata, dynamic sitemap, and LocalBusiness structured data exist. |
 | C-38 | Product analytics | Implemented | First-party server-side measurement; no third-party behavioral tracker is present. |
-| C-39 | Notifications | Partial | OTP, account lifecycle, and credential-change messages exist. Review submission/moderation outcomes and relevant operational/service notifications are not sent. |
+| C-39 | Notifications | Implemented | PHPMailer-backed transactional notifications cover OTP and account/security lifecycle events plus review submission, edit, publication, rejection, and Staff removal. Review mail excludes review text and private moderation notes; delivery success/failure is recorded as a non-sensitive Customer audit event and transport failure cannot roll back the completed review action. |
 | C-40 | Privacy/data handling | Launch-gated | Minimisation controls, export/deletion, access control, and no ad-tech are implemented. Retention, cross-border/data-location, and final legal handling remain counsel decisions; fabricated permission contact data must be removed. |
 
 ## Scope deviation requiring a product decision
@@ -80,12 +80,11 @@ Do not remove it silently. Record one of these decisions before launch:
 
 ### P1 — Required capability completion
 
-4. **C-39 review notifications** — notify Customers of submitted, published, rejected, removed, and edited-review outcomes where applicable.
-5. **C-17/C-32 Telegram Mini App bootstrap** — official SDK loading, CSP-compatible integration, runtime detection, canonical sharing, and real-device validation; never treat launch context as Customer identity.
-6. **C-22 media lifecycle** — replace/remove and permission-withdrawal handling.
-7. **C-23/C-24 reference-data maintenance** — edit, aliases, activation, validation, and safe cache invalidation.
-8. **C-25 appeals** — Administrator-only appeal review and audited outcome.
-9. **C-27 early campaign termination** — Administrator action with mandatory reason and immediate inventory removal.
+4. **C-17/C-32 Telegram Mini App bootstrap** — official SDK loading, CSP-compatible integration, runtime detection, canonical sharing, and real-device validation; never treat launch context as Customer identity.
+5. **C-22 media lifecycle** — replace/remove and permission-withdrawal handling.
+6. **C-23/C-24 reference-data maintenance** — edit, aliases, activation, validation, and safe cache invalidation.
+7. **C-25 appeals** — Administrator-only appeal review and audited outcome.
+8. **C-27 early campaign termination** — Administrator action with mandatory reason and immediate inventory removal.
 
 ### P2 — Launch assurance
 
@@ -96,7 +95,7 @@ Do not remove it silently. Record one of these decisions before launch:
 
 ## Immediate next implementation milestone
 
-Proceed with **C-39 review notifications** next while the Customer-password scope decision awaits explicit product approval. Customers should receive concise, non-sensitive notifications for review submission and material moderation outcomes, with reliable SMTP adapter behavior and auditable failure handling suitable for shared hosting.
+Proceed with **C-17/C-32 Telegram Mini App bootstrap** next while the Customer-password scope decision awaits explicit product approval. Load the official SDK under the existing content-security policy, detect Telegram only as runtime context, preserve the unified Customer identity boundary, and validate canonical sharing and graceful Web fallback without trusting launch context as authentication.
 
 ## Verification basis
 
