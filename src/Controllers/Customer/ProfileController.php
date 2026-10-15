@@ -234,6 +234,7 @@ final class ProfileController
 
         Session::forget('sensitive_action_type'); Session::forget('sensitive_action_requested_at'); Session::forget('sensitive_action_confirmed_at'); Session::forget('sensitive_action_dev_preview');
         if ($requestType === 'ACCOUNT_DELETION') {
+            (new \Bulbula\Services\CustomerLifecycleMailer())->deletionScheduled((string)$customer['email'], date('Y-m-d H:i:s', time() + 30 * 86400));
             (new \Bulbula\Services\AccountSessionService())->revokeOthers('CUSTOMER', (int)$customer['id']);
             $this->authService->logout();
             Session::flash('success', 'Your account is scheduled for deletion in 30 days. Sign in during the safety period to restore it.');

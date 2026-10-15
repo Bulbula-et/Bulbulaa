@@ -73,6 +73,7 @@ final class CustomerAuthService
                 return ['ok'=>true,'restore_required'=>true,'customer'=>$customer];
             }
             $this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);
+            (new CustomerLifecycleMailer())->deleted((string)$customer['email']);
             return ['ok'=>false,'error'=>'The email or password is incorrect.'];
         }
         if (($customer['account_status'] ?? '') !== 'ACTIVE') return ['ok' => false, 'error' => 'The email or password is incorrect.'];
@@ -194,7 +195,7 @@ final class CustomerAuthService
         if (($customer['account_status'] ?? '') === 'PENDING_DELETION') {
             $effective=strtotime((string)($customer['deletion_effective_at']??''))?:0;
             if($effective>time()){Session::regenerate();Session::set('restore_customer_id',(int)$customer['id']);Session::set('restore_verified_at',time());return ['ok'=>true,'restore_required'=>true,'customer'=>$customer];}
-            $this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);return ['ok'=>false,'error'=>'This account is no longer available.'];
+            $this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);(new CustomerLifecycleMailer())->deleted((string)$customer['email']);return ['ok'=>false,'error'=>'This account is no longer available.'];
         }
 
         Session::regenerate();
@@ -365,7 +366,7 @@ final class CustomerAuthService
         if (($customer['account_status'] ?? '') === 'PENDING_DELETION') {
             $effective=strtotime((string)($customer['deletion_effective_at']??''))?:0;
             if($effective>time()){Session::regenerate();Session::set('restore_customer_id',(int)$customer['id']);Session::set('restore_verified_at',time());$customer['_restore_required']=true;return $customer;}
-            $this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);return $customer;
+            $this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);(new CustomerLifecycleMailer())->deleted((string)$customer['email']);return $customer;
         }
         Session::regenerate();
         Session::set('customer_id', (int) $customer['id']);
@@ -383,13 +384,13 @@ final class CustomerAuthService
     public function restorePendingAccount(): array
     {
         $customer=$this->pendingRestoreCustomer();if($customer===null)return ['ok'=>false,'error'=>'Your verified recovery session expired. Sign in again.'];
-        $this->customerRepo->restorePendingDeletion((int)$customer['id']);Session::forget('restore_customer_id');Session::forget('restore_verified_at');Session::regenerate();Session::set('customer_id',(int)$customer['id']);(new AccountSessionService())->begin('CUSTOMER',(int)$customer['id']);return ['ok'=>true,'customer'=>$this->customerRepo->findById((int)$customer['id'])];
+        $this->customerRepo->restorePendingDeletion((int)$customer['id']);(new CustomerLifecycleMailer())->restored((string)$customer['email']);Session::forget('restore_customer_id');Session::forget('restore_verified_at');Session::regenerate();Session::set('customer_id',(int)$customer['id']);(new AccountSessionService())->begin('CUSTOMER',(int)$customer['id']);return ['ok'=>true,'customer'=>$this->customerRepo->findById((int)$customer['id'])];
     }
 
     public function permanentlyDeletePendingAccount(): array
     {
         $customer=$this->pendingRestoreCustomer();if($customer===null)return ['ok'=>false,'error'=>'Your verified recovery session expired. Sign in again.'];
-        $this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);Session::forget('restore_customer_id');Session::forget('restore_verified_at');Session::reset();return ['ok'=>true];
+        $email=(string)$customer['email'];$this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);(new CustomerLifecycleMailer())->deleted($email);Session::forget('restore_customer_id');Session::forget('restore_verified_at');Session::reset();return ['ok'=>true];
     }
 
     public function logout(): void

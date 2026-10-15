@@ -3,5 +3,5 @@ declare(strict_types=1);
 if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
 define('BULBULA_ROOT',dirname(__DIR__));
 require BULBULA_ROOT.'/vendor/autoload.php';
-use Bulbula\Core\Config;use Bulbula\Repositories\CustomerRepository;
-Config::load(BULBULA_ROOT.'/config');$repo=new CustomerRepository();$ids=$repo->listDueDeletionIds();foreach($ids as $id)$repo->permanentlyErasePendingDeletion($id);fwrite(STDOUT,'Processed '.count($ids)." due Customer deletion(s).\n");
+use Bulbula\Core\Config;use Bulbula\Core\Database;use Bulbula\Repositories\CustomerRepository;use Bulbula\Services\CustomerLifecycleMailer;
+Config::load(BULBULA_ROOT.'/config');$repo=new CustomerRepository();$mailer=new CustomerLifecycleMailer();$ids=$repo->listDueDeletionIds();foreach($ids as $id){$row=Database::fetchOne("SELECT email FROM customers WHERE id=:id AND account_status='PENDING_DELETION'",[':id'=>$id]);if($row===null)continue;$email=(string)$row['email'];$repo->permanentlyErasePendingDeletion($id);$mailer->deleted($email);}fwrite(STDOUT,'Processed '.count($ids)." due Customer deletion(s).\n");
