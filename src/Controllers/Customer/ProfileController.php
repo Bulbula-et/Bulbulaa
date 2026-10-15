@@ -133,8 +133,9 @@ final class ProfileController
         }
         $result = $this->authService->changePassword($customer, (string) $request->input('current_password', ''), $new);
         if (!$result['ok']) { Session::flash('error', (string) $result['error']); return Response::redirect('/account'); }
-        $this->auditService->logCustomerAction((int) $customer['id'], 'CUSTOMER_PASSWORD_CHANGED', 'customer', (int) $customer['id'], []);
-        Session::flash('success', 'Your password has been changed securely.');
+        (new \Bulbula\Services\AccountSessionService())->revokeOthers('CUSTOMER', (int) $customer['id']);
+        $this->auditService->logCustomerAction((int) $customer['id'], 'CUSTOMER_PASSWORD_CHANGED', 'customer', (int) $customer['id'], ['other_sessions_revoked' => true]);
+        Session::flash('success', 'Your password was changed and all other devices were signed out.');
         return Response::redirect('/account');
     }
 

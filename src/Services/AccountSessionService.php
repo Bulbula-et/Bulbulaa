@@ -16,7 +16,7 @@ final class AccountSessionService {
  }
  public function currentHash(): string { $token=(string)Session::get('_account_session_token','');return $token===''?'':hash('sha256',$token); }
  public function list(string $type,int $actorId): array { $current=$this->currentHash();return array_map(static function(array $row)use($current){$row['is_current']=hash_equals($current,(string)$row['token_hash']);unset($row['token_hash']);return $row;},$this->repo->listActive($type,$actorId)); }
- public function revoke(int $id,string $type,int $actorId): void {$this->repo->revoke($id,$type,$actorId);}
+ public function revoke(int $id,string $type,int $actorId): void {$this->repo->revoke($id,$type,$actorId,$this->currentHash());}
  public function revokeOthers(string $type,int $actorId): void {$this->repo->revokeOthers($type,$actorId,$this->currentHash());}
  public function revokeCurrent(): void {$hash=$this->currentHash();if($hash!=='')$this->repo->revokeHash($hash);}
  private function deviceLabel(): string {$ua=(string)($_SERVER['HTTP_USER_AGENT']??'Unknown browser');$browser=str_contains($ua,'Edg/')?'Edge':(str_contains($ua,'Chrome/')?'Chrome':(str_contains($ua,'Firefox/')?'Firefox':(str_contains($ua,'Safari/')?'Safari':'Browser')));$os=str_contains($ua,'Android')?'Android':(str_contains($ua,'iPhone')||str_contains($ua,'iPad')?'iOS':(str_contains($ua,'Windows')?'Windows':(str_contains($ua,'Macintosh')?'macOS':(str_contains($ua,'Linux')?'Linux':'device'))));return $browser.' on '.$os;}

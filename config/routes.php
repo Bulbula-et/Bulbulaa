@@ -78,6 +78,7 @@ return [
     ['POST', '/staff/profile',                       ['Staff\ProfileController', 'updateProfile'], ['access' => 'authenticated']],     // Staff personal identity
     ['POST', '/staff/profile/password',              ['Staff\ProfileController', 'changePassword'], ['access' => 'authenticated']],    // Staff self-service password change
     ['POST', '/staff/profile/sessions/others/revoke', ['Staff\ProfileController', 'revokeOtherSessions'], ['access' => 'authenticated']],
+    ['POST', '/staff/profile/sessions/{id}/revoke',  ['Staff\ProfileController', 'revokeSession'], ['access' => 'authenticated']],
     ['POST', '/staff/profile/authenticator/replace', ['Staff\ProfileController', 'beginAuthenticatorReplacement'], ['access' => 'authenticated']],
     ['POST', '/staff/profile/authenticator/confirm', ['Staff\ProfileController', 'completeAuthenticatorReplacement'], ['access' => 'authenticated']],
     ['POST', '/staff/system/flush-cache',            ['Staff\DashboardController', 'flushCache'], ['access' => 'administrator']],      // Zero-restart cache & OPcache flush

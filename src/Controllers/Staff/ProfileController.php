@@ -49,8 +49,19 @@ final class ProfileController
         if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/staff/profile');}
         $result=$this->auth->completeAuthenticatorReplacement($staff,(string)$request->input('new_totp',''));
         if(!$result['ok']){Session::flash('error',(string)$result['error']);return Response::redirect('/staff/profile');}
-        $this->audit->logStaffAction((int)$staff['id'],'STAFF_2FA_REPLACED','staff_user',(int)$staff['id'],null,['self_service'=>true]);
-        Session::flash('success','Your authenticator was replaced. The previous secret is no longer valid.');return Response::redirect('/staff/profile');
+        (new \Bulbula\Services\AccountSessionService())->revokeOthers('STAFF',(int)$staff['id']);
+        $this->audit->logStaffAction((int)$staff['id'],'STAFF_2FA_REPLACED','staff_user',(int)$staff['id'],null,['self_service'=>true,'other_sessions_revoked'=>true]);
+        Session::flash('success','Your authenticator was replaced and all other devices were signed out.');return Response::redirect('/staff/profile');
+    }
+
+    public function revokeSession(Request $request): Response
+    {
+        $staff=$this->auth->currentStaff();if($staff===null)return Response::redirect('/staff/login');
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/staff/profile');}
+        $sessionId=(int)$request->param('id',0);
+        (new \Bulbula\Services\AccountSessionService())->revoke($sessionId,'STAFF',(int)$staff['id']);
+        $this->audit->logStaffAction((int)$staff['id'],'STAFF_SESSION_REVOKED','staff_user',(int)$staff['id'],null,['remote_session_revoked'=>true]);
+        Session::flash('success','The selected Staff device was signed out.');return Response::redirect('/staff/profile');
     }
 
     public function revokeOtherSessions(Request $request): Response
@@ -95,8 +106,9 @@ final class ProfileController
         }
         $result = $this->auth->changePassword($staff, (string) $request->input('current_password', ''), $new);
         if (!$result['ok']) { Session::flash('error', (string) $result['error']); return Response::redirect('/staff/profile'); }
-        $this->audit->logStaffAction((int) $staff['id'], 'STAFF_PASSWORD_CHANGED', 'staff_user', (int) $staff['id'], null, ['self_service' => true]);
-        Session::flash('success', 'Your password was changed securely.');
+        (new \Bulbula\Services\AccountSessionService())->revokeOthers('STAFF', (int) $staff['id']);
+        $this->audit->logStaffAction((int) $staff['id'], 'STAFF_PASSWORD_CHANGED', 'staff_user', (int) $staff['id'], null, ['self_service' => true, 'other_sessions_revoked' => true]);
+        Session::flash('success', 'Your password was changed and all other devices were signed out.');
         return Response::redirect('/staff/profile');
     }
 }
