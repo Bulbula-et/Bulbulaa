@@ -110,6 +110,7 @@ return [
     ['GET',  '/staff/campaigns',                     ['Staff\CampaignController', 'index'], ['access' => 'authenticated']],            // C-27 Staff-managed sponsorships
     ['POST', '/staff/campaigns/create',              ['Staff\CampaignController', 'create'], ['access' => 'authenticated']],           // C-27 Operator records campaign
     ['POST', '/staff/campaigns/{id}/approve',        ['Staff\CampaignController', 'approve'], ['access' => 'administrator']],          // C-27 Admin approves (blocked by D-39 if off)
+    ['POST', '/staff/campaigns/{id}/terminate',      ['Staff\CampaignController', 'terminate'], ['access' => 'administrator']],        // C-27 Immediate audited termination
     ['GET',  '/staff/analytics',                     ['Staff\AnalyticsController', 'index'], ['access' => 'authenticated']],           // C-28 Operational & zero-result analytics
     ['GET',  '/staff/audit-logs',                    ['Staff\AuditLogController', 'index'], ['access' => 'administrator']],            // C-29 Admin-only append-only audit trail
     ['GET',  '/staff/privacy-requests',               ['Staff\PrivacyRequestController', 'index'], ['access' => 'administrator']],

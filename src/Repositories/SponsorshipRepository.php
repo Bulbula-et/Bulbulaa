@@ -101,7 +101,12 @@ final class SponsorshipRepository
 
     public function findById(int $id): ?array
     {
-        return Database::fetchOne('SELECT * FROM sponsorship_campaigns WHERE id = :id LIMIT 1', [':id' => $id]);
+        return Database::fetchOne('SELECT sc.*,s.email AS creator_email,s.full_name AS creator_name,br.branch_name_en,bz.name_en AS business_name_en FROM sponsorship_campaigns sc INNER JOIN staff_users s ON s.id=sc.created_by_staff_id INNER JOIN branches br ON br.id=sc.branch_id INNER JOIN businesses bz ON bz.id=sc.business_id WHERE sc.id = :id LIMIT 1', [':id' => $id]);
+    }
+
+    public function terminateEarly(int $campaignId,int $adminId,string $reason): bool
+    {
+        return Database::execute("UPDATE sponsorship_campaigns SET status='TERMINATED_EARLY',terminated_by_admin_id=:admin,terminated_at=CURRENT_TIMESTAMP,termination_reason=:reason WHERE id=:id AND status IN ('ACTIVE','APPROVED_SCHEDULED')",[':admin'=>$adminId,':reason'=>$reason,':id'=>$campaignId])===1;
     }
 
     public function createDraftCampaign(array $data): int
@@ -156,6 +161,8 @@ final class SponsorshipRepository
         $today = date('Y-m-d');
 
         try {
+            $eligible=Database::fetchOne("SELECT id FROM sponsorship_campaigns WHERE id=:id AND status='ACTIVE' AND starts_at<=CURRENT_TIMESTAMP AND ends_at>=CURRENT_TIMESTAMP LIMIT 1",[':id'=>$campaignId]);
+            if($eligible===null)return;
             $existing = Database::fetchOne(
                 'SELECT impressions_count, clicks_count FROM sponsorship_daily_metrics
                  WHERE campaign_id = :cid AND metric_date = :dt AND surface = :surf',

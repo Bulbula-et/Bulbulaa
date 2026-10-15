@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Bulbula\Services;
 
+use Bulbula\Core\Cache;
+use Bulbula\Core\Database;
 use Bulbula\Domain\Enums\StaffRole;
 use Bulbula\Domain\Policies\SponsorshipPolicy;
 use Bulbula\Repositories\BranchRepository;
@@ -18,7 +20,8 @@ final class CampaignService
         private readonly SponsorshipRepository $sponsorshipRepo = new SponsorshipRepository(),
         private readonly BranchRepository $branchRepo = new BranchRepository(),
         private readonly GateRepository $gateRepo = new GateRepository(),
-        private readonly AuditService $auditService = new AuditService()
+        private readonly AuditService $auditService = new AuditService(),
+        private readonly StaffCampaignMailer $mailer = new StaffCampaignMailer()
     ) {}
 
     public function approveCampaign(int $campaignId, int $staffId, StaffRole $staffRole): array
@@ -51,5 +54,19 @@ final class CampaignService
         );
 
         return ['ok' => true, 'errors' => []];
+    }
+
+    public function terminateEarly(int $campaignId,int $adminId,string $reason):array
+    {
+        $campaign=$this->sponsorshipRepo->findById($campaignId);$reason=trim($reason);
+        if($campaign===null)return ['ok'=>false,'error'=>'Campaign not found.'];
+        if(!in_array((string)$campaign['status'],['ACTIVE','APPROVED_SCHEDULED'],true))return ['ok'=>false,'error'=>'Only an active or approved scheduled campaign can be terminated early.'];
+        if(mb_strlen($reason)<10||mb_strlen($reason)>500)return ['ok'=>false,'error'=>'Provide a termination reason of 10–500 characters.'];
+        $pdo=Database::pdo();
+        try{$pdo->beginTransaction();if(!$this->sponsorshipRepo->terminateEarly($campaignId,$adminId,$reason))throw new \RuntimeException('Campaign state changed.');$this->auditService->logStaffAction($adminId,'CAMPAIGN_TERMINATED_EARLY','sponsorship_campaign',$campaignId,['status'=>$campaign['status']],['status'=>'TERMINATED_EARLY','historical_metrics_preserved'=>true],$reason);$pdo->commit();}
+        catch(\Throwable $e){if($pdo->inTransaction())$pdo->rollBack();return ['ok'=>false,'error'=>'Campaign termination failed without changing delivery.'];}
+        Cache::invalidateTags(['campaigns']);
+        try{$campaign['termination_reason']=$reason;$mail=$this->mailer->terminated($campaign);$this->auditService->logStaffAction($adminId,!empty($mail['ok'])?'CAMPAIGN_TERMINATION_NOTICE_SENT':'CAMPAIGN_TERMINATION_NOTICE_FAILED','sponsorship_campaign',$campaignId,null,['recipient_role'=>'campaign_creator','delivery_status'=>!empty($mail['ok'])?'SENT':'FAILED']);}catch(\Throwable $e){error_log('Campaign termination notice failed safely for campaign #'.$campaignId.'.');}
+        return ['ok'=>true];
     }
 }

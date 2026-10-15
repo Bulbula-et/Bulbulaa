@@ -162,6 +162,22 @@ REF_AREA_ID="$(db_scalar "SELECT id FROM areas WHERE slug='ci-controlled-area'")
 [[ -n "$REF_AREA_ID" && "$AREA_ALIAS" == "ci area" ]] || fail "Controlled area alias was not persisted transactionally"
 pass "C-23/C-24 duplicate-safe aliases and assignment-protected reference lifecycles are enforced"
 
+# C-27 Administrator-only early termination removes inventory while retaining campaign history.
+ACTIVE_CAMPAIGN_ID="$(db_scalar "SELECT id FROM sponsorship_campaigns WHERE status='ACTIVE' ORDER BY id LIMIT 1")"
+curl -fsS -b "$TMP/staff.cookies" -c "$TMP/staff.cookies" "$BASE/staff?switch_staff=2" -o /dev/null
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/campaigns" -o "$TMP/operator-campaigns.html"; STAFF_CSRF="$(csrf_from "$TMP/operator-campaigns.html")"
+STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" -X POST "$BASE/staff/campaigns/$ACTIVE_CAMPAIGN_ID/terminate" --data-urlencode "_csrf=$STAFF_CSRF" --data-urlencode 'termination_reason=Operator must not terminate campaigns')"
+CAMPAIGN_STATUS="$(db_scalar "SELECT status FROM sponsorship_campaigns WHERE id=$ACTIVE_CAMPAIGN_ID")"; [[ "$STATUS" == "403" && "$CAMPAIGN_STATUS" == "ACTIVE" ]] || fail "Operator bypassed campaign termination policy"
+curl -fsS -b "$TMP/staff.cookies" -c "$TMP/staff.cookies" "$BASE/staff?switch_staff=1" -o /dev/null
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/campaigns" -o "$TMP/admin-campaigns.html"; STAFF_CSRF="$(csrf_from "$TMP/admin-campaigns.html")"
+curl -sS -o /dev/null -b "$TMP/staff.cookies" -X POST "$BASE/staff/campaigns/$ACTIVE_CAMPAIGN_ID/terminate" --data-urlencode "_csrf=$STAFF_CSRF" --data-urlencode 'termination_reason=Commercial agreement ended before scheduled completion'
+CAMPAIGN_STATUS="$(db_scalar "SELECT status FROM sponsorship_campaigns WHERE id=$ACTIVE_CAMPAIGN_ID")"; TERMINATION_REASON="$(db_scalar "SELECT termination_reason FROM sponsorship_campaigns WHERE id=$ACTIVE_CAMPAIGN_ID")"
+[[ "$CAMPAIGN_STATUS" == "TERMINATED_EARLY" && "$TERMINATION_REASON" == "Commercial agreement ended before scheduled completion" ]] || fail "Administrator termination did not remove campaign inventory with reason"
+METRICS_BEFORE="$(db_scalar "SELECT COALESCE(SUM(clicks_count),0) FROM sponsorship_daily_metrics WHERE campaign_id=$ACTIVE_CAMPAIGN_ID")"; CAMPAIGN_BIZ_SLUG="$(db_scalar "SELECT bz.slug FROM sponsorship_campaigns sc JOIN businesses bz ON bz.id=sc.business_id WHERE sc.id=$ACTIVE_CAMPAIGN_ID")"; CAMPAIGN_BRANCH_SLUG="$(db_scalar "SELECT br.branch_slug FROM sponsorship_campaigns sc JOIN branches br ON br.id=sc.branch_id WHERE sc.id=$ACTIVE_CAMPAIGN_ID")"
+curl -sS -o /dev/null -X POST "$BASE/b/$CAMPAIGN_BIZ_SLUG/$CAMPAIGN_BRANCH_SLUG/act" --data-urlencode 'action_type=share' --data-urlencode "campaign_id=$ACTIVE_CAMPAIGN_ID"
+METRICS_AFTER="$(db_scalar "SELECT COALESCE(SUM(clicks_count),0) FROM sponsorship_daily_metrics WHERE campaign_id=$ACTIVE_CAMPAIGN_ID")"; [[ "$METRICS_AFTER" == "$METRICS_BEFORE" ]] || fail "Terminated campaign accepted post-termination delivery metrics"
+pass "C-27 Operator denial, immediate termination, and stale-delivery metric rejection are enforced"
+
 # Customer OTP: request, HMAC-backed code preview in development, verification, account session.
 TEST_EMAIL="ci-otp-$(date +%s)-$$@example.com"
 curl -fsS -c "$TMP/customer.cookies" "$BASE/auth/login" -o "$TMP/customer-login.html"

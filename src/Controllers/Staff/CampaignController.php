@@ -102,6 +102,14 @@ final class CampaignController
         return Response::redirect('/staff/campaigns');
     }
 
+    public function terminate(Request $request): Response
+    {
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/staff/campaigns');}
+        $staff=$this->staffAuth->currentStaff();$result=$this->campaignService->terminateEarly((int)$request->param('id',0),(int)($staff['id']??0),(string)$request->input('termination_reason',''));
+        Session::flash($result['ok']?'success':'error',$result['ok']?'Campaign terminated immediately; history and delivery metrics were preserved.':(string)$result['error']);
+        return Response::redirect('/staff/campaigns');
+    }
+
     public function approve(Request $request): Response
     {
         if (!Csrf::verify((string) $request->input('_csrf', ''))) {
