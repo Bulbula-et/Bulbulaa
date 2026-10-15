@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+use Bulbula\Core\Config;
 use Bulbula\Core\View;
 use Bulbula\Core\SecurityHeaders;
 
@@ -23,7 +24,7 @@ $jsonLd = [
     '@type'       => 'LocalBusiness',
     'name'        => (string) ($b['branch_name_en'] ?? $b['business_name_en'] ?? 'Bole Bulbula Business'),
     'description' => (string) ($b['brand_summary_en'] ?? ''),
-    'url'         => 'https://bulbula.et' . $canonicalPath,
+    'url'         => rtrim((string) Config::get('app.url', 'https://bulbula.et'), '/') . $canonicalPath,
     'address'     => [
         '@type'           => 'PostalAddress',
         'streetAddress'   => (string) ($b['address_line_en'] ?? ''),

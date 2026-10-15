@@ -72,6 +72,9 @@ jobs:
           php database/migrate.php migrate | grep -q 'already current'
           php database/migrate.php status | grep -q '^APPLIED'
 
+      - name: Rehearse isolated SQLite backup and restore integrity
+        run: php tests/backup_restore_rehearsal.php
+
       - name: Start application test server
         run: |
           php -d opcache.enable_cli=0 -S 127.0.0.1:8080 -t public_html public_html/router.php > storage/logs/ci-server.log 2>&1 &
@@ -85,6 +88,9 @@ jobs:
 
       - name: Public, API, SEO and Staff route verification
         run: php tests/verify_v1_all.php
+
+      - name: Automated launch assurance baseline
+        run: php tests/launch_assurance.php
 
       - name: Browser security headers and CSP nonce verification
         run: tests/security_headers.sh

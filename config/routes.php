@@ -27,6 +27,7 @@ return [
     ['GET',  '/about',                               ['Public\PolicyPageController', 'about']],         // C-18 How Bulbula works
     ['GET',  '/policies/{policy_slug}',              ['Public\PolicyPageController', 'show']],          // C-18 Review, Sponsorship, Privacy policies
     ['GET',  '/sitemap.xml',                         ['Public\PolicyPageController', 'sitemap']],       // C-37 Dynamic XML Sitemap for SEO
+    ['GET',  '/robots.txt',                           ['Public\PolicyPageController', 'robots']],        // C-37 Origin-aware crawl rules
 
     // =========================================================================
     // 2. CUSTOMER ACCOUNT ROUTES (C-13, C-14, C-30 to C-36)

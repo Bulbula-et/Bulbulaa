@@ -74,6 +74,34 @@ final class PolicyPageController
         return new Response($xml, 200, ['Content-Type' => 'application/xml; charset=utf-8']);
     }
 
+    /**
+     * Origin-aware crawl rules keep the sitemap declaration consistent across
+     * local, staging, and production deployments.
+     */
+    public function robots(Request $request): Response
+    {
+        $baseUrl = rtrim((string) Config::get('app.url', 'https://bulbula.et'), '/');
+        $text = <<<'ROBOTS'
+User-agent: *
+Allow: /
+Allow: /categories
+Allow: /c/
+Allow: /areas
+Allow: /a/
+Allow: /b/
+Allow: /about
+Allow: /policies/
+
+Disallow: /staff
+Disallow: /account
+Disallow: /auth
+Disallow: /api/
+ROBOTS;
+        $text .= "\nSitemap: {$baseUrl}/sitemap.xml\n";
+
+        return new Response($text, 200, ['Content-Type' => 'text/plain; charset=utf-8']);
+    }
+
     private function renderPolicyPage(Request $request, string $slug): Response
     {
         $customer = $this->authService->currentCustomer();

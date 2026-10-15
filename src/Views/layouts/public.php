@@ -1,8 +1,11 @@
 <?php
 declare(strict_types=1);
+use Bulbula\Core\Config;
 use Bulbula\Core\Session;
 use Bulbula\Core\View;
 
+$baseUrl=rtrim((string)Config::get('app.url','https://bulbula.et'),'/');
+$canonicalHref=!empty($canonicalUrl) ? ($baseUrl.'/'.ltrim((string)$canonicalUrl,'/')) : null;
 $flashSuccess = Session::flash('success');
 $flashError   = Session::flash('error');
 ?>
@@ -18,8 +21,8 @@ $flashError   = Session::flash('error');
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <title><?= View::e($pageTitle ?? 'Bulbula.et — Bole Bulbula Local Business Directory') ?></title>
   <meta name="description" content="<?= View::e($metaDescription ?? 'Verified local business directory for Bole Bulbula, Addis Ababa.') ?>">
-  <?php if (!empty($canonicalUrl)): ?>
-    <link rel="canonical" href="<?= View::e($canonicalUrl) ?>">
+  <?php if ($canonicalHref !== null): ?>
+    <link rel="canonical" href="<?= View::e($canonicalHref) ?>">
   <?php endif; ?>
 
   <!-- Unified Design System CSS (content-hash cache busting) -->
