@@ -14,7 +14,8 @@ final class ModerationService
     public function __construct(
         private readonly ReviewRepository $reviewRepo = new ReviewRepository(),
         private readonly ReportRepository $reportRepo = new ReportRepository(),
-        private readonly AuditService $auditService = new AuditService()
+        private readonly AuditService $auditService = new AuditService(),
+        private readonly ReviewNotificationService $notificationService = new ReviewNotificationService()
     ) {}
 
     public function decideReview(
@@ -53,6 +54,7 @@ final class ModerationService
             $notes
         );
 
+        $this->notificationService->notify($reviewId, $decisionStatus);
         return ['ok' => true];
     }
 

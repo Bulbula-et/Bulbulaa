@@ -56,6 +56,22 @@ final class ReviewRepository
         return Database::fetchOne('SELECT * FROM reviews WHERE id = :id LIMIT 1', [':id' => $reviewId]);
     }
 
+    public function notificationContext(int $reviewId): ?array
+    {
+        return Database::fetchOne(
+            "SELECT r.id, r.customer_id, r.status, r.moderation_reason_code,
+                    c.email AS customer_email, c.account_status,
+                    br.branch_name_en, bz.name_en AS business_name_en
+             FROM reviews r
+             INNER JOIN customers c ON c.id = r.customer_id
+             INNER JOIN branches br ON br.id = r.branch_id
+             INNER JOIN businesses bz ON bz.id = br.business_id
+             WHERE r.id = :id AND c.account_status = 'ACTIVE'
+             LIMIT 1",
+            [':id' => $reviewId]
+        );
+    }
+
     /**
      * C-35 List all reviews authored by a specific Customer with Branch & moderation status.
      */

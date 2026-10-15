@@ -12,6 +12,7 @@ use Bulbula\Domain\Policies\ReviewPolicy;
 use Bulbula\Repositories\ReviewRepository;
 use Bulbula\Services\AuditService;
 use Bulbula\Services\CustomerAuthService;
+use Bulbula\Services\ReviewNotificationService;
 
 /**
  * C-13 Read/Write Branch Reviews & C-35 Customer Review Management Controller.
@@ -27,7 +28,8 @@ final class ReviewController
     public function __construct(
         private readonly CustomerAuthService $authService = new CustomerAuthService(),
         private readonly ReviewRepository $reviewRepo = new ReviewRepository(),
-        private readonly AuditService $auditService = new AuditService()
+        private readonly AuditService $auditService = new AuditService(),
+        private readonly ReviewNotificationService $notificationService = new ReviewNotificationService()
     ) {}
 
     public function index(Request $request): Response
@@ -98,6 +100,9 @@ final class ReviewController
                     $validation['rating'],
                     $validation['sanitized_text']
                 );
+                $reviewId = (int)$existingActive['id'];
+                $this->auditService->logCustomerAction($customerId, 'REVIEW_EDITED_PENDING', 'review', $reviewId, ['branch_id'=>$branchId]);
+                $this->notificationService->notify($reviewId, 'EDITED');
                 Session::flash('success', 'Your existing review was updated and submitted for moderation.');
                 return Response::redirect($returnTo);
             }
@@ -121,6 +126,7 @@ final class ReviewController
             ['branch_id' => $branchId, 'rating' => $validation['rating']]
         );
 
+        $this->notificationService->notify($reviewId, 'SUBMITTED');
         Session::flash('success', 'Thank you! Your review has been submitted and will appear once approved by Bulbula moderation.');
         return Response::redirect($returnTo);
     }
@@ -163,6 +169,8 @@ final class ReviewController
             $validation['sanitized_text']
         );
 
+        $this->auditService->logCustomerAction((int)$customer['id'], 'REVIEW_EDITED_PENDING', 'review', $reviewId, ['branch_id'=>(int)$review['branch_id']]);
+        $this->notificationService->notify($reviewId, 'EDITED');
         Session::flash('success', 'Your review was updated and returned to pending moderation.');
         return Response::redirect('/account/reviews');
     }
