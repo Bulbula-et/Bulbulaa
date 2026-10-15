@@ -50,6 +50,7 @@ final class ProfileController
             'myReviews'    => $reviews,
             'emailVerificationDevPreview' => Session::get('email_verification_dev_preview'),
             'sessionMetadata' => Session::metadata(),
+            'telegramLinked' => (new \Bulbula\Repositories\CustomerTelegramLinkRepository())->isLinked((int)$customer['id']),
             'securityEvents' => $this->auditService->listCustomerSecurityEvents((int) $customer['id']),
             'activeSessions' => (new \Bulbula\Services\AccountSessionService())->list('CUSTOMER', (int) $customer['id']),
             'pendingSensitiveAction' => Session::get('sensitive_action_type'),

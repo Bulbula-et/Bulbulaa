@@ -254,7 +254,7 @@ CREATE TABLE IF NOT EXISTS media_assets (
 
 -- ----------------------------------------------------------------------------
 -- 9. CUSTOMER ACCOUNTS & PASSWORD-FREE AUTH (C-30..C-33, C-36)
--- Rule: Google Auth + Email OTP only. Unified identity across Web & Telegram.
+-- Rule: Google + email sign-in; linked verified Telegram Mini App sign-in via migration.
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS customers (
     id                      BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

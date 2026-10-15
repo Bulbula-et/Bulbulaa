@@ -54,6 +54,8 @@ return [
     ['GET',  '/auth/google/bridge/continue',         ['Customer\AuthController', 'showGoogleBridgeBrowser']],
     ['POST', '/auth/google/bridge/verify',           ['Customer\AuthController', 'verifyGoogleBridgeBrowser']],
     ['POST', '/auth/logout',                         ['Customer\AuthController', 'logout']],
+    ['POST', '/auth/telegram/session',                ['Customer\TelegramAuthController', 'handle']],
+    ['POST', '/account/telegram/unlink',              ['Customer\TelegramAuthController', 'unlinkFromAccount']],
     ['GET',  '/account',                             ['Customer\ProfileController', 'index']],
     ['POST', '/account/profile',                     ['Customer\ProfileController', 'updateProfile']],
     ['POST', '/account/security-flow/cancel',        ['Customer\ProfileController', 'cancelSecurityFlow']],

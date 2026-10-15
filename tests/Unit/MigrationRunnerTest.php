@@ -39,10 +39,12 @@ final class MigrationRunnerTest extends TestCase
             '20261015040000_customer_deletion_grace',
             '20261015050000_review_appeals',
             '20261015170000_google_browser_handoff',
+            '20261015180000_customer_telegram_links',
         ], $runner->migrate());
         self::assertSame('APPLIED', $runner->status()[0]['status']);
         self::assertSame([], $runner->migrate());
         self::assertSame([
+            '20261015180000_customer_telegram_links',
             '20261015170000_google_browser_handoff',
             '20261015050000_review_appeals',
             '20261015040000_customer_deletion_grace',

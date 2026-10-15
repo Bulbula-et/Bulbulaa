@@ -268,6 +268,7 @@ final class CustomerRepository
     public function permanentlyErasePendingDeletion(int $customerId): void
     {
         Database::execute("UPDATE customers SET email=:email, display_name='Deleted Customer', google_sub_id=NULL, password_hash=NULL, password_changed_at=NULL, phone_number=NULL, preferred_language='en', account_status='DELETED', email_verified_at=NULL, deletion_reason_detail=NULL, updated_at=CURRENT_TIMESTAMP WHERE id=:id AND account_status='PENDING_DELETION'", [':email'=>'deleted+'.$customerId.'@privacy.invalid', ':id'=>$customerId]);
+        Database::execute('DELETE FROM customer_telegram_links WHERE customer_id=:id', [':id'=>$customerId]);
         Database::execute('DELETE FROM customer_saved_businesses WHERE customer_id=:id', [':id'=>$customerId]);
         Database::execute("UPDATE account_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE actor_type='CUSTOMER' AND actor_id=:id AND revoked_at IS NULL", [':id'=>$customerId]);
         Database::execute("UPDATE privacy_requests SET status='COMPLETED', resolution_summary='Self-service deletion completed after safety period.', completed_at=CURRENT_TIMESTAMP WHERE customer_id=:id AND request_type='ACCOUNT_DELETION' AND status IN ('SUBMITTED','IN_PROGRESS')", [':id'=>$customerId]);

@@ -17,7 +17,7 @@ $flashError   = Session::flash('error');
   <meta name="theme-color" content="#FFFAF5">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <!-- Official Telegram Mini App bridge; capability use remains runtime-guarded and initData is never authentication. -->
+  <!-- Official Telegram Mini App bridge; only fresh server-verified initData may authenticate a previously linked Customer. -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <title><?= View::e($pageTitle ?? 'Bulbula.et — Bole Bulbula Local Business Directory') ?></title>
   <meta name="description" content="<?= View::e($metaDescription ?? 'Verified local business directory for Bole Bulbula, Addis Ababa.') ?>">
@@ -33,7 +33,7 @@ $flashError   = Session::flash('error');
   <?php if (($canonicalUrl ?? '') === '/account'): ?><link rel="stylesheet" href="<?= View::asset('css/account-settings.css') ?>"><?php endif; ?>
   <link rel="stylesheet" href="<?= View::asset('css/futuristic.css') ?>">
 </head>
-<body class="b-app-shell">
+<body class="b-app-shell" data-telegram-auth-csrf="<?= View::e(\Bulbula\Core\Csrf::token()) ?>" data-telegram-account="<?= !empty($customer) ? 'yes' : 'no' ?>">
   <?= View::component('header', [
       'request'  => $request ?? null,
       'customer' => $customer ?? null,
@@ -69,6 +69,7 @@ $flashError   = Session::flash('error');
       'customer' => $customer ?? null,
   ]) ?>
 
+  <script src="<?= View::asset('js/modules/telegram-customer-auth.js') ?>" defer></script>
   <!-- Self-Hosted GSAP + Progressive Enhancement Modules -->
   <script src="<?= View::asset('js/vendor/gsap.min.js') ?>" defer></script>
   <script src="<?= View::asset('js/core/surface-adapter.js') ?>" defer></script>

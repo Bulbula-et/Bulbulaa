@@ -15,7 +15,8 @@
         "google/apiclient": "^2.18",
         "monolog/monolog": "^3.9",
         "phpmailer/phpmailer": "^6.10",
-        "robthree/twofactorauth": "^3.0"
+        "robthree/twofactorauth": "^3.0",
+        "tg/tgwebvalid": "^4.2.5"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",

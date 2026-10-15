@@ -15,7 +15,7 @@ use Bulbula\Repositories\CustomerRepository;
  * Rules:
  * - Supports Google Auth (C-30) and Email One-Time Code (C-31).
  * - OTP codes are short-lived (10m), single-use, rate-limited, and stored as HMAC-SHA256 hashes.
- * - Telegram Mini App launch context is never trusted as Customer identity (C-32).
+ * - Telegram launch data authenticates only after server verification and explicit one-to-one linking.
  */
 final class CustomerAuthService
 {
@@ -30,11 +30,25 @@ final class CustomerAuthService
         if (!is_int($id) && !is_numeric($id)) {
             return null;
         }
+        $telegramId = Session::get('_telegram_user_id');
+        if (is_string($telegramId) && (new \Bulbula\Repositories\CustomerTelegramLinkRepository())->customerIdFor($telegramId) !== (int)$id) {
+            (new AccountSessionService())->revokeCurrent();
+            Session::forget('_telegram_user_id');
+            Session::forget('customer_id');
+            return null;
+        }
         if (!(new AccountSessionService())->ensure('CUSTOMER', (int) $id)) {
             Session::forget('customer_id');
             return null;
         }
-        return $this->customerRepo->findById((int) $id);
+        $customer = $this->customerRepo->findById((int)$id);
+        if (is_string($telegramId) && ($customer === null || ($customer['account_status'] ?? '') !== 'ACTIVE')) {
+            (new AccountSessionService())->revokeCurrent();
+            Session::forget('_telegram_user_id');
+            Session::forget('customer_id');
+            return null;
+        }
+        return $customer;
     }
 
     public function registerWithPassword(string $rawEmail, string $displayName, string $password, string $surface = 'WEB'): array
@@ -51,6 +65,7 @@ final class CustomerAuthService
         if (!is_string($hash)) return ['ok' => false, 'error' => 'Your account could not be secured. Please try again.'];
         $customer = $this->customerRepo->createWithPassword($email, $name, $hash, $surface);
         Session::regenerate();
+        Session::forget('_telegram_user_id');
         Session::set('customer_id', (int) $customer['id']);
         (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);
         $this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_REGISTERED','customer',(int)$customer['id'],['method'=>'PASSWORD']);
@@ -86,6 +101,7 @@ final class CustomerAuthService
             if (is_string($hash)) $this->customerRepo->updatePassword((int) $customer['id'], $hash);
         }
         Session::regenerate();
+        Session::forget('_telegram_user_id');
         Session::set('customer_id', (int) $customer['id']);
         (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);
         $this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_LOGIN_SUCCESS','customer',(int)$customer['id'],['method'=>'PASSWORD']);
@@ -102,6 +118,7 @@ final class CustomerAuthService
         if (!is_string($hash)) return ['ok' => false, 'error' => 'The new password could not be secured.'];
         $this->customerRepo->updatePassword((int) $customer['id'], $hash);
         Session::regenerate();
+        Session::forget('_telegram_user_id');
         Session::set('customer_id', (int) $customer['id']);
         return ['ok' => true];
     }
@@ -204,6 +221,7 @@ final class CustomerAuthService
         }
 
         Session::regenerate();
+        Session::forget('_telegram_user_id');
         Session::set('customer_id', (int) $customer['id']);
         (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);
         $this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_LOGIN_SUCCESS','customer',(int)$customer['id'],['method'=>'EMAIL_OTP']);
@@ -360,6 +378,7 @@ final class CustomerAuthService
         Session::forget('password_reset_customer_id');
         Session::forget('password_reset_verified_at');
         Session::regenerate();
+        Session::forget('_telegram_user_id');
         Session::set('customer_id', $customerId);
         (new AccountSessionService())->begin('CUSTOMER', $customerId);
         (new AccountSessionService())->revokeOthers('CUSTOMER',$customerId);
@@ -393,10 +412,25 @@ final class CustomerAuthService
         }
         if (($customer['account_status'] ?? '') !== 'ACTIVE') return $customer;
         Session::regenerate();
+        Session::forget('_telegram_user_id');
         Session::set('customer_id', (int) $customer['id']);
         (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);
         $this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_LOGIN_SUCCESS','customer',(int)$customer['id'],['method'=>'GOOGLE']);
         return $customer;
+    }
+
+    /** Telegram-only sign-in: never creates an account or restores a pending deletion. */
+    public function signInExistingTelegramCustomer(int $customerId, string $telegramId): bool
+    {
+        $customer = $this->customerRepo->findById($customerId);
+        if ($customer === null || ($customer['account_status'] ?? '') !== 'ACTIVE'
+            || (new \Bulbula\Repositories\CustomerTelegramLinkRepository())->customerIdFor($telegramId) !== $customerId) return false;
+        Session::regenerate();
+        Session::set('customer_id', $customerId);
+        Session::set('_telegram_user_id', $telegramId);
+        (new AccountSessionService())->begin('CUSTOMER', $customerId);
+        $this->auditService->logCustomerAction($customerId, 'CUSTOMER_LOGIN_SUCCESS', 'customer', $customerId, ['method'=>'TELEGRAM_VERIFIED_LINK']);
+        return true;
     }
 
     public function pendingRestoreCustomer(): ?array

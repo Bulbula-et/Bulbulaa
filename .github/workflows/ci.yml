@@ -80,7 +80,7 @@ jobs:
 
       - name: Start application test server
         run: |
-          BULBULA_GOOGLE_CLIENT_ID=123456-ci.apps.googleusercontent.com php -d opcache.enable_cli=0 -S 127.0.0.1:8080 -t public_html public_html/router.php > storage/logs/ci-server.log 2>&1 &
+          BULBULA_GOOGLE_CLIENT_ID=123456-ci.apps.googleusercontent.com BULBULA_TELEGRAM_BOT_TOKEN=123456:ci-telegram-bot-token-not-real php -d opcache.enable_cli=0 -S 127.0.0.1:8080 -t public_html public_html/router.php > storage/logs/ci-server.log 2>&1 &
           echo $! > /tmp/bulbula-server.pid
           for i in {1..20}; do
             curl -fsS http://127.0.0.1:8080/ >/dev/null && exit 0
@@ -106,6 +106,11 @@ jobs:
 
       - name: Browser-to-Mini-App Google handoff isolation E2E
         run: bash tests/google_bridge_flow.sh
+
+      - name: Verified Telegram cross-device account link and revocation E2E
+        env:
+          BULBULA_TELEGRAM_BOT_TOKEN: 123456:ci-telegram-bot-token-not-real
+        run: bash tests/telegram_link_flow.sh
 
       - name: Show server log on failure
         if: failure()
@@ -135,6 +140,7 @@ jobs:
           --health-timeout=5s
           --health-retries=20
     env:
+      BULBULA_TELEGRAM_BOT_TOKEN: 123456:ci-telegram-bot-token-not-real
       BULBULA_APP_ENV: development
       BULBULA_DB_DRIVER: mysql
       BULBULA_DB_HOST: 127.0.0.1
@@ -172,7 +178,7 @@ jobs:
         run: bash tests/mariadb_restore_rehearsal.sh
       - name: Start MySQL-backed application
         run: |
-          BULBULA_GOOGLE_CLIENT_ID=123456-ci.apps.googleusercontent.com php -d opcache.enable_cli=0 -S 127.0.0.1:8080 -t public_html public_html/router.php > storage/logs/ci-mariadb-server.log 2>&1 &
+          BULBULA_GOOGLE_CLIENT_ID=123456-ci.apps.googleusercontent.com BULBULA_TELEGRAM_BOT_TOKEN=123456:ci-telegram-bot-token-not-real php -d opcache.enable_cli=0 -S 127.0.0.1:8080 -t public_html public_html/router.php > storage/logs/ci-mariadb-server.log 2>&1 &
           echo $! > /tmp/bulbula-mariadb-server.pid
           for i in {1..30}; do curl -fsS http://127.0.0.1:8080/ >/dev/null && exit 0; sleep 0.5; done
           cat storage/logs/ci-mariadb-server.log
@@ -183,6 +189,7 @@ jobs:
           tests/security_headers.sh
           tests/e2e_flows.sh
           bash tests/google_bridge_flow.sh
+          bash tests/telegram_link_flow.sh
       - name: Show MariaDB server log on failure
         if: failure()
         run: cat storage/logs/ci-mariadb-server.log || true
