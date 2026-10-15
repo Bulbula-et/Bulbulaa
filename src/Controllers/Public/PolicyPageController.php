@@ -80,6 +80,11 @@ final class PolicyPageController
      */
     public function robots(Request $request): Response
     {
+        return new Response(self::robotsText(), 200, ['Content-Type' => 'text/plain; charset=utf-8']);
+    }
+
+    public static function robotsText(): string
+    {
         $baseUrl = rtrim((string) Config::get('app.url', 'https://bulbula.et'), '/');
         $text = <<<'ROBOTS'
 User-agent: *
@@ -99,7 +104,7 @@ Disallow: /api/
 ROBOTS;
         $text .= "\nSitemap: {$baseUrl}/sitemap.xml\n";
 
-        return new Response($text, 200, ['Content-Type' => 'text/plain; charset=utf-8']);
+        return $text;
     }
 
     private function renderPolicyPage(Request $request, string $slug): Response

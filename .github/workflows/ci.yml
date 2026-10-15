@@ -75,6 +75,9 @@ jobs:
       - name: Rehearse isolated SQLite backup and restore integrity
         run: php tests/backup_restore_rehearsal.php
 
+      - name: Generate origin-aware static robots artifact
+        run: php database/generate_robots.php
+
       - name: Start application test server
         run: |
           php -d opcache.enable_cli=0 -S 127.0.0.1:8080 -t public_html public_html/router.php > storage/logs/ci-server.log 2>&1 &

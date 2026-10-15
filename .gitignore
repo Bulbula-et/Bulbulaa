@@ -7,6 +7,10 @@
 /.phpunit.cache/
 /.phpstan.cache/
 
+# Generated deployment artifact, rebuilt from configured app.url
+/public_html/robots.txt
+/public_html/robots.txt.tmp.*
+
 # Uploaded/processed branch media (deployment data, not source control)
 /public_html/media/branches/
 !/public_html/media/.htaccess

@@ -23,7 +23,7 @@ tar -C /home/ACCOUNT -czf "$HOME/backups/$STAMP/application-media.tgz" \
 sha256sum "$HOME/backups/$STAMP"/* > "$HOME/backups/$STAMP/SHA256SUMS"
 ```
 
-Copy the resulting directory to the approved off-host location. Application source is recovered from the verified Git commit and pinned `composer.lock`; do not treat generated `vendor/` as the authoritative source backup.
+Copy the resulting directory to the approved off-host location. Application source is recovered from the verified Git commit and pinned `composer.lock`; do not treat generated `vendor/` as the authoritative source backup. After deployment or a change to `app.url`, run `php database/generate_robots.php` from the checkout to publish a static, origin-aware `public_html/robots.txt`. This generated file is excluded from Git; the routed PHP response remains a fallback. Verify the unparameterized `/robots.txt` returns the configured sitemap declaration on repeated requests.
 
 ## Isolated MariaDB restore rehearsal
 
