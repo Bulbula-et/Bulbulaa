@@ -2,19 +2,19 @@
 
 **Audit date:** 2026-10-15  
 **Specification:** `Bulbula_et_SaaS_Product_Features_V1.pdf` (40 capabilities, C-01–C-40)  
-**Audited code:** `main` at `bf6380b`
+**Audited code:** `main` at `b443d74`
 **Method:** specification-to-route, controller, service, repository, schema, view, JavaScript, test, deployment, and production-smoke comparison.
 
 ## Executive result
 
 | Classification | Count | Meaning |
 |---|---:|---|
-| Implemented and materially evidenced | 34 | Primary V1 behavior exists with supporting code and/or tests. |
-| Implemented with a material completion gap | 3 | Useful implementation exists, but one or more explicit acceptance rules remain incomplete. |
+| Implemented and materially evidenced | 36 | Primary V1 behavior exists with supporting code and/or tests. |
+| Implemented with a material completion gap | 1 | Useful implementation exists, but one or more explicit acceptance rules remain incomplete. |
 | Implemented but launch-gated | 3 | Product code exists, but counsel/commercial or operational approval remains required. |
 | Wholly absent | 0 | Every capability has at least an implementation foundation. |
 
-**Overall:** Bulbula.et has broad V1 coverage, but route presence is not the same as launch readiness. The highest remaining risks are incomplete reference-data maintenance, review appeals, campaign termination, real-device Telegram acceptance, and outstanding legal/operational launch gates.
+**Overall:** Bulbula.et has broad V1 coverage, but route presence is not the same as launch readiness. The highest remaining risks are review appeals, campaign termination, real-device Telegram acceptance, and outstanding legal/operational launch gates.
 
 ## Capability matrix
 
@@ -42,8 +42,8 @@
 | C-20 | Listing maintenance | Implemented | Staff can correct Business-level identity/summary and Branch-level address/contact/hours through their proper records. Corrections to live data return affected listings to QC; temporary/permanent closure, unpublish, and reopen transitions are reasoned, transactional, audited, and cannot bypass reverification. |
 | C-21 | Verification/QC | Implemented | Preparation attribution is preserved separately from reviewer identity; independent review is enforced whenever another active Staff reviewer exists. Controlled same-person fallback requires no available reviewer, explicit justification, and audit evidence. Staff submit the real required checklist and decision; failed/returned reviews retain checklist evidence and a mandatory reason. QC history, publication state, and audit evidence are committed transactionally, and permission plus PASSED QC remains the authoritative publication gate. |
 | C-22 | Media management | Implemented | Staff can add or replace the single active Branch cover and remove active media with a mandatory reason. Uploads retain byte MIME validation, GD decode/re-encode, metadata stripping, dimensional limits, randomized names, CSRF/RBAC, and audit evidence. Replacement/removal quarantine old files outside the webroot before transactional database changes and restore them on failure. Permission withdrawal atomically revokes authorization, unpublishes every Business Branch, clears verification/linkage, deactivates affected assets, and safely purges their files. |
-| C-23 | Category management | Partial | Administrator can add level-1/2 records. Editing, controlled alias maintenance, activation/deactivation, and duplicate-safe validation are incomplete. |
-| C-24 | Location management | Partial | Administrator can add areas. Editing, aliases, activation/boundary maintenance, hierarchy controls, and assignment maintenance are incomplete. |
+| C-23 | Category management | Implemented | Administrator-only create/edit supports the controlled two-level hierarchy, bilingual labels, stable slugs, ordering, activation, and language-tagged search aliases. Mutations reject duplicate names/slugs and globally ambiguous aliases, prevent invalid parent depth or self-parenting, and block deactivation while Business assignments or active children remain. Changes and aliases commit transactionally, record before/after audit evidence, and invalidate tagged caches after commit. |
+| C-24 | Location management | Implemented | Administrator-only area create/edit supports bilingual area/sub-city labels, stable slugs, validated map centers, ordering, launch-boundary state, activation, and language-tagged aliases. Duplicate/ambiguous terms are rejected and assigned Areas cannot be deactivated until Branches are reassigned. Area and alias changes commit transactionally with before/after audit evidence and post-commit tagged cache invalidation. |
 | C-25 | Review moderation | Partial | Pending queue and approve/reject/remove decisions exist. A distinct Administrator appeal workflow is not implemented. |
 | C-26 | Report management | Implemented | Staff triage/resolution/escalation and audit logging exist; review reports route into the review domain. |
 | C-27 | Campaign management | Launch-gated / Partial | Creation, Administrator approval, dates, fixed price, formats, metrics, and D-39 gate exist. Early termination with a mandatory reason is absent. External commercial, billing, tax, and legal gates remain intentionally closed. |
@@ -80,9 +80,8 @@ Do not remove it silently. Record one of these decisions before launch:
 
 ### P1 — Required capability completion
 
-4. **C-23/C-24 reference-data maintenance** — edit, aliases, activation, validation, and safe cache invalidation.
-5. **C-25 appeals** — Administrator-only appeal review and audited outcome.
-6. **C-27 early campaign termination** — Administrator action with mandatory reason and immediate inventory removal.
+4. **C-25 appeals** — Administrator-only appeal review and audited outcome.
+5. **C-27 early campaign termination** — Administrator action with mandatory reason and immediate inventory removal.
 
 ### P2 — Launch assurance
 
@@ -93,7 +92,7 @@ Do not remove it silently. Record one of these decisions before launch:
 
 ## Immediate next implementation milestone
 
-Proceed with **C-23/C-24 reference-data maintenance** next while the Customer-password scope decision awaits explicit product approval. Add duplicate-safe edit, alias, activation/deactivation, and hierarchy/assignment protections for Categories and Areas, with transactional cache invalidation and audited Administrator-only mutations.
+Proceed with **C-25 review appeals** next while the Customer-password scope decision awaits explicit product approval. Add a Customer appeal path for eligible rejected/removed reviews, an Administrator-only decision workflow, immutable appeal evidence, clear state transitions, Customer notification, and tests that prevent ordinary moderation roles from deciding appeals.
 
 ## Verification basis
 
