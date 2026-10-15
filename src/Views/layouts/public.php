@@ -25,6 +25,7 @@ $flashError   = Session::flash('error');
   <link rel="stylesheet" href="<?= View::asset('css/base.css') ?>">
   <link rel="stylesheet" href="<?= View::asset('css/layout.css') ?>">
   <link rel="stylesheet" href="<?= View::asset('css/components.css') ?>">
+  <?php if (($canonicalUrl ?? '') === '/account'): ?><link rel="stylesheet" href="<?= View::asset('css/account-settings.css') ?>"><?php endif; ?>
   <link rel="stylesheet" href="<?= View::asset('css/futuristic.css') ?>">
 </head>
 <body class="b-app-shell">
@@ -72,5 +73,6 @@ $flashError   = Session::flash('error');
   <script src="<?= View::asset('js/modules/modal-drawer.js') ?>" defer></script>
   <script src="<?= View::asset('js/modules/branch-switcher.js') ?>" defer></script>
   <script src="<?= View::asset('js/modules/save-toggle.js') ?>" defer></script>
+  <?php if (($canonicalUrl ?? '') === '/account'): ?><script src="<?= View::asset('js/modules/account-settings.js') ?>" defer></script><?php endif; ?>
 </body>
 </html>
