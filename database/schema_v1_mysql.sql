@@ -339,6 +339,37 @@ CREATE TABLE IF NOT EXISTS reviews (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
+-- 11A. CUSTOMER REVIEW APPEALS (C-25)
+-- Submission and decision rows are append-only evidence.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS review_appeals (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    review_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    customer_id BIGINT UNSIGNED NOT NULL,
+    original_status VARCHAR(32) NOT NULL,
+    original_reason_code VARCHAR(64) NULL,
+    original_moderated_by_staff_id BIGINT UNSIGNED NULL,
+    original_moderated_at DATETIME NOT NULL,
+    appeal_statement VARCHAR(2000) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_appeal_review FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_appeal_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_appeal_original_moderator FOREIGN KEY (original_moderated_by_staff_id) REFERENCES staff_users(id) ON DELETE SET NULL,
+    INDEX idx_review_appeals_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS review_appeal_decisions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    appeal_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    decided_by_admin_id BIGINT UNSIGNED NOT NULL,
+    outcome VARCHAR(32) NOT NULL,
+    reason_code VARCHAR(64) NOT NULL,
+    decision_notes VARCHAR(2000) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_appeal_decision_appeal FOREIGN KEY (appeal_id) REFERENCES review_appeals(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_appeal_decision_admin FOREIGN KEY (decided_by_admin_id) REFERENCES staff_users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
 -- 12. PUBLIC REPORTS & CORRECTION SUGGESTIONS (C-15, C-26)
 -- Rule: Guests can report listing errors; Review reports require authenticated Customer.
 -- ----------------------------------------------------------------------------

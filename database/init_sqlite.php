@@ -242,6 +242,28 @@ CREATE TABLE reviews (
     withdrawn_at            DATETIME NULL
 );
 
+CREATE TABLE review_appeals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    review_id INTEGER NOT NULL UNIQUE REFERENCES reviews(id),
+    customer_id INTEGER NOT NULL REFERENCES customers(id),
+    original_status TEXT NOT NULL,
+    original_reason_code TEXT NULL,
+    original_moderated_by_staff_id INTEGER NULL REFERENCES staff_users(id),
+    original_moderated_at DATETIME NOT NULL,
+    appeal_statement TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_review_appeals_created ON review_appeals(created_at);
+CREATE TABLE review_appeal_decisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    appeal_id INTEGER NOT NULL UNIQUE REFERENCES review_appeals(id),
+    decided_by_admin_id INTEGER NOT NULL REFERENCES staff_users(id),
+    outcome TEXT NOT NULL,
+    reason_code TEXT NOT NULL,
+    decision_notes TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE public_reports (
     id                      INTEGER PRIMARY KEY AUTOINCREMENT,
     target_type             TEXT NOT NULL,

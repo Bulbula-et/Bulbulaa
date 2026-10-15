@@ -28,7 +28,7 @@ final class CustomerReviewMailerTest extends TestCase
     {
         $mailer = new CustomerReviewMailer(new class implements MailTransport { public function send(string $to,string $subject,string $html,string $text=''): array{return ['ok'=>true];} });
         $context=['branch_name_en'=>'Kazanchis','business_name_en'=>'Example','moderation_reason_code'=>'POLICY_VIOLATION'];
-        foreach (['PUBLISHED','REJECTED','REMOVED_BY_STAFF','EDITED'] as $event) self::assertNotNull($mailer->message($context,$event));
+        foreach (['PUBLISHED','REJECTED','REMOVED_BY_STAFF','EDITED','APPEAL_SUBMITTED','APPEAL_UPHELD','APPEAL_OVERTURNED'] as $event) self::assertNotNull($mailer->message($context,$event));
         self::assertStringContainsString('policy violation', $mailer->message($context,'REJECTED')['text']);
     }
 

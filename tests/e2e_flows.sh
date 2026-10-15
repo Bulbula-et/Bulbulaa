@@ -201,4 +201,21 @@ REVIEW_AFTER="$(db_scalar 'SELECT status FROM reviews WHERE id = ?' "$REVIEW_ID"
 [[ "$REVIEW_BEFORE" == "$REVIEW_AFTER" ]] || fail "Customer modified another account's review"
 pass "Customer CSRF, positive mutation-state, cleanup, and object-ownership checks"
 
+# C-25 Customer appeal evidence and Administrator-only independent final decision.
+db_exec "INSERT INTO reviews(branch_id,customer_id,rating,review_text,status,edit_count) VALUES(1,?,4,'CI appeal workflow review','PENDING_MODERATION',0)" "$CUSTOMER_ID"
+APPEAL_REVIEW_ID="$(db_scalar "SELECT id FROM reviews WHERE customer_id=$CUSTOMER_ID AND review_text='CI appeal workflow review'")"
+curl -fsS -b "$TMP/staff.cookies" -c "$TMP/staff.cookies" "$BASE/staff?switch_staff=2" -o /dev/null
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/moderation" -o "$TMP/operator-moderation.html"; STAFF_CSRF="$(csrf_from "$TMP/operator-moderation.html")"
+curl -sS -o /dev/null -b "$TMP/staff.cookies" -X POST "$BASE/staff/moderation/$APPEAL_REVIEW_ID/decide" --data-urlencode "_csrf=$STAFF_CSRF" --data-urlencode 'decision=REJECTED' --data-urlencode 'reason_code=POLICY_VIOLATION' --data-urlencode 'notes=Initial operator policy decision'
+curl -fsS -b "$TMP/customer.cookies" "$BASE/account/reviews" -o "$TMP/customer-reviews.html"; CSRF="$(csrf_from "$TMP/customer-reviews.html")"
+curl -sS -o /dev/null -b "$TMP/customer.cookies" -X POST "$BASE/account/reviews/$APPEAL_REVIEW_ID/appeal" --data-urlencode "_csrf=$CSRF" --data-urlencode 'appeal_statement=Additional context shows this review describes a genuine customer experience.'
+APPEAL_ID="$(db_scalar "SELECT id FROM review_appeals WHERE review_id=$APPEAL_REVIEW_ID")"; [[ -n "$APPEAL_ID" ]] || fail "Customer appeal evidence was not preserved"
+STATUS="$(curl -sS -o /dev/null -w '%{http_code}' -b "$TMP/staff.cookies" "$BASE/staff/review-appeals")"; [[ "$STATUS" == "403" ]] || fail "Operator reached Administrator-only appeal queue"
+curl -fsS -b "$TMP/staff.cookies" -c "$TMP/staff.cookies" "$BASE/staff?switch_staff=1" -o /dev/null
+curl -fsS -b "$TMP/staff.cookies" "$BASE/staff/review-appeals" -o "$TMP/admin-appeals.html"; STAFF_CSRF="$(csrf_from "$TMP/admin-appeals.html")"
+curl -sS -o /dev/null -b "$TMP/staff.cookies" -X POST "$BASE/staff/review-appeals/$APPEAL_ID/decide" --data-urlencode "_csrf=$STAFF_CSRF" --data-urlencode 'outcome=OVERTURNED' --data-urlencode 'reason_code=CONTEXT_CHANGED_DECISION' --data-urlencode 'decision_notes=Customer context supports restoration after independent Administrator review.'
+APPEAL_OUTCOME="$(db_scalar "SELECT outcome FROM review_appeal_decisions WHERE appeal_id=$APPEAL_ID")"; APPEAL_REVIEW_STATUS="$(db_scalar "SELECT status FROM reviews WHERE id=$APPEAL_REVIEW_ID")"
+[[ "$APPEAL_OUTCOME" == "OVERTURNED" && "$APPEAL_REVIEW_STATUS" == "PUBLISHED" ]] || fail "Administrator appeal decision did not restore review atomically"
+pass "C-25 immutable Customer appeal, Operator denial, and independent Administrator outcome are enforced"
+
 echo 'ALL AUTHENTICATED END-TO-END FLOWS PASSED.'

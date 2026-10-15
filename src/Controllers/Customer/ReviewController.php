@@ -13,6 +13,7 @@ use Bulbula\Repositories\ReviewRepository;
 use Bulbula\Services\AuditService;
 use Bulbula\Services\CustomerAuthService;
 use Bulbula\Services\ReviewNotificationService;
+use Bulbula\Services\ReviewAppealService;
 
 /**
  * C-13 Read/Write Branch Reviews & C-35 Customer Review Management Controller.
@@ -29,7 +30,8 @@ final class ReviewController
         private readonly CustomerAuthService $authService = new CustomerAuthService(),
         private readonly ReviewRepository $reviewRepo = new ReviewRepository(),
         private readonly AuditService $auditService = new AuditService(),
-        private readonly ReviewNotificationService $notificationService = new ReviewNotificationService()
+        private readonly ReviewNotificationService $notificationService = new ReviewNotificationService(),
+        private readonly ReviewAppealService $appealService = new ReviewAppealService()
     ) {}
 
     public function index(Request $request): Response
@@ -172,6 +174,15 @@ final class ReviewController
         $this->auditService->logCustomerAction((int)$customer['id'], 'REVIEW_EDITED_PENDING', 'review', $reviewId, ['branch_id'=>(int)$review['branch_id']]);
         $this->notificationService->notify($reviewId, 'EDITED');
         Session::flash('success', 'Your review was updated and returned to pending moderation.');
+        return Response::redirect('/account/reviews');
+    }
+
+    public function appeal(Request $request): Response
+    {
+        $customer=$this->authService->currentCustomer();if($customer===null)return Response::redirect('/auth/login');
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/account/reviews');}
+        $result=$this->appealService->submit((int)$request->param('review_id',0),(int)$customer['id'],(string)$request->input('appeal_statement',''));
+        Session::flash($result['ok']?'success':'error',$result['ok']?'Your appeal was recorded for Administrator review.':(string)$result['error']);
         return Response::redirect('/account/reviews');
     }
 

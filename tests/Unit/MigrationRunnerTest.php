@@ -13,7 +13,7 @@ final class MigrationRunnerTest extends TestCase
     {
         $this->dbFile = tempnam(sys_get_temp_dir(), 'bulbula-migration-');
         $this->pdo = new PDO('sqlite:' . $this->dbFile, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-        foreach (['staff_users','categories','areas','businesses','branches','business_permissions','media_assets','customers','reviews','audit_logs'] as $table) {
+        foreach (['staff_users','categories','areas','businesses','branches','business_permissions','media_assets','customers','reviews','review_appeals','review_appeal_decisions','audit_logs'] as $table) {
             $this->pdo->exec("CREATE TABLE {$table} (id INTEGER PRIMARY KEY)");
         }
         $this->pdo->exec("ALTER TABLE customers ADD COLUMN account_status TEXT NOT NULL DEFAULT 'ACTIVE'");

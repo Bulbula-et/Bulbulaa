@@ -78,10 +78,13 @@ final class ReviewRepository
     public function listByCustomer(int $customerId): array
     {
         return Database::fetchAll(
-            'SELECT r.*, br.branch_name_en, br.branch_slug, bz.name_en AS business_name_en, bz.slug AS business_slug
+            'SELECT r.*, br.branch_name_en, br.branch_slug, bz.name_en AS business_name_en, bz.slug AS business_slug,
+                    ra.id AS appeal_id, ra.created_at AS appeal_created_at, rad.outcome AS appeal_outcome, rad.decision_notes AS appeal_decision_notes
              FROM reviews r
              INNER JOIN branches br ON br.id = r.branch_id
              INNER JOIN businesses bz ON bz.id = br.business_id
+             LEFT JOIN review_appeals ra ON ra.review_id=r.id
+             LEFT JOIN review_appeal_decisions rad ON rad.appeal_id=ra.id
              WHERE r.customer_id = :cid
              ORDER BY r.first_submitted_at DESC',
             [':cid' => $customerId]

@@ -39,6 +39,8 @@ $customer = $customer ?? [];
             <?= View::e($rev['review_text'] ?? '(Rating only)') ?>
           </p>
 
+          <?php if(in_array($rev['status'],['REJECTED','REMOVED_BY_STAFF'],true)): ?><div class="b-alert b-alert--info"><strong>Moderation decision:</strong> <?= View::e(str_replace('_',' ',(string)($rev['moderation_reason_code']??'Policy review'))) ?><?php if(!empty($rev['moderation_notes'])): ?> — <?= View::e($rev['moderation_notes']) ?><?php endif; ?></div><?php if(empty($rev['appeal_id'])): ?><form method="POST" action="/account/reviews/<?= (int)$rev['id'] ?>/appeal" style="display:grid;gap:.5rem;margin:1rem 0"><?= Csrf::field() ?><label class="b-label">Appeal this decision within 180 days</label><textarea class="b-input" name="appeal_statement" minlength="20" maxlength="2000" rows="3" required placeholder="Explain the context or why the decision should be reconsidered"></textarea><button class="b-btn b-btn--outline b-btn--sm">Submit appeal</button></form><?php endif; ?><?php endif; ?>
+          <?php if(!empty($rev['appeal_id'])): ?><div class="b-alert <?= !empty($rev['appeal_outcome'])?'b-alert--success':'b-alert--info' ?>"><strong>Appeal <?= View::e($rev['appeal_outcome']??'PENDING ADMINISTRATOR REVIEW') ?></strong><?php if(!empty($rev['appeal_decision_notes'])): ?><br><?= View::e($rev['appeal_decision_notes']) ?><?php endif; ?></div><?php endif; ?>
           <div class="b-card__footer">
             <span style="font-size: var(--text-xs); color: var(--neutral-600);">
               Submitted <?= View::e($rev['first_submitted_at']) ?>

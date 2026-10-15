@@ -67,6 +67,7 @@ return [
     ['POST', '/account/reviews/submit',              ['Customer\ReviewController', 'submit']],          // C-13 Write review (1-5 int, pre-mod)
     ['POST', '/account/reviews/{review_id}/edit',    ['Customer\ReviewController', 'edit']],            // C-13, C-35 Edit within 30 days
     ['POST', '/account/reviews/{review_id}/withdraw',['Customer\ReviewController', 'withdraw']],        // C-35 Withdraw own review
+    ['POST', '/account/reviews/{review_id}/appeal',  ['Customer\ReviewController', 'appeal']],          // C-25 Customer moderation appeal
 
     // =========================================================================
     // 3. STAFF INTERNAL OPERATIONS CONSOLE (C-19 to C-29, Gate D-45)
@@ -101,7 +102,9 @@ return [
     ['GET',  '/staff/locations',                     ['Staff\LocationController', 'index'], ['access' => 'authenticated']],            // C-24 Area & Sub-city manager
     ['POST', '/staff/locations/save',                ['Staff\LocationController', 'save'], ['access' => 'administrator']],             // C-24 Area update
     ['GET',  '/staff/moderation',                    ['Staff\ModerationController', 'index'], ['access' => 'authenticated']],          // C-25 Pre-publication review queue
-    ['POST', '/staff/moderation/{review_id}/decide', ['Staff\ModerationController', 'decide'], ['access' => 'authenticated']],         // C-25 Approve / Reject / Appeal
+    ['POST', '/staff/moderation/{review_id}/decide', ['Staff\ModerationController', 'decide'], ['access' => 'authenticated']],         // C-25 Initial moderation
+    ['GET',  '/staff/review-appeals',                ['Staff\ReviewAppealController', 'index'], ['access' => 'administrator']],         // C-25 Administrator appeal queue
+    ['POST', '/staff/review-appeals/{appeal_id}/decide', ['Staff\ReviewAppealController', 'decide'], ['access' => 'administrator']],     // C-25 Final appeal decision
     ['GET',  '/staff/reports',                       ['Staff\ReportQueueController', 'index'], ['access' => 'authenticated']],         // C-26 Public report triage queue
     ['POST', '/staff/reports/{report_id}/resolve',   ['Staff\ReportQueueController', 'resolve'], ['access' => 'authenticated']],       // C-26 Resolve / Escalate report
     ['GET',  '/staff/campaigns',                     ['Staff\CampaignController', 'index'], ['access' => 'authenticated']],            // C-27 Staff-managed sponsorships

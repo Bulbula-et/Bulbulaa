@@ -48,6 +48,11 @@ final class StaffRepository
         );
     }
 
+    public function hasOtherActiveAdministrator(int $staffId): bool
+    {
+        return Database::fetchOne("SELECT id FROM staff_users WHERE id<>:id AND is_active=1 AND role='ADMINISTRATOR' LIMIT 1",[':id'=>$staffId])!==null;
+    }
+
     public function hasOtherActiveReviewer(int $staffId): bool
     {
         $row = Database::fetchOne('SELECT COUNT(*) AS total FROM staff_users WHERE is_active=1 AND id<>:id', [':id'=>$staffId]);

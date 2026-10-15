@@ -33,6 +33,9 @@ final class CustomerReviewMailer
             'PUBLISHED'=>['Your review is now published','Your review of '.$place.' passed moderation and is now public.'],
             'REJECTED'=>['Your review was not published','Your review of '.$place.' did not pass moderation'.($reason!==''?' (reason: '.$this->reasonLabel($reason).')':'').'. You can review its status from your account.'],
             'REMOVED_BY_STAFF'=>['Your review was removed','Your previously published review of '.$place.' was removed after moderation'.($reason!==''?' (reason: '.$this->reasonLabel($reason).')':'').'. You can review its status from your account.'],
+            'APPEAL_SUBMITTED'=>['Your review appeal was received','We received your appeal for the moderation decision concerning '.$place.'. An Administrator will review the original decision and your additional context.'],
+            'APPEAL_UPHELD'=>['Your review appeal was decided','An Administrator completed a second review and upheld the original moderation decision for '.$place.'. The decision explanation is available in your account.'],
+            'APPEAL_OVERTURNED'=>['Your review appeal was successful','An Administrator overturned the original moderation decision for '.$place.'. Your review has been restored and published.'],
         ];
         if (!isset($templates[$event])) return null;
         [$subject,$body]=$templates[$event];

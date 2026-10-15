@@ -12,6 +12,7 @@ $currentLabel = $labels[$statusFilter] ?? 'Reviews';
 <section class="b-mod-toolbar">
   <div class="b-mod-toolbar__title"><strong><?= View::e($currentLabel) ?> review queue · <?= count($reviews) ?></strong><span>Review customer content against publication policy before it reaches the public directory.</span></div>
   <nav class="b-mod-tabs" aria-label="Review status filters">
+    <?php if(($staff['role']??'')==='ADMINISTRATOR'): ?><a href="/staff/review-appeals" class="b-mod-tab">Appeals</a><?php endif; ?>
     <?php foreach ($labels as $status => $label): ?>
       <a href="/staff/moderation?status=<?= View::e($status) ?>" class="b-mod-tab <?= $statusFilter === $status ? 'is-active' : '' ?>" <?= $statusFilter === $status ? 'aria-current="page"' : '' ?>><?= View::e($label) ?></a>
     <?php endforeach; ?>
