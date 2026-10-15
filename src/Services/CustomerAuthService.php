@@ -53,6 +53,7 @@ final class CustomerAuthService
         Session::regenerate();
         Session::set('customer_id', (int) $customer['id']);
         (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);
+        $this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_REGISTERED','customer',(int)$customer['id'],['method'=>'PASSWORD']);
         return ['ok' => true, 'customer' => $customer];
     }
 
@@ -65,7 +66,10 @@ final class CustomerAuthService
         $customer = $this->customerRepo->findByEmail($email);
         $valid = $customer !== null && is_string($customer['password_hash'] ?? null)
             && password_verify($password, (string) $customer['password_hash']);
-        if (!$valid) return ['ok' => false, 'error' => 'The email or password is incorrect.'];
+        if (!$valid) {
+            if($customer!==null)$this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_LOGIN_FAILED','customer',(int)$customer['id'],['method'=>'PASSWORD']);
+            return ['ok' => false, 'error' => 'The email or password is incorrect.'];
+        }
         if (($customer['account_status'] ?? '') === 'PENDING_DELETION') {
             $effective = strtotime((string)($customer['deletion_effective_at'] ?? '')) ?: 0;
             if ($effective > time()) {
@@ -84,6 +88,7 @@ final class CustomerAuthService
         Session::regenerate();
         Session::set('customer_id', (int) $customer['id']);
         (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);
+        $this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_LOGIN_SUCCESS','customer',(int)$customer['id'],['method'=>'PASSWORD']);
         return ['ok' => true, 'customer' => $this->customerRepo->findById((int) $customer['id'])];
     }
 
@@ -201,6 +206,7 @@ final class CustomerAuthService
         Session::regenerate();
         Session::set('customer_id', (int) $customer['id']);
         (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);
+        $this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_LOGIN_SUCCESS','customer',(int)$customer['id'],['method'=>'EMAIL_OTP']);
 
         return ['ok' => true, 'customer' => $customer];
     }
@@ -356,6 +362,8 @@ final class CustomerAuthService
         Session::regenerate();
         Session::set('customer_id', $customerId);
         (new AccountSessionService())->begin('CUSTOMER', $customerId);
+        (new AccountSessionService())->revokeOthers('CUSTOMER',$customerId);
+        $this->auditService->logCustomerAction($customerId,'CUSTOMER_PASSWORD_RESET','customer',$customerId,['other_sessions_revoked'=>true]);
         return ['ok' => true, 'customer' => $this->customerRepo->findById($customerId)];
     }
 
@@ -371,6 +379,7 @@ final class CustomerAuthService
         Session::regenerate();
         Session::set('customer_id', (int) $customer['id']);
         (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);
+        $this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_LOGIN_SUCCESS','customer',(int)$customer['id'],['method'=>'GOOGLE']);
         return $customer;
     }
 
@@ -384,13 +393,13 @@ final class CustomerAuthService
     public function restorePendingAccount(): array
     {
         $customer=$this->pendingRestoreCustomer();if($customer===null)return ['ok'=>false,'error'=>'Your verified recovery session expired. Sign in again.'];
-        $this->customerRepo->restorePendingDeletion((int)$customer['id']);(new CustomerLifecycleMailer())->restored((string)$customer['email']);Session::forget('restore_customer_id');Session::forget('restore_verified_at');Session::regenerate();Session::set('customer_id',(int)$customer['id']);(new AccountSessionService())->begin('CUSTOMER',(int)$customer['id']);return ['ok'=>true,'customer'=>$this->customerRepo->findById((int)$customer['id'])];
+        $this->customerRepo->restorePendingDeletion((int)$customer['id']);$this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_ACCOUNT_RESTORED','customer',(int)$customer['id'],['self_service'=>true]);(new CustomerLifecycleMailer())->restored((string)$customer['email']);Session::forget('restore_customer_id');Session::forget('restore_verified_at');Session::regenerate();Session::set('customer_id',(int)$customer['id']);(new AccountSessionService())->begin('CUSTOMER',(int)$customer['id']);return ['ok'=>true,'customer'=>$this->customerRepo->findById((int)$customer['id'])];
     }
 
     public function permanentlyDeletePendingAccount(): array
     {
         $customer=$this->pendingRestoreCustomer();if($customer===null)return ['ok'=>false,'error'=>'Your verified recovery session expired. Sign in again.'];
-        $email=(string)$customer['email'];$this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);(new CustomerLifecycleMailer())->deleted($email);Session::forget('restore_customer_id');Session::forget('restore_verified_at');Session::reset();return ['ok'=>true];
+        $email=(string)$customer['email'];$this->auditService->logCustomerAction((int)$customer['id'],'CUSTOMER_PERMANENT_DELETION_CONFIRMED','customer',(int)$customer['id'],['self_service'=>true]);$this->customerRepo->permanentlyErasePendingDeletion((int)$customer['id']);(new CustomerLifecycleMailer())->deleted($email);Session::forget('restore_customer_id');Session::forget('restore_verified_at');Session::reset();return ['ok'=>true];
     }
 
     public function logout(): void

@@ -248,7 +248,7 @@ final class ProfileController
 
         $this->auditService->logCustomerAction(
             (int) $customer['id'],
-            'PRIVACY_REQUEST_SUBMITTED',
+            'CUSTOMER_ACCOUNT_DELETION_SCHEDULED',
             'privacy_request',
             $reqId,
             ['request_type' => $requestType]
