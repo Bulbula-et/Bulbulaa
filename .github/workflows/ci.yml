@@ -159,6 +159,11 @@ jobs:
           php database/migrate.php migrate | grep -q 'already current'
           php database/migrate.php status | grep -q '^APPLIED'
           test "$(php tests/db_test_tool.php scalar 'SELECT DATABASE()')" = 'bulbula_ci'
+      - name: Rehearse isolated MariaDB logical backup and restore
+        env:
+          BULBULA_RESTORE_ADMIN_USER: root
+          BULBULA_RESTORE_ADMIN_PASSWORD: root_ci_password
+        run: bash tests/mariadb_restore_rehearsal.sh
       - name: Start MySQL-backed application
         run: |
           php -d opcache.enable_cli=0 -S 127.0.0.1:8080 -t public_html public_html/router.php > storage/logs/ci-mariadb-server.log 2>&1 &

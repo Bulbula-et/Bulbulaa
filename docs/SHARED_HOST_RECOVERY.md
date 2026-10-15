@@ -19,7 +19,7 @@ mysqldump --defaults-extra-file="$HOME/.bulbula-my.cnf" \
   --default-character-set=utf8mb4 DATABASE_NAME \
   | gzip -9 > "$HOME/backups/$STAMP/database.sql.gz"
 tar -C /home/ACCOUNT -czf "$HOME/backups/$STAMP/application-media.tgz" \
-  discoverbulbula.arkeonethiopia.com/storage/uploads
+  discoverbulbula.arkeonethiopia.com/public_html/media/branches
 sha256sum "$HOME/backups/$STAMP"/* > "$HOME/backups/$STAMP/SHA256SUMS"
 ```
 
@@ -34,7 +34,7 @@ cd "$HOME/backups/BACKUP_ID"
 sha256sum -c SHA256SUMS
 gzip -dc database.sql.gz | mysql --defaults-extra-file="$HOME/.bulbula-rehearsal.cnf" REHEARSAL_DATABASE
 mysql --defaults-extra-file="$HOME/.bulbula-rehearsal.cnf" REHEARSAL_DATABASE \
-  -e 'CHECK TABLE users, businesses, branches, campaigns, audit_logs;'
+  -e 'CHECK TABLE staff_users, customers, businesses, branches, sponsorship_campaigns, audit_logs;'
 ```
 
 Point a temporary, access-restricted checkout at `REHEARSAL_DATABASE`; run migrations in status mode, `php tests/verify_v1_all.php` against its local server, verify representative public/staff records, and confirm uploaded-media checksums. Record counts for critical tables before and after restore. Destroy the temporary checkout, database, and credentials after evidence is approved.
@@ -50,6 +50,10 @@ php tests/backup_restore_rehearsal.php
 ```
 
 The test uses SQLite `VACUUM INTO`, restores to a separate temporary file, runs `PRAGMA integrity_check`, compares every application table's row count, and deletes the temporary artifacts. CI runs this on every supported PHP version.
+
+## Synthetic MariaDB CI restore
+
+`tests/mariadb_restore_rehearsal.sh` runs only against the isolated `bulbula_ci` fixture in GitHub Actions. It dumps a consistent InnoDB snapshot into a protected temporary directory, verifies the archive digest, restores into a separate short-lived database, compares every table name and row count, runs `CHECK TABLE` and migration-status checks, tests that a write in the restored database does not affect the source, and removes both the database and local archive. This does **not** prove that the production MariaDB backup or off-host media can be restored. Arrange a separate access-restricted restore of an actual production backup before closing that launch gate. Avoid schema changes while taking a `--single-transaction` backup; non-InnoDB tables do not share its consistency guarantee.
 
 ## Evidence record
 
