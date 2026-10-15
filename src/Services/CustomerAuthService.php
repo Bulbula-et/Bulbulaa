@@ -30,6 +30,10 @@ final class CustomerAuthService
         if (!is_int($id) && !is_numeric($id)) {
             return null;
         }
+        if (!(new AccountSessionService())->ensure('CUSTOMER', (int) $id)) {
+            Session::forget('customer_id');
+            return null;
+        }
         return $this->customerRepo->findById((int) $id);
     }
 
@@ -48,6 +52,7 @@ final class CustomerAuthService
         $customer = $this->customerRepo->createWithPassword($email, $name, $hash, $surface);
         Session::regenerate();
         Session::set('customer_id', (int) $customer['id']);
+        (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);
         return ['ok' => true, 'customer' => $customer];
     }
 
@@ -69,6 +74,7 @@ final class CustomerAuthService
         }
         Session::regenerate();
         Session::set('customer_id', (int) $customer['id']);
+        (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);
         return ['ok' => true, 'customer' => $this->customerRepo->findById((int) $customer['id'])];
     }
 
@@ -180,6 +186,7 @@ final class CustomerAuthService
 
         Session::regenerate();
         Session::set('customer_id', (int) $customer['id']);
+        (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);
 
         return ['ok' => true, 'customer' => $customer];
     }
@@ -254,6 +261,7 @@ final class CustomerAuthService
         Session::forget('password_reset_verified_at');
         Session::regenerate();
         Session::set('customer_id', $customerId);
+        (new AccountSessionService())->begin('CUSTOMER', $customerId);
         return ['ok' => true, 'customer' => $this->customerRepo->findById($customerId)];
     }
 
@@ -263,6 +271,7 @@ final class CustomerAuthService
         $customer = $this->customerRepo->findOrCreateByEmail($email, $displayName, $googleSubId, $surface);
         Session::regenerate();
         Session::set('customer_id', (int) $customer['id']);
+        (new AccountSessionService())->begin('CUSTOMER', (int) $customer['id']);
         return $customer;
     }
 

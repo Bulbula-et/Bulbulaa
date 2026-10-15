@@ -34,10 +34,12 @@ final class MigrationRunnerTest extends TestCase
             '20261014000000_baseline_v1_schema',
             '20261015010000_customer_password_profiles',
             '20261015020000_customer_otp_purposes',
+            '20261015030000_account_sessions',
         ], $runner->migrate());
         self::assertSame('APPLIED', $runner->status()[0]['status']);
         self::assertSame([], $runner->migrate());
         self::assertSame([
+            '20261015030000_account_sessions',
             '20261015020000_customer_otp_purposes',
             '20261015010000_customer_password_profiles',
             '20261014000000_baseline_v1_schema',

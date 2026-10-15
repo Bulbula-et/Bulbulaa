@@ -21,7 +21,10 @@ final class StaffAuthService
     public function currentStaff(): ?array
     {
         $staffId = Session::get('staff_id');
-        if (is_int($staffId) || is_numeric($staffId)) return $this->staffRepo->findById((int) $staffId);
+        if (is_int($staffId) || is_numeric($staffId)) {
+            if (!(new AccountSessionService())->ensure('STAFF', (int) $staffId)) { Session::forget('staff_id'); return null; }
+            return $this->staffRepo->findById((int) $staffId);
+        }
 
         $strictLogin  = !Config::previewFeaturesEnabled() || (bool) Config::get('security.require_staff_login', false);
         $loggedOut    = (bool) Session::get('staff_logged_out', false);
@@ -133,6 +136,7 @@ final class StaffAuthService
         Session::regenerate();
         Session::remove('staff_logged_out');
         Session::set('staff_id', (int) $user['id']);
+        (new AccountSessionService())->begin('STAFF', (int) $user['id']);
         Session::set('preview_staff_id', (int) $user['id']);
         $this->staffRepo->recordLoginTimestamp((int) $user['id']);
         $this->auditService->logStaffAction((int) $user['id'], 'STAFF_LOGIN_SUCCESS', 'staff_user', (int) $user['id'], null, ['email' => $user['email'], 'role' => $user['role'], 'two_factor' => true]);

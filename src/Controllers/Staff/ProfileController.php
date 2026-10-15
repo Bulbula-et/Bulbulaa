@@ -29,7 +29,17 @@ final class ProfileController
             'staff' => $staff,
             'sessionMetadata' => Session::metadata(),
             'securityEvents' => $this->audit->listStaffSecurityEvents((int) $staff['id']),
+            'activeSessions' => (new \Bulbula\Services\AccountSessionService())->list('STAFF', (int) $staff['id']),
         ], 'staff'));
+    }
+
+    public function revokeOtherSessions(Request $request): Response
+    {
+        $staff=$this->auth->currentStaff();if($staff===null)return Response::redirect('/staff/login');
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/staff/profile');}
+        (new \Bulbula\Services\AccountSessionService())->revokeOthers('STAFF',(int)$staff['id']);
+        $this->audit->logStaffAction((int)$staff['id'],'STAFF_OTHER_SESSIONS_REVOKED','staff_user',(int)$staff['id']);
+        Session::flash('success','All other Staff sessions were revoked.');return Response::redirect('/staff/profile');
     }
 
     public function updateProfile(Request $request): Response

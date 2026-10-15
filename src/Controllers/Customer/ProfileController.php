@@ -45,6 +45,7 @@ final class ProfileController
             'emailVerificationDevPreview' => Session::get('email_verification_dev_preview'),
             'sessionMetadata' => Session::metadata(),
             'securityEvents' => $this->auditService->listCustomerSecurityEvents((int) $customer['id']),
+            'activeSessions' => (new \Bulbula\Services\AccountSessionService())->list('CUSTOMER', (int) $customer['id']),
         ]);
 
         return Response::html($html);
@@ -77,6 +78,22 @@ final class ProfileController
         $this->auditService->logCustomerAction((int) $customer['id'], 'CUSTOMER_EMAIL_VERIFIED', 'customer', (int) $customer['id'], []);
         Session::flash('success', 'Your email address is now verified.');
         return Response::redirect('/account');
+    }
+
+    public function revokeSession(Request $request): Response
+    {
+        $customer=$this->authService->currentCustomer(); if($customer===null)return Response::redirect('/auth/login');
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/account');}
+        (new \Bulbula\Services\AccountSessionService())->revoke((int)$request->param('id',0),'CUSTOMER',(int)$customer['id']);
+        Session::flash('success','The selected device was signed out.'); return Response::redirect('/account');
+    }
+
+    public function revokeOtherSessions(Request $request): Response
+    {
+        $customer=$this->authService->currentCustomer(); if($customer===null)return Response::redirect('/auth/login');
+        if(!Csrf::verify((string)$request->input('_csrf',''))){Session::flash('error','Security token expired.');return Response::redirect('/account');}
+        (new \Bulbula\Services\AccountSessionService())->revokeOthers('CUSTOMER',(int)$customer['id']);
+        Session::flash('success','All other devices were signed out.'); return Response::redirect('/account');
     }
 
     public function updateProfile(Request $request): Response

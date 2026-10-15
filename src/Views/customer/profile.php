@@ -97,8 +97,7 @@ $myReviews  = $myReviews ?? [];
     </section>
 
     <section class="b-card" style="align-items:flex-start">
-      <div><span class="b-badge b-badge--verified">Current session</span><h2 style="font-size:var(--text-xl);margin-top:var(--space-3)">This device</h2><p style="font-size:var(--text-sm);color:var(--neutral-600)">Active since <?= View::e(date('M j, Y, g:i a', (int)($sessionMetadata['created_at'] ?? time()))) ?>. Last activity is current.</p></div>
-      <form method="POST" action="/auth/logout"><?= Csrf::field() ?><button class="b-btn b-btn--outline b-btn--sm" type="submit">Sign out this device</button></form>
+      <div style="width:100%"><span class="b-badge b-badge--verified">Active sessions</span><h2 style="font-size:var(--text-xl);margin-top:var(--space-3)">Signed-in devices</h2><?php foreach($activeSessions as $device): ?><div style="display:flex;justify-content:space-between;gap:1rem;padding:.75rem 0;border-top:1px solid var(--neutral-100)"><div><strong><?= View::e($device['device_label']) ?></strong><div style="font-size:var(--text-xs);color:var(--neutral-500)"><?= !empty($device['is_current'])?'This device · ':'' ?>Last active <?= View::e($device['last_seen_at']) ?></div></div><?php if(empty($device['is_current'])): ?><form method="POST" action="/account/sessions/<?= (int)$device['id'] ?>/revoke"><?= Csrf::field() ?><button class="b-btn b-btn--outline b-btn--sm" type="submit">Sign out</button></form><?php endif; ?></div><?php endforeach; ?><form method="POST" action="/account/sessions/others/revoke" style="margin-top:var(--space-3)"><?= Csrf::field() ?><button class="b-btn b-btn--outline b-btn--sm" type="submit">Sign out all other devices</button></form></div>
     </section>
 
     <section class="b-card" style="display:block">
