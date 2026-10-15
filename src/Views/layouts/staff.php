@@ -27,6 +27,7 @@ $icons = [
   'audit-logs'=>'<path d="M6 3h12v18H6zM9 8h6m-6 4h6m-6 4h4"/>',
   'privacy-requests'=>'<path d="M12 3 4 7v5c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V7l-8-4Zm-3 9 2 2 4-4"/>',
   'users'=>'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+  'email-templates'=>'<path d="M3 5h18v14H3zM3 6l9 7 9-7M7 16h5"/>',
   'settings'=>'<path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/>',
 ];
 $icon = static fn(string $key): string => '<svg aria-hidden="true" viewBox="0 0 24 24">' . ($icons[$key] ?? '') . '</svg>';
@@ -42,7 +43,7 @@ $navGroups = [
   ],
 ];
 if ($isAdmin) $navGroups['Administration'] = [
-  ['audit-logs','/staff/audit-logs','Audit log'], ['privacy-requests','/staff/privacy-requests','Privacy requests'], ['users','/staff/users','Staff & access'], ['settings','/staff/settings','System settings'],
+  ['audit-logs','/staff/audit-logs','Audit log'], ['privacy-requests','/staff/privacy-requests','Privacy requests'], ['users','/staff/users','Staff & access'], ['email-templates','/staff/email-templates','Email designs'], ['settings','/staff/settings','System settings'],
 ];
 ?>
 <!DOCTYPE html>
@@ -64,6 +65,7 @@ if ($isAdmin) $navGroups['Administration'] = [
   <?php if ($activeNav === 'locations'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-locations.css') ?>"><?php endif; ?>
   <?php if ($activeNav === 'audit-logs'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-audit.css') ?>"><?php endif; ?>
   <?php if ($activeNav === 'users'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-users.css') ?>"><?php endif; ?>
+  <?php if ($activeNav === 'email-templates'): ?><link rel="stylesheet" href="<?= View::asset('js/vendor/email-editor.css') ?>"><link rel="stylesheet" href="<?= View::asset('css/staff-email-templates.css') ?>"><script src="<?= View::asset('js/vendor/email-editor.js') ?>" defer></script><?php endif; ?>
   <?php if ($activeNav === 'settings'): ?><link rel="stylesheet" href="<?= View::asset('css/staff-settings.css') ?>"><?php endif; ?>
 </head>
 <body class="b-staff-body">

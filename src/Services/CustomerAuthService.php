@@ -139,7 +139,9 @@ final class CustomerAuthService
               . '<p style="font-size:13px;color:#6b7280">If you did not request this code, you can safely ignore this email. Never share the code with anyone.</p></div>';
         $text = "Your Bulbula.et code to {$action} is {$code}. It expires in {$minutes} minutes. Never share this code.";
 
-        $mail = Mailer::send($email, $code . ' is your Bulbula.et verification code', $html, $text);
+        $templateKey = match ($purpose) { 'PASSWORD_RESET'=>'otp_password_reset', 'VERIFY_EMAIL'=>'otp_verify_email', 'SENSITIVE_ACTION'=>'otp_sensitive_action', default=>'otp_sign_in' };
+        $message = (new EmailTemplateService())->render($templateKey, ['code'=>$code,'minutes'=>(string)$minutes], ['subject'=>$code . ' is your Bulbula.et verification code','html'=>$html,'text'=>$text]);
+        $mail = Mailer::send($email, $message['subject'], $message['html'], $message['text']);
         if (!$mail['ok'] && !$isDev) {
             return ['ok' => false, 'error' => 'We could not deliver your verification email. Please try again later.'];
         }

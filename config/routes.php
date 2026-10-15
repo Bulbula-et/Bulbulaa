@@ -131,6 +131,9 @@ return [
     ['POST', '/staff/users/{id}/toggle',             ['Staff\StaffUserController', 'toggleActive'], ['access' => 'administrator']],    // D-45 Suspend/activate staff
     ['POST', '/staff/users/{id}/password',           ['Staff\StaffUserController', 'resetPassword'], ['access' => 'administrator']],   // D-45 Admin password reset
     ['POST', '/staff/users/{id}/2fa-reset',          ['Staff\StaffUserController', 'resetTotp'], ['access' => 'administrator']],       // D-45 Admin-assisted TOTP recovery
+    ['GET',  '/staff/email-templates',              ['Staff\EmailTemplateController', 'index'], ['access' => 'administrator']],
+    ['POST', '/staff/email-templates/save',         ['Staff\EmailTemplateController', 'save'], ['access' => 'administrator']],
+    ['POST', '/staff/email-templates/publish',      ['Staff\EmailTemplateController', 'publish'], ['access' => 'administrator']],
     ['GET',  '/staff/settings',                      ['Staff\SettingsController', 'index'], ['access' => 'administrator']],            // Auth/SMTP/System settings
     ['POST', '/staff/settings/save',                 ['Staff\SettingsController', 'save'], ['access' => 'administrator']],             // Zero-restart config hot reload
     ['POST', '/staff/settings/test-email',           ['Staff\SettingsController', 'testEmail'], ['access' => 'administrator']],        // SMTP live delivery test

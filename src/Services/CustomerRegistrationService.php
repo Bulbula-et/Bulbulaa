@@ -105,7 +105,9 @@ final class CustomerRegistrationService
     private function deliver(string $email, string $code): bool
     {
         $text = "Your Bulbula.et registration code is {$code}. Enter it in the registration screen within 10 minutes. If you did not request this, ignore this email. Never share the code.";
-        $mail = Mailer::sendText($email, 'Your Bulbula.et registration code', $text);
+        $fallback = ['subject'=>'Your Bulbula.et registration code','html'=>'','text'=>$text];
+        $message = (new EmailTemplateService())->render('registration_code', ['code'=>$code,'minutes'=>'10'], $fallback);
+        $mail = $message['html'] === '' ? Mailer::sendText($email, $message['subject'], $message['text']) : Mailer::send($email, $message['subject'], $message['html'], $message['text']);
         // Existing local/CI preview gate; never substitutes for successful production delivery.
         return !empty($mail['ok']) || Config::previewFeaturesEnabled();
     }

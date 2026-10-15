@@ -42,7 +42,7 @@ final class CustomerReviewMailer
         $url=rtrim((string)Config::get('app.url','https://bulbula.et'),'/').'/account/reviews';
         $text=$body."\n\nReview your activity: ".$url."\n\nThis is a transactional update about your Bulbula.et review.";
         $html='<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:28px;color:#1f2937"><div style="color:#EA6A15;font-weight:800;font-size:20px">Bulbula.et</div><h1 style="font-size:24px;margin:20px 0 8px">'.htmlspecialchars($subject,ENT_QUOTES).'</h1><p style="line-height:1.6">'.htmlspecialchars($body,ENT_QUOTES).'</p><p><a href="'.htmlspecialchars($url,ENT_QUOTES).'" style="color:#C9550D;font-weight:700">Review your activity</a></p><p style="font-size:13px;color:#6b7280">This is a transactional update about your Bulbula.et review. It does not include your review text or private moderation notes.</p></div>';
-        return ['subject'=>$subject.' — Bulbula.et','html'=>$html,'text'=>$text];
+        return (new EmailTemplateService())->render('review_' . strtolower($event), ['message'=>$body], ['subject'=>$subject.' — Bulbula.et','html'=>$html,'text'=>$text]);
     }
 
     private function reasonLabel(string $code): string

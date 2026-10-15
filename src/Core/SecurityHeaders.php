@@ -22,7 +22,7 @@ final class SecurityHeaders
             "img-src 'self' data: https:",
             "font-src 'self' data:",
             "connect-src 'self' https://accounts.google.com",
-            "frame-src https://accounts.google.com",
+            "frame-src 'self' https://accounts.google.com",
             "media-src 'self'",
             "worker-src 'self' blob:",
             "manifest-src 'self'",
